@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificates &amp; Documents</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.doc-layout{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.doc-layout{grid-template-columns:1fr}}
+.doc-editor textarea{width:100%;min-height:190px;font-family:inherit;font-size:13px;line-height:1.6;
+  padding:11px 12px;border:1px solid var(--line2);border-radius:9px;color:var(--ink);resize:vertical}
+.doc-editor label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.03em;margin:14px 0 5px}
+.doc-editor label:first-of-type{margin-top:0}
+.doc-editor input[type=text]{width:100%}
+.merge-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.merge-tag{font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--teal-soft);
+  color:#22595a;border:none;padding:3px 7px;border-radius:6px;cursor:pointer}
+.merge-tag:hover{filter:brightness(.96)}
+/* Formal letterhead — deliberately plain and serif; these are documents people
+   present to banks, colleges and government offices. */
+.doc-sheet{background:#fff;width:210mm;max-width:100%;margin:0 auto 18px;padding:18mm 20mm;
+  border:1px solid var(--line);box-shadow:var(--shadow);color:#22262F;
+  font-family:Georgia,"Times New Roman",serif;min-height:250mm;display:flex;flex-direction:column}
+.doc-head{text-align:center;border-bottom:2.5px solid var(--navy);padding-bottom:10px}
+.doc-head img{height:56px;width:auto;border-radius:8px;margin-bottom:8px}
+.doc-acad{font-size:23px;color:var(--navy);font-weight:700;letter-spacing:.01em}
+.doc-addr{font-size:11px;color:var(--mut);margin-top:3px;font-family:system-ui,sans-serif}
+.doc-refrow{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);
+  margin-top:12px;font-family:system-ui,sans-serif}
+.doc-title{text-align:center;margin:22px 0 6px;font-size:17px;font-weight:700;color:var(--navy);
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:underline;text-underline-offset:5px}
+.doc-body{font-size:14px;line-height:2;text-align:justify;margin-top:20px;white-space:pre-wrap;flex:1}
+.doc-body b{color:#111}
+.doc-signrow{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px}
+.doc-sign{text-align:center;font-size:12px;color:var(--mut);border-top:1px solid var(--ink);padding-top:6px;min-width:180px}
+.doc-seal{width:78px;height:78px;border:1.5px dashed var(--line2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--mut2);
+  text-align:center;font-family:system-ui,sans-serif;line-height:1.3}
+.doc-foot{margin-top:16px;border-top:1px solid var(--line);padding-top:8px;font-size:9.5px;
+  color:var(--mut2);text-align:center;font-family:system-ui,sans-serif}
+@media print{.doc-sheet{width:auto;border:none;box-shadow:none;padding:0;margin:0;min-height:0}}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Students":[
+ ["Roll No","Student Name","Class / Batch","Gender","Parent / Guardian Name","Date of Birth","Admission Date","Address","Conduct","Achievement"],
+ [1,"Aarav Shah","11th Science","M","Mr. R. Shah","2008-04-12","2024-06-10","Ichalkaranji, Kolhapur","Excellent","securing first rank in the Term 1 examination"],
+ [2,"Diya Kulkarni","11th Science","F","Mrs. S. Kulkarni","2008-09-02","2024-06-10","Ichalkaranji, Kolhapur","Very Good","outstanding improvement across all subjects"],
+ [3,"Kabir Nair","12th Science","M","Mr. V. Nair","2007-11-25","2023-06-12","Ichalkaranji, Kolhapur","Good","consistent effort and class participation"],
+ [4,"Ishita Mehra","12th Science","","Mrs. P. Mehra","2007-07-19","2023-06-12","Ichalkaranji, Kolhapur","Excellent","perfect attendance through the year"]]};
+
+/* Merge fields are plain {placeholders} so a clerk can retype a template from
+   scratch without learning syntax. Anything unknown is left visible rather than
+   silently blanked, so a typo shows up on screen instead of on printed paper. */
+const TEMPLATES={
+ bonafide:{
+  label:"Bonafide Certificate",
+  title:"Bonafide Certificate",
+  body:`This is to certify that {name}, {relation} {parent}, is a bonafide student of {academy}.
+
+{pronoun_He} {is_are} currently studying in {class} during the academic year {year}. {pronoun_His} date of birth as per our records is {dob}.
+
+This certificate is issued on {his_her} request for the purpose of {purpose}.`
+ },
+ transfer:{
+  label:"Transfer Certificate",
+  title:"Transfer Certificate",
+  body:`This is to certify that {name}, {relation} {parent}, was a student of {academy}.
+
+{pronoun_He} {was_were} admitted on {admission_date} and studied in {class}. {pronoun_His} date of birth as per our records is {dob}.
+
+{pronoun_His} conduct during the period of study was {conduct}. All dues payable to the academy have been cleared.
+
+{pronoun_He} {is_are} hereby relieved from {academy} with effect from {date} at {his_her} own request.`
+ },
+ character:{
+  label:"Character Certificate",
+  title:"Character Certificate",
+  body:`This is to certify that {name}, {relation} {parent}, {has_have} been a student of {academy} in {class} during the academic year {year}.
+
+To the best of our knowledge, {his_her} character and conduct during this period were found to be {conduct}. {pronoun_He} {was_were} regular, well-behaved, and maintained cordial relations with teachers and fellow students.
+
+We wish {him_her} success in all future endeavours.`
+ },
+ award:{
+  label:"Award / Merit Certificate",
+  title:"Certificate of Achievement",
+  body:`This certificate is proudly presented to
+
+
+{name}
+
+
+of {class}, {academy}, in recognition of {achievement} during the academic year {year}.
+
+Your dedication and consistent effort are an inspiration to your peers. We congratulate you and wish you continued success.`
+ }
+};
+
+function parse(sheets){
+  const O=OFFICE;
+  const aoa=O.findSheet(sheets,"Students")||Object.values(sheets)[0];
+  if(!aoa)throw new Error("This workbook has no 'Students' sheet.");
+  const rows=O.readTable(aoa,{
+    roll:["Roll No","Roll","Sr. No."],name:["Student Name","Name"],
+    batch:["Class / Batch","Class","Batch","Division"],
+    parent:["Parent / Guardian Name","Parent Name","Guardian Name","Father's Name"],
+    gender:["Gender","Sex"],dob:["Date of Birth","DOB","Birth Date"],
+    admission:["Admission Date","Date of Admission","Joined On"],
+    address:["Address","Residence"],conduct:["Conduct","Character","Behaviour"],
+    achievement:["Achievement","Award","Award For","Reason"]
+  }).map(r=>({roll:O.toNum(r.roll),name:O.norm(r.name),batch:O.norm(r.batch),
+    parent:O.norm(r.parent),gender:O.norm(r.gender),dob:r.dob,admission:r.admission,
+    address:O.norm(r.address),conduct:O.norm(r.conduct),achievement:O.norm(r.achievement)})).filter(s=>s.name);
+  if(!rows.length)throw new Error("No students found — check that a 'Student Name' column exists.");
+  return{rows};
+}
+
+let D=null,MOUNT=null,KIND="bonafide",CUR=null,YEAR="2025-26",PURPOSE="submission to the concerned authority",
+    REF="",PLACE="Ichalkaranji",BODY=null;
+const O=()=>OFFICE;
+
+// Gender is optional on the roster; when it's absent we deliberately use they/them
+// rather than guessing from the name, which would get it wrong for real people.
+// Verb agreement travels with the pronoun: "They is currently studying" would go out on a
+// document a family presents to a bank or college, so singular-they carries plural verbs.
+function pronouns(g){
+  const s=OFFICE.keyName(g);
+  const verbs=sing=>sing?{is_are:"is",was_were:"was",has_have:"has"}:{is_are:"are",was_were:"were",has_have:"have"};
+  if(s==="m"||s==="male"||s==="boy")return{He:"He",His:"His",his_her:"his",him_her:"him",relation:"son of",...verbs(true)};
+  if(s==="f"||s==="female"||s==="girl")return{He:"She",His:"Her",his_her:"her",him_her:"her",relation:"daughter of",...verbs(true)};
+  return{He:"They",His:"Their",his_her:"their",him_her:"them",relation:"child of",...verbs(false)};
+}
+function fields(s){
+  const o=O(),p=pronouns(s.gender);
+  return{
+    name:s.name,class:s.batch||"—",roll:s.roll!=null?String(s.roll):"—",
+    parent:s.parent||"—",academy:o.branding.name,
+    dob:s.dob?o.fmtDate(s.dob):"—",admission_date:s.admission?o.fmtDate(s.admission):"—",
+    address:s.address||"—",conduct:s.conduct||"good",
+    achievement:s.achievement||"outstanding performance",
+    year:YEAR,purpose:PURPOSE,date:o.fmtDate(o.today()),place:PLACE,
+    pronoun_He:p.He,pronoun_His:p.His,his_her:p.his_her,him_her:p.him_her,relation:p.relation,
+    is_are:p.is_are,was_were:p.was_were,has_have:p.has_have
+  };
+}
+function merge(text,f){
+  const o=O();
+  return o.esc(text).replace(/\{(\w+)\}/g,(m,k)=>
+    // bold the merged value so it reads like a filled-in form, and leave unknown
+    // placeholders visible so a typo is caught here rather than after printing
+    f[k]!==undefined?`<b>${o.esc(String(f[k]))}</b>`:`<span style="color:#B4472F">${o.esc(m)}</span>`);
+}
+
+function docHTML(s){
+  const o=O(),b=o.branding,f=fields(s),tpl=TEMPLATES[KIND];
+  const body=(BODY!=null?BODY:tpl.body);
+  return `<div class="doc-sheet">
+    <div class="doc-head">
+      <img src="${o.esc(b.logoEmblem)}" alt="">
+      <div class="doc-acad">${o.esc(b.name)}</div>
+      <div class="doc-addr">${o.esc(PLACE)}</div>
+    </div>
+    <div class="doc-refrow">
+      <span>Ref: ${o.esc(REF||"—")}</span>
+      <span>Date: ${o.esc(f.date)}</span>
+    </div>
+    <div class="doc-title">${o.esc(tpl.title)}</div>
+    <div class="doc-body">${merge(body,f)}</div>
+    <div class="doc-signrow">
+      <div class="doc-seal">Academy<br>Seal</div>
+      <div class="doc-sign">${KIND==="award"?"Principal":"Principal / Authorised Signatory"}</div>
+    </div>
+    <div class="doc-foot">Issued by ${o.esc(b.name)}${PLACE?", "+o.esc(PLACE):""} · This document is computer-generated and valid when signed and sealed.</div>
+  </div>`;
+}
+
+const MERGE_KEYS=["name","class","roll","parent","academy","dob","admission_date","address",
+  "conduct","achievement","year","purpose","date","place","pronoun_He","pronoun_His","his_her","him_her","relation",
+  "is_are","was_were","has_have"];
+
+function render(){
+  const o=O();
+  if(!CUR&&D.rows[0])CUR=D.rows[0].name;
+  const s=D.rows.find(x=>x.name===CUR)||D.rows[0];
+  const tpl=TEMPLATES[KIND];
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-doc">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Office paperwork</div><h2>Certificates &amp; Documents</h2></div>
+        <div class="of-filters">
+          <label class="flab">Student</label>
+          <select id="dStud">${D.rows.map(x=>`<option value="${o.esc(x.name)}"${x.name===s.name?" selected":""}>${o.esc(x.name)}</option>`).join("")}</select>
+          <button class="btn btn-ghost" id="dAll">Print all students</button>
+          <button class="btn btn-ghost" id="dPrint">Print / Save as PDF</button>
+          <button class="btn btn-primary" id="dShare">Share this</button>
+        </div>
+      </div>
+      <div class="doc-layout">
+        <div class="panel doc-editor no-print">
+          <h3>Template</h3>
+          <p class="sub">Pick a document, then edit the wording however you like — it applies to every student.</p>
+          <label>Document type</label>
+          <select id="dKind" style="width:100%">
+            ${Object.keys(TEMPLATES).map(k=>`<option value="${k}"${k===KIND?" selected":""}>${o.esc(TEMPLATES[k].label)}</option>`).join("")}
+          </select>
+          <label>Reference no.</label>
+          <input type="text" id="dRef" value="${o.esc(REF)}" placeholder="e.g. TESA/2025/114">
+          <label>Place</label>
+          <input type="text" id="dPlace" value="${o.esc(PLACE)}">
+          <label>Academic year</label>
+          <input type="text" id="dYear" value="${o.esc(YEAR)}">
+          <label>Purpose (bonafide)</label>
+          <input type="text" id="dPurpose" value="${o.esc(PURPOSE)}">
+          <label>Body text</label>
+          <textarea id="dBody">${o.esc(BODY!=null?BODY:tpl.body)}</textarea>
+          <div class="merge-list">${MERGE_KEYS.map(k=>`<button type="button" class="merge-tag" data-k="${k}">{${k}}</button>`).join("")}</div>
+          <p style="font-size:11px;color:var(--mut);margin:8px 0 0;line-height:1.5">
+            Click a tag to insert it. Values come from the Students sheet; anything unrecognised stays visible in red so you can spot it before printing.</p>
+          <button class="btn btn-ghost" id="dReset" style="margin-top:12px;width:100%;justify-content:center">Reset wording to default</button>
+        </div>
+        <div id="docHolder">${docHTML(s)}</div>
+      </div>
+    </div>`;
+
+  const repaint=()=>{document.getElementById("docHolder").innerHTML=docHTML(s);};
+  document.getElementById("dStud").addEventListener("change",e=>{CUR=e.target.value;render();});
+  document.getElementById("dKind").addEventListener("change",e=>{KIND=e.target.value;BODY=null;render();});
+  document.getElementById("dRef").addEventListener("input",e=>{REF=e.target.value;repaint();});
+  document.getElementById("dPlace").addEventListener("input",e=>{PLACE=e.target.value;repaint();});
+  document.getElementById("dYear").addEventListener("input",e=>{YEAR=e.target.value;repaint();});
+  document.getElementById("dPurpose").addEventListener("input",e=>{PURPOSE=e.target.value;repaint();});
+  const ta=document.getElementById("dBody");
+  ta.addEventListener("input",e=>{BODY=e.target.value;repaint();});
+  document.getElementById("dReset").addEventListener("click",()=>{BODY=null;render();});
+  MOUNT.querySelectorAll(".merge-tag").forEach(b=>b.addEventListener("click",()=>{
+    const tag="{"+b.dataset.k+"}",st=ta.selectionStart||0,en=ta.selectionEnd||0;
+    ta.value=ta.value.slice(0,st)+tag+ta.value.slice(en);
+    BODY=ta.value;ta.focus();ta.selectionStart=ta.selectionEnd=st+tag.length;repaint();
+  }));
+  document.getElementById("dPrint").addEventListener("click",()=>o.printView("v-doc"));
+  document.getElementById("dAll").addEventListener("click",()=>{
+    document.getElementById("docHolder").innerHTML=D.rows.map((x,i)=>
+      `<div class="${i?"page-break":""}">${docHTML(x)}</div>`).join("");
+    o.printView("v-doc");
+  });
+  document.getElementById("dShare").addEventListener("click",e=>{
+    o.sharePDF(document.getElementById("docHolder"),
+      o.slugify(s.name)+"_"+o.slugify(tpl.label)+".pdf",s.name+" — "+tpl.label,e.target);
+  });
+}
+
+OFFICE.boot({
+  title:"Certificates & Documents",
+  kicker:"Front Office",
+  headline:"Bonafide, transfer and character certificates in seconds",
+  blurb:"Upload your roster, pick a document type, and print properly worded certificates on your academy letterhead — one student or the whole class.",
+  noteLeft:"One sheet: Students. Date of birth, admission date and conduct feed the certificate wording where the template needs them.",
+  manualHint:"One row per student. Name is required; date of birth, admission date and conduct fill in the certificate wording.",
+  templateHref:"../../assets/templates/office/Office_Roster_Template.xlsx",
+  cacheKey:"tool-documents",
+  sampleSheets:SAMPLE_SHEETS,
+  // Certificates need nothing but the roster, so the shared master alone can drive this tool.
+  rosterToSheets:students=>({Students:SPDRoster.toAoa(students)}),
+  pill:d=>`${d.rows.length} students`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;CUR=null;render();}
+});
+</script>
+</body>
+</html>

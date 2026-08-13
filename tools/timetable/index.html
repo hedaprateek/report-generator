@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timetable</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.tt-sheet{background:#fff;width:297mm;max-width:100%;margin:0 auto 18px;padding:12mm;
+  border:1px solid var(--line);box-shadow:var(--shadow);color:#22262F}
+.tt-head{display:flex;align-items:center;gap:12px;border-bottom:2.5px solid var(--navy);padding-bottom:10px;margin-bottom:14px}
+.tt-head img{height:46px;width:auto;border-radius:8px}
+.tt-acad{font-family:Georgia,serif;font-size:20px;color:var(--navy);font-weight:600}
+.tt-doc{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-top:2px}
+.tt-for{margin-left:auto;text-align:right}
+.tt-for .big{font-family:Georgia,serif;font-size:19px;color:var(--navy);font-weight:700}
+.tt-for .small{font-size:11px;color:var(--mut);margin-top:2px}
+.tt-grid{width:100%;border-collapse:collapse;table-layout:fixed}
+.tt-grid th,.tt-grid td{border:1px solid var(--line2);padding:0;vertical-align:top}
+.tt-grid thead th{background:#F3F1EA;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--navy);font-weight:700;padding:7px 6px;text-align:center}
+.tt-daycol{background:#F6F5F0;font-weight:700;color:var(--navy);font-size:12px;
+  padding:8px 7px;text-align:center;width:78px}
+.tt-cell{padding:6px 7px;min-height:44px;height:44px}
+.tt-subj{font-size:12px;font-weight:700;color:var(--navy);line-height:1.25}
+.tt-meta{font-size:10px;color:var(--mut);margin-top:2px;line-height:1.3}
+.tt-free{background:#FAF9F5}
+.tt-break{background:#F3F1EA;text-align:center;color:var(--mut);font-size:11px;font-style:italic}
+.tt-clash{background:var(--b1s);box-shadow:inset 0 0 0 2px var(--b1)}
+.clash-box{background:#FDF1EC;border:1px solid #E8B49A;border-left:3px solid var(--b1);
+  border-radius:9px;padding:12px 15px;margin-bottom:16px}
+.clash-box h4{margin:0 0 6px;font-size:13px;color:#7A3323}
+.clash-box ul{margin:0;padding-left:18px;font-size:12.5px;color:#7A3323;line-height:1.6}
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  .tt-sheet{width:auto;border:none;box-shadow:none;padding:0;margin:0}
+}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Timetable":[
+ ["Class","Day","Period","Start","End","Subject","Teacher","Room"],
+ ["11th Science","Monday",1,"08:00","08:50","Physics","Prof. P Heda","Lab 1"],
+ ["11th Science","Monday",2,"08:50","09:40","Chemistry","Prof. P Waghire","Room 4"],
+ ["11th Science","Monday",3,"10:00","10:50","Maths","Prof. Patil","Room 4"],
+ ["11th Science","Monday",4,"10:50","11:40","English","Prof. Deshpande","Room 4"],
+ ["11th Science","Tuesday",1,"08:00","08:50","Maths","Prof. Patil","Room 4"],
+ ["11th Science","Tuesday",2,"08:50","09:40","Physics","Prof. P Heda","Lab 1"],
+ ["11th Science","Tuesday",3,"10:00","10:50","Chemistry","Prof. P Waghire","Lab 2"],
+ ["11th Science","Wednesday",1,"08:00","08:50","Chemistry","Prof. P Waghire","Room 4"],
+ ["11th Science","Wednesday",2,"08:50","09:40","Maths","Prof. Patil","Room 4"],
+ ["11th Science","Wednesday",4,"10:50","11:40","Physics","Prof. P Heda","Lab 1"],
+ ["11th Science","Thursday",1,"08:00","08:50","English","Prof. Deshpande","Room 4"],
+ ["11th Science","Thursday",2,"08:50","09:40","Physics","Prof. P Heda","Lab 1"],
+ ["11th Science","Friday",1,"08:00","08:50","Maths","Prof. Patil","Room 4"],
+ ["11th Science","Friday",3,"10:00","10:50","Chemistry","Prof. P Waghire","Lab 2"],
+ ["11th Science","Saturday",1,"08:00","08:50","Doubt Session","Prof. P Heda","Room 4"],
+ ["12th Science","Monday",1,"08:00","08:50","Maths","Prof. Patil","Room 6"],
+ ["12th Science","Monday",2,"08:50","09:40","Physics","Prof. P Heda","Lab 1"],
+ ["12th Science","Monday",3,"10:00","10:50","Biology","Prof. Kulkarni","Lab 3"],
+ ["12th Science","Tuesday",1,"08:00","08:50","Chemistry","Prof. P Waghire","Lab 2"],
+ ["12th Science","Tuesday",2,"08:50","09:40","Maths","Prof. Patil","Room 6"],
+ ["12th Science","Tuesday",4,"10:50","11:40","Biology","Prof. Kulkarni","Lab 3"],
+ ["12th Science","Wednesday",1,"08:00","08:50","Physics","Prof. P Heda","Lab 1"],
+ ["12th Science","Wednesday",3,"10:00","10:50","Maths","Prof. Patil","Room 6"],
+ ["12th Science","Thursday",2,"08:50","09:40","Chemistry","Prof. P Waghire","Lab 2"],
+ ["12th Science","Thursday",3,"10:00","10:50","Biology","Prof. Kulkarni","Lab 3"],
+ ["12th Science","Friday",1,"08:00","08:50","Physics","Prof. P Heda","Lab 1"],
+ ["12th Science","Friday",2,"08:50","09:40","Maths","Prof. Patil","Room 6"]]};
+
+const DAY_ORDER=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+function parse(sheets){
+  const O=OFFICE;
+  const aoa=O.findSheet(sheets,"Timetable")||Object.values(sheets)[0];
+  if(!aoa)throw new Error("This workbook has no 'Timetable' sheet.");
+  const rows=O.readTable(aoa,{
+    cls:["Class","Class / Batch","Batch","Division","Section"],
+    day:["Day","Weekday"],period:["Period","Slot","Period No"],
+    start:["Start","From","Start Time"],end:["End","To","End Time"],
+    subject:["Subject","Topic","Activity"],teacher:["Teacher","Faculty","Taken By"],
+    room:["Room","Venue","Hall","Lab"]
+  }).map(r=>({cls:O.norm(r.cls),day:O.norm(r.day),period:O.toNum(r.period),
+    start:O.norm(r.start),end:O.norm(r.end),subject:O.norm(r.subject),
+    teacher:O.norm(r.teacher),room:O.norm(r.room)}))
+   .filter(r=>r.cls&&r.day&&r.subject&&r.period!=null);
+  if(!rows.length)throw new Error("No timetable rows found — each row needs Class, Day, Period and Subject.");
+
+  const classes=[...new Set(rows.map(r=>r.cls))];
+  const teachers=[...new Set(rows.map(r=>r.teacher).filter(Boolean))].sort();
+  const days=DAY_ORDER.filter(d=>rows.some(r=>O.keyName(r.day)===O.keyName(d)));
+  const periods=[...new Set(rows.map(r=>r.period))].sort((a,b)=>a-b);
+  // Period timings are declared once by whichever row first mentions them, so the
+  // header can show "1 · 08:00–08:50" without repeating times in every row.
+  const timings={};
+  periods.forEach(p=>{const src=rows.find(r=>r.period===p&&(r.start||r.end));
+    timings[p]=src?{start:src.start,end:src.end}:null;});
+
+  // A teacher physically cannot be in two classes at once — this is the single most
+  // useful thing the tool can tell you, and it's invisible when each class is on its
+  // own sheet of paper.
+  const clashes=[];
+  const seen={};
+  rows.forEach(r=>{
+    if(!r.teacher)return;
+    const k=O.keyName(r.teacher)+"|"+O.keyName(r.day)+"|"+r.period;
+    if(seen[k]&&seen[k].cls!==r.cls){
+      clashes.push({teacher:r.teacher,day:r.day,period:r.period,a:seen[k].cls,b:r.cls});
+    }else seen[k]=r;
+  });
+  return{rows,classes,teachers,days,periods,timings,clashes,
+    warnings:clashes.map(c=>`${c.teacher} is booked for both ${c.a} and ${c.b} on ${c.day}, period ${c.period}.`)};
+}
+
+let D=null,MOUNT=null,MODE="class",WHO=null;
+const O=()=>OFFICE;
+
+function cellFor(day,period){
+  const o=O();
+  return D.rows.filter(r=>o.keyName(r.day)===o.keyName(day)&&r.period===period&&
+    (MODE==="class"?r.cls===WHO:o.keyName(r.teacher)===o.keyName(WHO)));
+}
+function isClash(entry){
+  return D.clashes.some(c=>O().keyName(c.teacher)===O().keyName(entry.teacher)&&
+    O().keyName(c.day)===O().keyName(entry.day)&&c.period===entry.period);
+}
+function gridHTML(){
+  const o=O();
+  return `<table class="tt-grid">
+    <thead><tr><th style="width:78px">Day</th>
+      ${D.periods.map(p=>{const t=D.timings[p];
+        return `<th>${p}${t&&t.start?`<div style="font-weight:600;font-size:9.5px;color:var(--mut);letter-spacing:0;text-transform:none;margin-top:2px">${o.esc(t.start)}${t.end?"–"+o.esc(t.end):""}</div>`:""}</th>`;}).join("")}
+    </tr></thead>
+    <tbody>${D.days.map(day=>`<tr>
+      <td class="tt-daycol">${o.esc(day)}</td>
+      ${D.periods.map(p=>{
+        const items=cellFor(day,p);
+        if(!items.length)return `<td class="tt-cell tt-free"></td>`;
+        return `<td class="tt-cell${items.some(isClash)?" tt-clash":""}">${items.map(it=>`
+          <div class="tt-subj">${o.esc(it.subject)}</div>
+          <div class="tt-meta">${MODE==="class"?o.esc(it.teacher||"—"):o.esc(it.cls)}${it.room?" · "+o.esc(it.room):""}</div>`).join("")}</td>`;
+      }).join("")}
+    </tr>`).join("")}</tbody>
+  </table>`;
+}
+function sheetHTML(){
+  const o=O(),b=o.branding;
+  const load=D.rows.filter(r=>MODE==="class"?r.cls===WHO:o.keyName(r.teacher)===o.keyName(WHO)).length;
+  return `<div class="tt-sheet">
+    <div class="tt-head">
+      <img src="${o.esc(b.logoEmblem)}" alt="">
+      <div><div class="tt-acad">${o.esc(b.name)}</div>
+        <div class="tt-doc">${MODE==="class"?"Class Timetable":"Teacher Timetable"}</div></div>
+      <div class="tt-for"><div class="big">${o.esc(WHO||"—")}</div>
+        <div class="small">${load} period${load===1?"":"s"} per week</div></div>
+    </div>
+    ${gridHTML()}
+  </div>`;
+}
+
+function render(){
+  const o=O();
+  const list=MODE==="class"?D.classes:D.teachers;
+  if(!WHO||!list.includes(WHO))WHO=list[0]||null;
+  if(!WHO){MOUNT.innerHTML=`<div class="empty">Nothing to show — add a Teacher column to see teacher timetables.</div>`;return;}
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-tt">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Who is where, when</div><h2>Timetable</h2></div>
+        <div class="of-filters">
+          <label class="flab">View</label>
+          <select id="tMode">
+            <option value="class"${MODE==="class"?" selected":""}>By class</option>
+            <option value="teacher"${MODE==="teacher"?" selected":""}${D.teachers.length?"":" disabled"}>By teacher</option>
+          </select>
+          <label class="flab">${MODE==="class"?"Class":"Teacher"}</label>
+          <select id="tWho">${list.map(x=>`<option value="${o.esc(x)}"${x===WHO?" selected":""}>${o.esc(x)}</option>`).join("")}</select>
+          <button class="btn btn-ghost" id="tAll">Print all ${MODE==="class"?"classes":"teachers"}</button>
+          <button class="btn btn-ghost" id="tPrint">Print / Save as PDF</button>
+          <button class="btn btn-primary" id="tShare">Share this</button>
+        </div>
+      </div>
+      ${D.clashes.length?`<div class="clash-box no-print">
+        <h4>⚠ ${D.clashes.length} teacher clash${D.clashes.length>1?"es":""} — the same teacher is booked twice at once</h4>
+        <ul>${D.clashes.map(c=>`<li><b>${o.esc(c.teacher)}</b> — ${o.esc(c.day)}, period ${c.period}: ${o.esc(c.a)} and ${o.esc(c.b)}</li>`).join("")}</ul>
+      </div>`:""}
+      <div id="ttHolder">${sheetHTML()}</div>
+    </div>`;
+  document.getElementById("tMode").addEventListener("change",e=>{MODE=e.target.value;WHO=null;render();});
+  document.getElementById("tWho").addEventListener("change",e=>{WHO=e.target.value;render();});
+  document.getElementById("tPrint").addEventListener("click",()=>o.printView("v-tt"));
+  document.getElementById("tAll").addEventListener("click",()=>{
+    const keep=WHO;
+    document.getElementById("ttHolder").innerHTML=list.map((x,i)=>{
+      WHO=x;return `<div class="${i?"page-break":""}">${sheetHTML()}</div>`;
+    }).join("");
+    WHO=keep;
+    o.printView("v-tt");
+  });
+  document.getElementById("tShare").addEventListener("click",e=>{
+    o.sharePDF(document.getElementById("ttHolder"),
+      o.slugify(WHO)+"_timetable.pdf",WHO+" — Timetable",e.target);
+  });
+}
+
+OFFICE.boot({
+  title:"Timetable",
+  kicker:"Front Office",
+  headline:"One grid in, every timetable out",
+  blurb:"Enter each class's weekly schedule once. Get printable class timetables, each teacher's personal timetable derived automatically, and a warning whenever a teacher is double-booked.",
+  noteLeft:"One sheet: Timetable. A row per period — Class, Day, Period, Subject, and optionally Teacher and Room.",
+  manualHint:"One row per period. Class, Day, Period and Subject are required; add Teacher to get teacher timetables and clash detection.",
+  templateHref:"../../assets/templates/office/Timetable_Template.xlsx",
+  cacheKey:"tool-timetable",
+  sampleSheets:SAMPLE_SHEETS,
+  ledgerSheets:["Timetable"], // many rows per class/teacher by design
+  pill:d=>`${d.classes.length} classes · ${d.teachers.length} teachers${d.clashes.length?" · "+d.clashes.length+" clash":""}`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;WHO=null;MODE="class";render();}
+});
+</script>
+</body>
+</html>

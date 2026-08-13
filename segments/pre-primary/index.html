@@ -6,6 +6,8 @@
 <title>Pre-Primary Development Reports</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
@@ -209,6 +211,15 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .avatar-fallback{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Georgia,serif;flex-shrink:0}
 .avatar-wrap{position:relative;flex-shrink:0}
 .avatar-img{position:absolute;top:0;left:0;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.avatar-edit-wrap{position:relative;display:inline-block;flex-shrink:0;align-self:flex-start}
+.avatar-edit-btn{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border-radius:50%;
+  background:var(--teal);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25);padding:0;z-index:2}
+.avatar-edit-btn:hover{filter:brightness(1.1)}
+.avatar-remove-btn{position:absolute;left:-2px;top:-2px;width:18px;height:18px;border-radius:50%;
+  background:var(--mut2);color:#fff;border:2px solid #fff;font-size:9px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25);padding:0;z-index:2}
+.avatar-remove-btn:hover{background:var(--navy)}
 
 /* topics / goals / milestones */
 .topics-line{font-size:12px;color:#3f4756;line-height:1.6;margin:0 0 5px}
@@ -327,6 +338,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
       <div class="land-actions">
         <button class="btn btn-primary" id="pick">Choose file</button>
         <button class="btn btn-ghost" id="demo">Explore with sample data</button>
+        <button class="btn btn-ghost" id="manualEntry">Type data in manually</button>
         <a class="btn btn-ghost" href="../../assets/templates/pre-primary/Pre_Primary_Evaluation_Template.xlsx" download>Download template</a>
       </div>
       <div class="land-note">
@@ -354,11 +366,13 @@ tbody tr.clickable:hover{background:#FAF8F2}
     </div>
     <div class="top-right">
       <span class="pill" id="dataPill"></span>
+      <button class="mini-btn" id="editDataBtn" title="View or edit the data behind these reports">✎ Edit data</button>
       <button class="mini-btn" id="settingsBtn" title="Customize branding & labels">⚙ Settings</button>
       <button class="mini-btn" id="reload">New file</button>
       <a class="mini-btn" href="../../index.html" title="Back to segment picker">⌂ Segments</a>
     </div>
   </div>
+  <input id="photoPickInput" type="file" accept="image/*" class="hidden">
   <div id="settingsModal" class="modal-wrap hidden">
     <div class="modal-card">
       <h3>Customize branding &amp; labels</h3>
@@ -1193,7 +1207,11 @@ function reportSheetHTML(s){
       <div class="period">${esc(DATA.batch||"")} · ${esc(DATA.year||"")}<br>Generated ${new Date().toLocaleDateString()}</div>
     </div>
     <div class="rep-top-row">
-      ${avatarHTML(s.name,s.photo,58)}
+      <div class="avatar-edit-wrap">
+        ${avatarHTML(s.name,s.photo,58)}
+        <button type="button" class="avatar-edit-btn no-print" data-name="${esc(s.name)}" title="Add / change photo">✎</button>
+        ${s._photoOverride?`<button type="button" class="avatar-remove-btn no-print" data-name="${esc(s.name)}" title="Remove custom photo">✕</button>`:""}
+      </div>
       <div class="rep-id">
         <div><div class="l">Student</div><div class="v">${esc(s.name)}</div></div>
         <div><div class="l">Roll No</div><div class="v">${s.roll??"—"}</div></div>
@@ -1444,6 +1462,151 @@ function switchView(name){
   if(name==="report-all")renderReportAll();
   if(name==="certificate")renderCertificate();
 }
+/* =================================================================
+   WORKBOOK CACHE (IndexedDB) — remembers the last uploaded file for this
+   app, so a refresh or accidental tab close doesn't force a re-upload.
+   Demo data is never cached. Keyed per-segment in case the browser shares
+   storage across file:// pages (it already does for BRANDING_KEY above).
+   ================================================================= */
+const WB_CACHE_DB="spdWorkbookCache_v1",WB_CACHE_STORE="workbooks",WB_CACHE_KEY="pre-primary",PHOTO_STORE="photoOverrides";
+function wbCacheOpen(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(WB_CACHE_DB,2);
+    req.onupgradeneeded=()=>{
+      if(!req.result.objectStoreNames.contains(WB_CACHE_STORE))req.result.createObjectStore(WB_CACHE_STORE);
+      if(!req.result.objectStoreNames.contains(PHOTO_STORE))req.result.createObjectStore(PHOTO_STORE);
+    };
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+}
+async function wbCacheSave(filename,bytes){
+  try{const db=await wbCacheOpen();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readwrite");
+      tx.objectStore(WB_CACHE_STORE).put({filename,savedAt:Date.now(),bytes},WB_CACHE_KEY);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    db.close();
+  }catch(e){/* storage unavailable/full — app still works, just won't auto-restore next time */}
+}
+async function wbCacheLoad(){
+  try{const db=await wbCacheOpen();
+    const rec=await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readonly");
+      const req=tx.objectStore(WB_CACHE_STORE).get(WB_CACHE_KEY);
+      req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});
+    db.close();return rec;
+  }catch(e){return null;}
+}
+async function wbCacheClear(){
+  try{const db=await wbCacheOpen();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readwrite");
+      tx.objectStore(WB_CACHE_STORE).delete(WB_CACHE_KEY);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    db.close();
+  }catch(e){/* ignore */}
+}
+function showRestoredToast(filename){
+  const old=document.getElementById("wbRestoredToast");if(old)old.remove();
+  const box=document.createElement("div");
+  box.id="wbRestoredToast";
+  box.style.cssText="position:fixed;bottom:20px;right:20px;z-index:200;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 12px 32px rgba(0,0,0,.22);max-width:300px;font-family:inherit";
+  box.innerHTML=`<div style="font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:4px">Welcome back ✓</div>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:10px;line-height:1.5">Restored "${esc(filename)}" from your last session on this device.</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" id="restoredNewFile">Upload a different file</button>
+      <button style="border:none;background:transparent;color:var(--mut);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:5px" id="wbToastClose">✕</button>
+    </div>`;
+  document.body.appendChild(box);
+  document.getElementById("wbToastClose").addEventListener("click",()=>box.remove());
+  document.getElementById("restoredNewFile").addEventListener("click",()=>{box.remove();document.getElementById("reload").click();});
+  setTimeout(()=>{if(document.getElementById("wbRestoredToast"))box.remove();},15000);
+}
+
+/* =================================================================
+   MANUAL PHOTO PICKER — lets a teacher pick a photo file from their own
+   device (no need to host it and paste a URL). Stored locally as a
+   resized data: URL in the same IndexedDB, keyed per-student, and layered
+   on top of whatever the Students sheet's Photo URL column provided.
+   ================================================================= */
+function resizeImageFile(file,maxDim){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>=h){if(w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}}
+      else{if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}}
+      const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL("image/jpeg",0.85));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("that doesn't look like an image file"));};
+    img.src=url;
+  });
+}
+async function photoOverrideSave(name,dataUrl){
+  try{const db=await wbCacheOpen();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,"readwrite");
+      tx.objectStore(PHOTO_STORE).put({name,dataUrl,savedAt:Date.now()},WB_CACHE_KEY+"::"+keyName(name));
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    db.close();
+  }catch(e){/* storage unavailable/full — the photo just won't persist past this session */}
+}
+async function photoOverrideRemove(name){
+  try{const db=await wbCacheOpen();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,"readwrite");
+      tx.objectStore(PHOTO_STORE).delete(WB_CACHE_KEY+"::"+keyName(name));
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    db.close();
+  }catch(e){/* ignore */}
+}
+async function photoOverridesLoadAll(){
+  const prefix=WB_CACHE_KEY+"::";
+  try{const db=await wbCacheOpen();
+    const out=await new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,"readonly");
+      const req=tx.objectStore(PHOTO_STORE).openCursor();const found={};
+      req.onsuccess=()=>{const cur=req.result;
+        if(cur){if(String(cur.key).startsWith(prefix))found[String(cur.key).slice(prefix.length)]=cur.value.dataUrl;cur.continue();}
+        else resolve(found);};
+      req.onerror=()=>reject(req.error);});
+    db.close();return out;
+  }catch(e){return {};}
+}
+async function applyPhotoOverrides(){
+  const overrides=await photoOverridesLoadAll();
+  if(!Object.keys(overrides).length)return;
+  let changed=false;
+  AN.S.forEach(s=>{
+    const dataUrl=overrides[keyName(s.name)];
+    if(dataUrl){s._origPhoto=s.photo||"";s.photo=dataUrl;s._photoOverride=true;changed=true;}
+  });
+  if(changed){const active=document.querySelector(".tab.active");if(active)switchView(active.dataset.view);}
+}
+async function removeStudentPhoto(name){
+  await photoOverrideRemove(name);
+  const s=AN.S.find(x=>keyName(x.name)===keyName(name));
+  if(s){s.photo=s._origPhoto||"";s._photoOverride=false;}
+  const active=document.querySelector(".tab.active");if(active)switchView(active.dataset.view);
+}
+const photoPickInput=document.getElementById("photoPickInput");
+let photoPickTargetName=null;
+document.addEventListener("click",e=>{
+  const pickBtn=e.target.closest(".avatar-edit-btn");
+  if(pickBtn){photoPickTargetName=pickBtn.dataset.name;photoPickInput.click();return;}
+  const rmBtn=e.target.closest(".avatar-remove-btn");
+  if(rmBtn){removeStudentPhoto(rmBtn.dataset.name);}
+});
+photoPickInput.addEventListener("change",async e=>{
+  const file=e.target.files[0];photoPickInput.value="";
+  if(!file||!photoPickTargetName)return;
+  try{
+    const dataUrl=await resizeImageFile(file,480);
+    await photoOverrideSave(photoPickTargetName,dataUrl);
+    const s=AN.S.find(x=>keyName(x.name)===keyName(photoPickTargetName));
+    if(s){if(!s._photoOverride)s._origPhoto=s.photo||"";s.photo=dataUrl;s._photoOverride=true;}
+    const active=document.querySelector(".tab.active");if(active)switchView(active.dataset.view);
+  }catch(err){alert("Could not use that photo — "+(err.message||err));}
+});
+
 function boot(batches){
   BATCHES=batches;CURRENT_BATCH=0;
   DATA=BATCHES[0].data;AN=analyze(DATA);curStudent=null;
@@ -1453,25 +1616,60 @@ function boot(batches){
   document.getElementById("landing").style.display="none";
   document.getElementById("app").style.display="block";
   switchView("overview");
+  applyPhotoOverrides();
 }
 function showUploadError(html){const box=document.getElementById("uploadError");box.innerHTML=html;box.classList.remove("hidden");}
 function clearUploadError(){document.getElementById("uploadError").classList.add("hidden");}
+// shared by real uploads and by the IndexedDB cache-restore path below, so both go through
+// identical validation (throws NO_TESTS if the workbook has no usable evaluation-cycle data)
+let LAST_SHEETS=null;
+function parseWorkbookBytes(bytes){
+  const wb=XLSX.read(new Uint8Array(bytes),{type:"array"});
+  const sheets={};wb.SheetNames.forEach(n=>{sheets[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null,raw:true});});
+  const batches=detectBatches(sheets);
+  if(!batches[0].data.cycles.length){const e=new Error("NO_TESTS");e.code="NO_TESTS";throw e;}
+  LAST_SHEETS=sheets;
+  return batches;
+}
+// Only interrupt the teacher when something actually looks off — a clean workbook
+// goes straight to the dashboard, exactly as it did before.
+function bootWithReview(batches,sheets){
+  const parserWarnings=batches.reduce((a,b)=>a.concat(b.data.warnings||[]),[]);
+  const issues=(window.SPDGrid?SPDGrid.audit(sheets,parserWarnings):[]);
+  if(!issues.length){boot(batches);return;}
+  SPDGrid.open(sheets,{
+    title:"Check this before we build the reports",
+    subtitle:"We spotted a few things that are usually typos. Fix anything that's wrong, or continue if it's intentional.",
+    issues,
+    filename:slugify(DATA&&DATA.academy||BRANDING.name)+"_data.xlsx",
+    onApply:edited=>{
+      LAST_SHEETS=edited;
+      try{boot(detectBatches(edited));}
+      catch(err){showUploadError(`<b>Could not use the edited data.</b> <p style="margin:6px 0 0">${esc(err.message)}</p>`);}
+    }
+  });
+}
 function readFile(file){
   clearUploadError();
   const rd=new FileReader();
-  rd.onload=e=>{try{
-    const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-    const sheets={};wb.SheetNames.forEach(n=>{sheets[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null,raw:true});});
-    const batches=detectBatches(sheets);
-    if(!batches[0].data.cycles.length){
-      showUploadError(`<b>No evaluation cycles were found in the Evaluation sheet.</b>
-        <p style="margin:6px 0 0">This usually means the header row got moved or its "Student Name" label was renamed.</p>
-        <ul><li>A header cell that says <b>"Student Name"</b> (or "Name") on the row above your student rows</li></ul>
-        <p style="margin:8px 0 0">Check that row is still there and re-upload.</p>`);
-      return;
+  rd.onload=e=>{
+    const bytes=e.target.result;
+    try{
+      const batches=parseWorkbookBytes(bytes);
+      bootWithReview(batches,LAST_SHEETS);
+      wbCacheSave(file.name,bytes.slice(0));
+      if(window.SPDRoster)SPDRoster.merge(SPDRoster.fromSheets(LAST_SHEETS)); // top up the shared roster
+    }catch(err){
+      if(err.code==="NO_TESTS"){
+        showUploadError(`<b>No evaluation cycles were found in the Evaluation sheet.</b>
+          <p style="margin:6px 0 0">This usually means the header row got moved or its "Student Name" label was renamed.</p>
+          <ul><li>A header cell that says <b>"Student Name"</b> (or "Name") on the row above your student rows</li></ul>
+          <p style="margin:8px 0 0">Check that row is still there and re-upload.</p>`);
+      }else{
+        showUploadError(`<b>Could not read this file.</b> <p style="margin:6px 0 0">${esc(err.message)}. Make sure it's an .xlsx file saved from the template.</p>`);
+      }
     }
-    boot(batches);
-  }catch(err){showUploadError(`<b>Could not read this file.</b> <p style="margin:6px 0 0">${esc(err.message)}. Make sure it's an .xlsx file saved from the template.</p>`);}};
+  };
   rd.readAsArrayBuffer(file);
 }
 const drop=document.getElementById("drop"),fileIn=document.getElementById("file");
@@ -1481,9 +1679,54 @@ fileIn.addEventListener("change",e=>{if(e.target.files[0])readFile(e.target.file
 ["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("drag");}));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag");}));
 drop.addEventListener("drop",e=>{if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
-document.getElementById("demo").addEventListener("click",()=>{clearUploadError();boot(detectBatches(SAMPLE_SHEETS));});
+document.getElementById("demo").addEventListener("click",()=>{clearUploadError();LAST_SHEETS=SAMPLE_SHEETS;boot(detectBatches(SAMPLE_SHEETS));});
+// Manual entry: reuse the sample workbook purely as scaffolding — same sheets, same
+// header rows, no student data — so a teacher can type straight in without Excel.
+document.getElementById("manualEntry").addEventListener("click",()=>{
+  clearUploadError();
+  SPDGrid.open(SPDGrid.blankFrom(SAMPLE_SHEETS),{
+    title:"Type your data in",
+    subtitle:"Fill the rows below — one child per row. Ratings are Excellent / Good / Satisfactory / Needs Practice. Add more rows as you need, then continue.",
+    applyLabel:"Build the reports",
+    filename:slugify(BRANDING.name)+"_data.xlsx",
+    onApply:edited=>{
+      LAST_SHEETS=edited;
+      try{
+        const batches=detectBatches(edited);
+        if(!batches[0].data.cycles.length){
+          showUploadError(`<b>No evaluation data yet.</b> <p style="margin:6px 0 0">Add at least one child row with ratings, then try again.</p>`);
+          return;
+        }
+        boot(batches);
+      }catch(err){showUploadError(`<b>Could not use that data.</b> <p style="margin:6px 0 0">${esc(err.message)}</p>`);}
+    }
+  });
+});
+document.getElementById("editDataBtn").addEventListener("click",()=>{
+  if(!LAST_SHEETS)return;
+  SPDGrid.open(LAST_SHEETS,{
+    title:"Edit data",
+    subtitle:"Change any value and continue — the reports rebuild instantly. Nothing is saved back to your original file.",
+    applyLabel:"Rebuild reports",
+    filename:slugify(DATA&&DATA.academy||BRANDING.name)+"_data.xlsx",
+    onApply:edited=>{
+      LAST_SHEETS=edited;
+      try{boot(detectBatches(edited));}
+      catch(err){alert("Could not use the edited data: "+err.message);}
+    }
+  });
+});
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>switchView(t.dataset.view)));
-document.getElementById("reload").addEventListener("click",()=>{DATA=null;document.getElementById("app").style.display="none";document.getElementById("landing").style.display="flex";fileIn.value="";});
+document.getElementById("reload").addEventListener("click",()=>{DATA=null;document.getElementById("app").style.display="none";document.getElementById("landing").style.display="flex";fileIn.value="";wbCacheClear();});
+(async function tryRestoreLastWorkbook(){
+  const rec=await wbCacheLoad();
+  if(!rec)return;
+  try{
+    const batches=parseWorkbookBytes(rec.bytes);
+    boot(batches);
+    showRestoredToast(rec.filename);
+  }catch(e){wbCacheClear();}
+})();
 
 /* =================================================================
    SETTINGS / BRANDING

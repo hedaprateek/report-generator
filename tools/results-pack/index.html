@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results Pack</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.rp-layout{display:grid;grid-template-columns:290px 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.rp-layout{grid-template-columns:1fr}}
+.rp-side label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.03em;margin:13px 0 5px}
+.rp-side label:first-of-type{margin-top:0}
+.rp-side input[type=text],.rp-side select{width:100%}
+.rp-side input[type=color]{width:100%;height:36px;padding:2px;border:1px solid var(--line2);border-radius:8px}
+.rp-stage{display:flex;flex-direction:column;align-items:center;gap:14px}
+
+/* ---- Poster (A4 portrait) ---- */
+.poster{width:210mm;max-width:100%;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);
+  color:#1b2130;display:flex;flex-direction:column;overflow:hidden}
+.po-top{padding:14mm 14mm 9mm;text-align:center;color:#fff;position:relative}
+.po-top img{height:20mm;width:auto;border-radius:3mm;background:rgba(255,255,255,.1);margin-bottom:4mm}
+.po-acad{font-family:Georgia,serif;font-size:9mm;font-weight:700;line-height:1.1}
+.po-tag{font-size:3.4mm;letter-spacing:.16em;text-transform:uppercase;margin-top:2mm;opacity:.85}
+.po-head{font-family:Georgia,serif;font-size:11mm;font-weight:700;margin:5mm 0 1mm;line-height:1.05}
+.po-sub{font-size:4mm;opacity:.9}
+.po-body{padding:9mm 12mm 6mm;flex:1}
+.po-grid{display:grid;gap:6mm}
+.po-star{display:flex;align-items:center;gap:6mm;border:0.4mm solid var(--line);border-radius:4mm;
+  padding:5mm 6mm;background:#FCFBF7}
+.po-rank{width:15mm;height:15mm;border-radius:50%;display:grid;place-items:center;flex-shrink:0;
+  font-family:Georgia,serif;font-weight:800;font-size:7mm;color:#fff}
+.po-photo,.po-fb{width:22mm;height:26mm;border-radius:2.5mm;object-fit:cover;flex-shrink:0;border:0.5mm solid #fff;
+  box-shadow:0 1mm 3mm rgba(0,0,0,.14)}
+.po-fb{display:grid;place-items:center;font-family:Georgia,serif;font-weight:700;font-size:9mm}
+.po-name{font-family:Georgia,serif;font-size:6.5mm;font-weight:700;line-height:1.1}
+.po-meta{font-size:3.4mm;color:var(--mut);margin-top:1mm}
+.po-score{margin-left:auto;text-align:right;flex-shrink:0}
+.po-score .n{font-family:Georgia,serif;font-size:10mm;font-weight:800;line-height:1}
+.po-score .u{font-size:3mm;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.po-strip{display:flex;justify-content:space-around;padding:6mm 8mm;border-top:0.4mm solid var(--line);background:#FCFBF7}
+.po-stat{text-align:center}
+.po-stat .n{font-family:Georgia,serif;font-size:8mm;font-weight:800;line-height:1}
+.po-stat .l{font-size:3mm;color:var(--mut);letter-spacing:.05em;text-transform:uppercase;margin-top:1.5mm}
+.po-foot{padding:5mm;text-align:center;font-size:3.2mm;color:#fff}
+
+/* ---- Story card (9:16, for WhatsApp status) ---- */
+.story{width:270px;height:480px;border-radius:14px;overflow:hidden;color:#fff;
+  display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 18px;
+  box-shadow:0 10px 34px rgba(0,0,0,.28);flex-shrink:0}
+.story img.logo{height:34px;width:auto;border-radius:7px;background:rgba(255,255,255,.12)}
+.story .acad{font-family:Georgia,serif;font-size:14px;font-weight:700;margin-top:8px;line-height:1.15}
+.story .ph,.story .phfb{width:104px;height:104px;border-radius:50%;object-fit:cover;margin-top:16px;
+  border:3px solid rgba(255,255,255,.9);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.story .phfb{display:grid;place-items:center;font-family:Georgia,serif;font-weight:700;font-size:38px}
+.story .nm{font-family:Georgia,serif;font-size:21px;font-weight:700;margin-top:14px;line-height:1.15}
+.story .cl{font-size:11.5px;opacity:.88;margin-top:3px}
+.story .big{font-family:Georgia,serif;font-size:52px;font-weight:800;line-height:1;margin-top:16px}
+.story .bl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.9;margin-top:5px}
+.story .rk{margin-top:14px;background:rgba(255,255,255,.16);border-radius:20px;padding:6px 15px;font-size:12.5px;font-weight:700}
+.story .ft{margin-top:auto;font-size:10px;opacity:.82;letter-spacing:.05em}
+.story-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.story-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.story-wrap button{font-size:11.5px;padding:5px 11px}
+@media print{
+  @page{size:A4;margin:0}
+  .poster{width:auto;border:none;box-shadow:none}
+  .story-row,.rp-side{display:none !important}
+}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Students":[
+ ["Roll No","Student Name","Class / Batch","Photo URL"],
+ [1,"Ishita Mehra","12th Science",""],
+ [2,"Aarav Shah","12th Science",""],
+ [3,"Sanya Bhatt","12th Science",""],
+ [4,"Kabir Nair","12th Science",""],
+ [5,"Diya Kulkarni","12th Science",""],
+ [6,"Rohan Bhosale","12th Science",""],
+ [7,"Meera Choudhary","12th Science",""],
+ [8,"Aryan Kapoor","12th Science",""]],
+"Marks":[
+ [null,"MAX MARKS →",100,100,100],
+ ["Roll No","Student Name","Physics","Chemistry","Maths"],
+ [1,"Ishita Mehra",96,94,98],
+ [2,"Aarav Shah",92,90,95],
+ [3,"Sanya Bhatt",89,91,88],
+ [4,"Kabir Nair",84,80,86],
+ [5,"Diya Kulkarni",78,82,75],
+ [6,"Rohan Bhosale",71,68,74],
+ [7,"Meera Choudhary",88,86,90],
+ [8,"Aryan Kapoor",65,70,62]]};
+
+function parse(sheets){
+  const O=OFFICE;
+  const acad=O.readAcademic(sheets);
+  if(!acad)throw new Error("This workbook has no readable Marks sheet — results need marks to celebrate.");
+  const studAoa=O.findSheet(sheets,"Students");
+  const roster={};
+  if(studAoa){
+    O.readTable(studAoa,{roll:["Roll No","Roll"],name:["Student Name","Name"],
+      batch:["Class / Batch","Program / Division","Class","Batch"],
+      photo:["Photo URL","Photo","Picture","Image URL"]})
+      .forEach(r=>{const nm=O.norm(r.name);if(nm)roster[O.keyName(nm)]=
+        {roll:O.toNum(r.roll),batch:O.norm(r.batch),photo:O.norm(r.photo)};});
+  }
+  const rows=Object.keys(acad.byName).map(k=>{
+    const a=acad.byName[k],info=roster[k]||{};
+    return{key:k,name:a.name,pct:a.avg,batch:info.batch||"",roll:info.roll,photo:info.photo||""};
+  }).filter(r=>r.pct!=null).sort((a,b)=>b.pct-a.pct);
+  if(!rows.length)throw new Error("No numeric marks found to rank.");
+  rows.forEach((r,i)=>r.rank=i+1);
+  const pcts=rows.map(r=>r.pct);
+  return{rows,stats:{
+    n:rows.length,
+    avg:O.mean(pcts),
+    top:pcts[0],
+    above90:rows.filter(r=>r.pct>=90).length,
+    above75:rows.filter(r=>r.pct>=75).length,
+    distinctionPct:rows.length?rows.filter(r=>r.pct>=75).length/rows.length*100:0
+  }};
+}
+
+let D=null,MOUNT=null,VIEW="poster";
+let CFG={headline:"Our Results Speak",sub:"Batch of 2025-26",tag:"Excellence in Competitive Exam Coaching",
+  topN:5,accent:"#1F2A44",accent2:"#0E7C7B",unit:"%",footer:"Admissions open · Ichalkaranji"};
+const O=()=>OFFICE;
+
+function initials(n){const p=OFFICE.norm(n).split(/\s+/).filter(Boolean);return((p[0]||"")[0]||"")+((p[1]||"")[0]||"");}
+function hueOf(n){let h=0;for(const c of String(n))h=(h*31+c.charCodeAt(0))%360;return h;}
+// crossOrigin only for canvas capture: a photo host that won't allow it must fail to the
+// initials block rather than tainting the canvas and killing the whole image export.
+function photoEl(s,cls,fbCls,forCanvas){
+  const o=O(),h=hueOf(s.name);
+  const fb=`<div class="${fbCls}" style="background:hsl(${h},52%,86%);color:hsl(${h},45%,30%)">${o.esc(initials(s.name).toUpperCase())}</div>`;
+  if(!s.photo)return fb;
+  const co=forCanvas?' crossorigin="anonymous"':"";
+  return `<img class="${cls}"${co} src="${o.esc(s.photo)}" alt="" onerror="this.outerHTML=${o.esc(JSON.stringify(fb)).replace(/"/g,'&quot;')}">`;
+}
+const medal=i=>["#C9A227","#9AA0A6","#B0763C"][i]||CFG.accent2;
+
+function posterHTML(){
+  const o=O(),b=o.branding,top=D.rows.slice(0,CFG.topN),st=D.stats;
+  return `<div class="poster" id="posterEl">
+    <div class="po-top" style="background:linear-gradient(135deg,${o.esc(CFG.accent)},${o.esc(CFG.accent2)})">
+      <img src="${o.esc(b.logoEmblem)}" alt="">
+      <div class="po-acad">${o.esc(b.name)}</div>
+      <div class="po-tag">${o.esc(CFG.tag)}</div>
+      <div class="po-head">${o.esc(CFG.headline)}</div>
+      <div class="po-sub">${o.esc(CFG.sub)}</div>
+    </div>
+    <div class="po-body"><div class="po-grid">
+      ${top.map((s,i)=>`<div class="po-star">
+        <div class="po-rank" style="background:${medal(i)}">${s.rank}</div>
+        ${photoEl(s,"po-photo","po-fb")}
+        <div style="min-width:0">
+          <div class="po-name">${o.esc(s.name)}</div>
+          <div class="po-meta">${o.esc(s.batch||"")}${s.roll!=null?" · Roll "+s.roll:""}</div>
+        </div>
+        <div class="po-score"><div class="n" style="color:${o.esc(CFG.accent)}">${s.pct.toFixed(1)}</div>
+          <div class="u">${o.esc(CFG.unit)}</div></div>
+      </div>`).join("")}
+    </div></div>
+    <div class="po-strip">
+      <div class="po-stat"><div class="n" style="color:${o.esc(CFG.accent2)}">${st.top.toFixed(1)}${o.esc(CFG.unit)}</div><div class="l">Top score</div></div>
+      <div class="po-stat"><div class="n" style="color:${o.esc(CFG.accent2)}">${st.above90}</div><div class="l">Above 90${o.esc(CFG.unit)}</div></div>
+      <div class="po-stat"><div class="n" style="color:${o.esc(CFG.accent2)}">${st.above75}</div><div class="l">Distinctions</div></div>
+      <div class="po-stat"><div class="n" style="color:${o.esc(CFG.accent2)}">${st.avg.toFixed(1)}${o.esc(CFG.unit)}</div><div class="l">Batch average</div></div>
+    </div>
+    <div class="po-foot" style="background:${o.esc(CFG.accent)}">${o.esc(CFG.footer)}</div>
+  </div>`;
+}
+
+function storyHTML(s,forCanvas){
+  const o=O(),b=o.branding;
+  // During capture the logo must be an inlined data: URI or absent entirely. Pointing at
+  // the file:// path taints the canvas and kills the whole export — losing the logo is a
+  // far better failure than losing the image.
+  const logo=forCanvas?(s.__logo?`<img class="logo" src="${s.__logo}" alt="">`:"")
+                      :`<img class="logo" src="${o.esc(b.logoEmblem)}" alt="">`;
+  return `<div class="story" style="background:linear-gradient(160deg,${o.esc(CFG.accent)},${o.esc(CFG.accent2)})">
+    ${logo}
+    <div class="acad">${o.esc(b.name)}</div>
+    ${photoEl(s,"ph","phfb",forCanvas)}
+    <div class="nm">${o.esc(s.name)}</div>
+    <div class="cl">${o.esc(s.batch||"")}</div>
+    <div class="big">${s.pct.toFixed(1)}<span style="font-size:22px">${o.esc(CFG.unit)}</span></div>
+    <div class="bl">${o.esc(CFG.sub)}</div>
+    <div class="rk">${s.rank<=3?["🥇 Rank 1","🥈 Rank 2","🥉 Rank 3"][s.rank-1]:"Rank "+s.rank+" in batch"}</div>
+    <div class="ft">${o.esc(CFG.footer)}</div>
+  </div>`;
+}
+
+/* On file:// even a same-folder logo taints the capture canvas, so it is inlined as a
+   data: URI before html2canvas runs — the same fix the pre-primary share image needed. */
+async function toDataURL(url){
+  try{
+    const res=await fetch(url);const blob=await res.blob();
+    return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r(null);fr.readAsDataURL(blob);});
+  }catch(e){return null;}
+}
+async function downloadStory(s,btn){
+  const o=O(),orig=btn?btn.textContent:null;
+  if(btn){btn.textContent="Rendering…";btn.disabled=true;}
+  let holder=null;
+  try{
+    if(typeof html2canvas!=="function")throw new Error("Image engine still loading — try again in a moment.");
+    const logo=await toDataURL(o.branding.logoEmblem);
+    holder=document.createElement("div");
+    holder.style.cssText="position:fixed;left:-9999px;top:0";
+    holder.innerHTML=storyHTML({...s,__logo:logo},true);
+    document.body.appendChild(holder);
+    await new Promise(r=>setTimeout(r,80));
+    const canvas=await html2canvas(holder.firstElementChild,{scale:4,useCORS:true,backgroundColor:null});
+    const blob=await new Promise(r=>canvas.toBlob(r,"image/png"));
+    if(!blob)throw new Error("Could not render the image.");
+    const file=new File([blob],o.slugify(s.name)+"_result.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:s.name});return;}
+      catch(e){if(e&&e.name==="AbortError")return;}
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=file.name;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }catch(err){alert("Could not create the image: "+(err.message||err));}
+  finally{if(holder)holder.remove();if(btn){btn.textContent=orig;btn.disabled=false;}}
+}
+
+function sideHTML(){
+  const o=O();
+  return `<div class="panel no-print rp-side">
+    <h3>Wording &amp; look</h3>
+    <p class="sub">This is marketing material — say it the way you'd say it on a banner.</p>
+    <label>Headline</label><input type="text" id="cHead" value="${o.esc(CFG.headline)}">
+    <label>Sub-heading</label><input type="text" id="cSub" value="${o.esc(CFG.sub)}">
+    <label>Tagline</label><input type="text" id="cTag" value="${o.esc(CFG.tag)}">
+    <label>Footer / call to action</label><input type="text" id="cFoot" value="${o.esc(CFG.footer)}">
+    <label>How many students to feature</label>
+    <select id="cTop">${[3,5,8,10].filter(n=>n<=Math.max(3,D.rows.length)).map(n=>
+      `<option value="${n}"${n===CFG.topN?" selected":""}>Top ${n}</option>`).join("")}</select>
+    <label>Score unit</label>
+    <select id="cUnit">
+      <option value="%"${CFG.unit==="%"?" selected":""}>Percentage (%)</option>
+      <option value=""${CFG.unit===""?" selected":""}>Plain number</option>
+    </select>
+    <label>Primary colour</label><input type="color" id="cAcc" value="${o.esc(CFG.accent)}">
+    <label>Accent colour</label><input type="color" id="cAcc2" value="${o.esc(CFG.accent2)}">
+    ${location.protocol==="file:"?`<p style="font-size:11px;color:var(--mut);margin:14px 0 0;line-height:1.5">
+      <b>Note:</b> opened straight from a folder, the browser won't let downloaded status images
+      include the logo — the poster and PDF still have it. Serve the folder over http (or host it)
+      and the logo appears in the images too.</p>`:""}
+  </div>`;
+}
+function wireSide(){
+  const bind=(id,k)=>{const el=document.getElementById(id);
+    if(el)el.addEventListener("input",e=>{CFG[k]=e.target.value;paintStage();});};
+  bind("cHead","headline");bind("cSub","sub");bind("cTag","tag");bind("cFoot","footer");
+  bind("cAcc","accent");bind("cAcc2","accent2");
+  const t=document.getElementById("cTop");
+  if(t)t.addEventListener("change",e=>{CFG.topN=Number(e.target.value);paintStage();});
+  const u=document.getElementById("cUnit");
+  if(u)u.addEventListener("change",e=>{CFG.unit=e.target.value;paintStage();});
+}
+function paintStage(){
+  const stage=document.getElementById("rpStage");
+  if(!stage)return;
+  stage.innerHTML=VIEW==="poster"?posterHTML():
+    `<div class="story-row">${D.rows.slice(0,CFG.topN).map((s,i)=>
+      `<div class="story-wrap">${storyHTML(s)}
+        <button class="btn btn-ghost" data-story="${i}">Download image</button></div>`).join("")}</div>`;
+  stage.querySelectorAll("[data-story]").forEach(b=>b.addEventListener("click",()=>
+    downloadStory(D.rows[Number(b.dataset.story)],b)));
+}
+
+function render(){
+  const o=O();
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-rp">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Next year's admissions</div><h2>Results Pack</h2></div>
+        <div class="of-filters">
+          <label class="flab">Make</label>
+          <select id="rView">
+            <option value="poster"${VIEW==="poster"?" selected":""}>Topper poster (A4)</option>
+            <option value="story"${VIEW==="story"?" selected":""}>WhatsApp status cards</option>
+          </select>
+          <button class="btn btn-ghost" id="rPrint"${VIEW==="story"?" disabled":""}>Print / Save as PDF</button>
+          <button class="btn btn-primary" id="rShare"${VIEW==="story"?" disabled":""}>Share poster</button>
+        </div>
+      </div>
+      <div class="rp-layout">
+        ${sideHTML()}
+        <div class="rp-stage" id="rpStage"></div>
+      </div>
+    </div>`;
+  paintStage();wireSide();
+  document.getElementById("rView").addEventListener("change",e=>{VIEW=e.target.value;render();});
+  const p=document.getElementById("rPrint");
+  if(p&&!p.disabled)p.addEventListener("click",()=>o.printView("v-rp"));
+  const sh=document.getElementById("rShare");
+  if(sh&&!sh.disabled)sh.addEventListener("click",e=>
+    o.sharePDF(document.getElementById("posterEl"),o.slugify(o.branding.name)+"_results.pdf","Our Results",e.target));
+}
+
+OFFICE.boot({
+  title:"Results Pack",
+  kicker:"Marketing",
+  headline:"Turn last year's results into next year's admissions",
+  blurb:"Upload the marks you already have and get a topper poster for the noticeboard plus ready-to-send WhatsApp status cards — with photos, your logo and your colours.",
+  noteLeft:"Any workbook with a Marks sheet works. Add a Students sheet with Photo URL to put faces on the poster.",
+  manualHint:"Students and their marks. The tool ranks them and builds the artwork.",
+  templateHref:"../../assets/templates/office/Office_Roster_Template.xlsx",
+  cacheKey:"tool-resultspack",
+  sampleSheets:SAMPLE_SHEETS,
+  pill:d=>`${d.rows.length} students · top ${d.stats.top.toFixed(1)}%`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;VIEW="poster";render();}
+});
+</script>
+</body>
+</html>

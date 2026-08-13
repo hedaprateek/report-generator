@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fees &amp; Dues</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.due-pill{font-weight:700}
+.bal-0{color:var(--b5)} .bal-due{color:var(--amber)} .bal-over{color:var(--b1)}
+.receipt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16mm 14mm;
+  width:210mm;max-width:100%;margin:0 auto 16px;color:#22262F;box-shadow:var(--shadow)}
+.rc-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid var(--navy);padding-bottom:10px}
+.rc-head img{height:52px;width:auto;border-radius:8px}
+.rc-acad{font-family:Georgia,serif;font-size:20px;color:var(--navy);font-weight:600}
+.rc-doc{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-top:2px}
+.rc-no{text-align:right;font-size:11.5px;color:var(--mut);line-height:1.6}
+.rc-no b{color:var(--navy);font-size:13px}
+.rc-id{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line2);border-radius:8px;margin:14px 0;overflow:hidden}
+.rc-id div{padding:7px 11px;border-right:1px solid var(--line)}
+.rc-id div:last-child{border-right:none}
+.rc-id .l{font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.rc-id .v{font-size:13px;color:var(--navy);font-weight:700;margin-top:2px}
+.rc-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+.rc-table th{background:#F6F5F0;font-size:9.5px;padding:7px 9px;border-bottom:1px solid var(--line2);color:var(--navy);text-align:left}
+.rc-table td{padding:7px 9px;border-bottom:1px solid var(--line)}
+.rc-words{margin-top:12px;font-size:12px;font-style:italic;color:#444;background:#FCFBF7;
+  border-left:3px solid var(--teal);border-radius:6px;padding:9px 12px}
+.rc-sum{margin-top:14px;margin-left:auto;width:min(300px,100%);font-size:13px}
+.rc-sum div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--line)}
+.rc-sum .grand{border-bottom:none;border-top:2px solid var(--navy);margin-top:4px;padding-top:8px;font-weight:700;font-size:15px;color:var(--navy)}
+.rc-foot{margin-top:26px;display:flex;justify-content:space-between;align-items:flex-end}
+.rc-sign{border-top:1px solid var(--ink);padding-top:6px;font-size:11px;color:var(--mut);min-width:170px;text-align:center}
+.rc-note{margin-top:14px;font-size:9.5px;color:var(--mut2);text-align:center;border-top:1px solid var(--line);padding-top:8px}
+@media print{.receipt{width:auto;border:none;box-shadow:none;padding:0;margin:0}}
+</style>
+</head>
+<body>
+<script>
+/* =================================================================
+   SAMPLE — a deliberately mixed ledger so the demo shows all three
+   billing styles working through the same charges/payments model:
+   installments (Aarav), monthly (Diya), one-time + part payments (Kabir).
+   ================================================================= */
+const SAMPLE_SHEETS={
+"Students":[
+ ["Roll No","Student Name","Class / Batch","Parent / Guardian Name","Parent Phone"],
+ [1,"Aarav Shah","11th Science","Mr. R. Shah","98765 43210"],
+ [2,"Diya Kulkarni","11th Science","Mrs. S. Kulkarni","98220 11223"],
+ [3,"Kabir Nair","12th Science","Mr. V. Nair","99700 55443"],
+ [4,"Ishita Mehra","12th Science","Mrs. P. Mehra","97650 88110"],
+ [5,"Rohan Bhosale","11th Science","Mr. D. Bhosale","90280 33221"]],
+"Charges":[
+ ["Roll No","Student Name","Item","Amount","Due Date"],
+ [1,"Aarav Shah","Admission Fee",5000,"2025-06-10"],
+ [1,"Aarav Shah","Term 1 Tuition",18000,"2025-07-15"],
+ [1,"Aarav Shah","Term 2 Tuition",18000,"2025-11-15"],
+ [2,"Diya Kulkarni","Admission Fee",5000,"2025-06-10"],
+ [2,"Diya Kulkarni","Tuition - Jul 2025",4000,"2025-07-05"],
+ [2,"Diya Kulkarni","Tuition - Aug 2025",4000,"2025-08-05"],
+ [2,"Diya Kulkarni","Tuition - Sep 2025",4000,"2025-09-05"],
+ [3,"Kabir Nair","Annual Fee 2025-26",42000,"2025-06-30"],
+ [4,"Ishita Mehra","Annual Fee 2025-26",42000,"2025-06-30"],
+ [4,"Ishita Mehra","Study Material",3500,"2025-07-20"],
+ [5,"Rohan Bhosale","Admission Fee",5000,"2025-06-10"],
+ [5,"Rohan Bhosale","Term 1 Tuition",18000,"2025-07-15"]],
+"Payments":[
+ ["Receipt No","Date","Roll No","Student Name","Amount","Mode","Note"],
+ ["R-1001","2025-06-08",1,"Aarav Shah",5000,"UPI","Admission"],
+ ["R-1002","2025-07-12",1,"Aarav Shah",18000,"Cheque","Term 1"],
+ ["R-1003","2025-11-10",1,"Aarav Shah",18000,"UPI","Term 2"],
+ ["R-1004","2025-06-09",2,"Diya Kulkarni",5000,"Cash","Admission"],
+ ["R-1005","2025-07-04",2,"Diya Kulkarni",4000,"UPI","July"],
+ ["R-1006","2025-08-06",2,"Diya Kulkarni",4000,"UPI","August"],
+ ["R-1007","2025-06-28",3,"Kabir Nair",20000,"Cheque","Part payment 1"],
+ ["R-1008","2025-09-14",3,"Kabir Nair",12000,"UPI","Part payment 2"],
+ ["R-1009","2025-06-25",4,"Ishita Mehra",42000,"Bank Transfer","Full annual"],
+ ["R-1010","2025-07-18",4,"Ishita Mehra",3500,"Cash","Books"]]};
+
+/* =================================================================
+   PARSE — one generic ledger: what was charged, what was paid.
+   Installments, monthly fees and one-time-with-part-payments are all
+   just different row patterns in the same two sheets, so the tool
+   never needs to know which billing style an academy uses.
+   ================================================================= */
+function parse(sheets){
+  const O=OFFICE;
+  const studAoa=O.findSheet(sheets,"Students");
+  const chgAoa=O.findSheet(sheets,"Charges");
+  const payAoa=O.findSheet(sheets,"Payments");
+  if(!studAoa)throw new Error("This workbook has no 'Students' sheet.");
+  if(!chgAoa&&!payAoa)throw new Error("This workbook needs a 'Charges' sheet (and usually a 'Payments' sheet).");
+
+  const students=O.readTable(studAoa,{
+    roll:["Roll No","Roll","Sr. No."],name:["Student Name","Name"],
+    batch:["Class / Batch","Class","Batch","Division"],
+    parent:["Parent / Guardian Name","Parent Name","Guardian Name"],
+    phone:["Parent Phone","Phone","Contact","Mobile"]
+  }).map(r=>({roll:O.toNum(r.roll),name:O.norm(r.name),batch:O.norm(r.batch),
+    parent:O.norm(r.parent),phone:O.norm(r.phone)})).filter(s=>s.name);
+
+  const charges=O.readTable(chgAoa||[],{
+    roll:["Roll No","Roll"],name:["Student Name","Name"],
+    item:["Item","Particulars","Description","Fee Head"],
+    amount:["Amount","Fee","Value"],due:["Due Date","Due","Date"]
+  }).map(r=>({roll:O.toNum(r.roll),name:O.norm(r.name),item:O.norm(r.item)||"Fee",
+    amount:O.toNum(r.amount)||0,due:O.parseDate(r.due)})).filter(c=>c.name&&c.amount>0);
+
+  const payments=O.readTable(payAoa||[],{
+    receipt:["Receipt No","Receipt","Rcpt No"],date:["Date","Payment Date","Paid On"],
+    roll:["Roll No","Roll"],name:["Student Name","Name"],
+    amount:["Amount","Paid","Value"],mode:["Mode","Payment Mode","Method"],note:["Note","Remark","Remarks","Against"]
+  }).map(r=>({receipt:O.norm(r.receipt),date:O.parseDate(r.date),roll:O.toNum(r.roll),
+    name:O.norm(r.name),amount:O.toNum(r.amount)||0,mode:O.norm(r.mode)||"Cash",
+    note:O.norm(r.note)})).filter(p=>p.name&&p.amount>0);
+
+  const warnings=[];
+  const byKey={};
+  students.forEach(s=>{byKey[O.keyName(s.name)]={...s,charges:[],payments:[]};});
+  const attach=(rows,bucket,label)=>rows.forEach(r=>{
+    const k=O.keyName(r.name);
+    if(!byKey[k]){
+      byKey[k]={roll:r.roll,name:r.name,batch:"",parent:"",phone:"",charges:[],payments:[]};
+      warnings.push(`${label}: "${r.name}" isn't on the Students sheet — added from the ${label} sheet.`);
+    }
+    byKey[k][bucket].push(r);
+  });
+  attach(charges,"charges","Charges");
+  attach(payments,"payments","Payments");
+
+  const now=O.today();
+  const rows=Object.values(byKey).map(s=>{
+    const charged=s.charges.reduce((a,c)=>a+c.amount,0);
+    const paid=s.payments.reduce((a,p)=>a+p.amount,0);
+    const balance=charged-paid;
+    // Payments are applied to the oldest charge first (FIFO) — the usual
+    // convention, and it's what makes "overdue" meaningful rather than just
+    // "has any balance": a student who paid late but in full is not overdue.
+    const sorted=[...s.charges].sort((a,b)=>(a.due?a.due.getTime():0)-(b.due?b.due.getTime():0));
+    let pool=paid,overdue=0,oldestOverdue=null;
+    sorted.forEach(c=>{
+      const applied=Math.min(pool,c.amount);pool-=applied;
+      const unpaid=c.amount-applied;
+      if(unpaid>0&&c.due&&c.due<now){overdue+=unpaid;if(!oldestOverdue||c.due<oldestOverdue)oldestOverdue=c.due;}
+    });
+    const advance=balance<0?-balance:0;
+    return{...s,charged,paid,balance,overdue,oldestOverdue,advance,
+      status:balance<=0?"clear":(overdue>0?"overdue":"due")};
+  }).sort((a,b)=>(a.roll??9e9)-(b.roll??9e9)||a.name.localeCompare(b.name));
+
+  return{rows,payments,warnings,
+    totals:{charged:rows.reduce((a,r)=>a+r.charged,0),
+      paid:rows.reduce((a,r)=>a+r.paid,0),
+      balance:rows.reduce((a,r)=>a+Math.max(0,r.balance),0),
+      overdue:rows.reduce((a,r)=>a+r.overdue,0),
+      clear:rows.filter(r=>r.status==="clear").length,
+      overdueCount:rows.filter(r=>r.status==="overdue").length}};
+}
+
+/* =================================================================
+   VIEWS
+   ================================================================= */
+let VIEW="register",FILTER="all",CUR=null,D=null,MOUNT=null;
+const O=()=>OFFICE;
+
+function statusChip(r){
+  if(r.status==="clear")return `<span class="chip" style="background:var(--b5s);color:var(--b5)">Clear</span>`;
+  if(r.status==="overdue")return `<span class="chip" style="background:var(--b1s);color:var(--b1)">Overdue</span>`;
+  return `<span class="chip" style="background:var(--amber-soft);color:var(--amber)">Due</span>`;
+}
+function balClass(r){return r.balance<=0?"bal-0":(r.overdue>0?"bal-over":"bal-due");}
+
+function renderRegister(){
+  const o=O(),t=D.totals;
+  const list=D.rows.filter(r=>FILTER==="all"?true:FILTER==="pending"?r.balance>0:FILTER==="overdue"?r.overdue>0:r.status==="clear");
+  const batches=[...new Set(D.rows.map(r=>r.batch).filter(Boolean))];
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-register">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Who owes what</div><h2>Outstanding Dues Register</h2></div>
+        <div class="of-filters">
+          <label class="flab">Show</label>
+          <select id="fFilter">
+            <option value="all"${FILTER==="all"?" selected":""}>Everyone</option>
+            <option value="pending"${FILTER==="pending"?" selected":""}>Any balance</option>
+            <option value="overdue"${FILTER==="overdue"?" selected":""}>Overdue only</option>
+            <option value="clear"${FILTER==="clear"?" selected":""}>Fully paid</option>
+          </select>
+          <button class="btn btn-ghost" id="bPrint">Print / Save as PDF</button>
+          <button class="btn btn-primary" id="bShare">Share (WhatsApp / Email)</button>
+        </div>
+      </div>
+      ${o.printHead("Outstanding Dues Register",batches.join(" · "))}
+      <div class="kpis">
+        <div class="kpi"><div class="k">Total billed</div><div class="v">${o.money(t.charged)}</div><div class="s">${D.rows.length} students</div></div>
+        <div class="kpi"><div class="k">Collected</div><div class="v" style="color:var(--b5)">${o.money(t.paid)}</div><div class="s">${t.charged?Math.round(t.paid/t.charged*100):0}% of billed</div></div>
+        <div class="kpi"><div class="k">Outstanding</div><div class="v" style="color:var(--amber)">${o.money(t.balance)}</div><div class="s">${D.rows.filter(r=>r.balance>0).length} students</div></div>
+        <div class="kpi"><div class="k">Overdue</div><div class="v" style="color:var(--b1)">${o.money(t.overdue)}</div><div class="s">${t.overdueCount} past due date</div></div>
+        <div class="kpi"><div class="k">Fully paid</div><div class="v">${t.clear}</div><div class="s">of ${D.rows.length}</div></div>
+      </div>
+      <div class="panel" style="padding:8px 6px">
+        <table>
+          <thead><tr>
+            <th class="c">Roll</th><th>Student</th><th>Class</th>
+            <th class="r">Billed</th><th class="r">Paid</th><th class="r">Balance</th>
+            <th class="r">Overdue</th><th class="c">Status</th><th class="c no-print"></th>
+          </tr></thead>
+          <tbody>${list.length?list.map(r=>`<tr class="clickable" data-name="${o.esc(r.name)}">
+            <td class="c">${r.roll??"—"}</td>
+            <td><b style="color:var(--navy)">${o.esc(r.name)}</b>${r.phone?`<div style="font-size:11px;color:var(--mut)">${o.esc(r.phone)}</div>`:""}</td>
+            <td>${o.esc(r.batch||"—")}</td>
+            <td class="r">${o.money(r.charged)}</td>
+            <td class="r">${o.money(r.paid)}</td>
+            <td class="r due-pill ${balClass(r)}">${r.balance>0?o.money(r.balance):(r.advance>0?o.money(r.advance)+" adv":"—")}</td>
+            <td class="r">${r.overdue>0?`<b style="color:var(--b1)">${o.money(r.overdue)}</b><div style="font-size:10px;color:var(--mut)">since ${o.fmtDate(r.oldestOverdue)}</div>`:"—"}</td>
+            <td class="c">${statusChip(r)}</td>
+            <td class="c no-print"><button class="btn btn-ghost" style="padding:5px 10px;font-size:11.5px" data-rc="${o.esc(r.name)}">Receipt</button></td>
+          </tr>`).join(""):`<tr><td colspan="9" class="empty">No students match this filter.</td></tr>`}</tbody>
+        </table>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:var(--mut2);margin-top:12px">
+        Payments are applied to the oldest unpaid charge first, so a student who paid late but in full counts as clear, not overdue.
+      </p>
+    </div>`;
+  const f=document.getElementById("fFilter");
+  f.addEventListener("change",e=>{FILTER=e.target.value;renderRegister();});
+  document.getElementById("bPrint").addEventListener("click",()=>o.printView("v-register"));
+  document.getElementById("bShare").addEventListener("click",e=>{
+    const el=document.getElementById("v-register");
+    const hide=[...el.querySelectorAll(".no-print")],prev=hide.map(h=>h.style.display);
+    hide.forEach(h=>h.style.display="none");
+    const ph=el.querySelector(".of-print-head");if(ph)ph.style.display="flex";
+    Promise.resolve(o.sharePDF(el,o.slugify(o.branding.name)+"_dues_register.pdf","Outstanding Dues Register",e.target))
+      .finally(()=>{hide.forEach((h,i)=>h.style.display=prev[i]);if(ph)ph.style.display="";});
+  });
+  MOUNT.querySelectorAll("tr.clickable").forEach(tr=>tr.addEventListener("click",e=>{
+    if(e.target.closest("[data-rc]"))return;
+    CUR=tr.dataset.name;VIEW="receipt";paint();
+  }));
+  MOUNT.querySelectorAll("[data-rc]").forEach(b=>b.addEventListener("click",()=>{CUR=b.dataset.rc;VIEW="receipt";paint();}));
+}
+
+function receiptHTML(r,pay,idx){
+  const o=O();
+  // A receipt for a specific payment shows that payment; the "statement" variant
+  // (pay === null) shows the whole ledger, which is what parents usually ask for.
+  const lines=pay?[pay]:r.payments;
+  const total=lines.reduce((a,p)=>a+p.amount,0);
+  const rcNo=pay?(pay.receipt||`R-${String(idx+1).padStart(4,"0")}`):`STMT-${r.roll??""}`;
+  const rcDate=pay?o.fmtDate(pay.date):o.fmtDate(o.today());
+  return `<div class="receipt${idx>0?" page-break-before":""}">
+    <div class="rc-head">
+      <div style="display:flex;gap:12px;align-items:center">
+        <img src="${o.esc(o.branding.logoEmblem)}" alt="">
+        <div><div class="rc-acad">${o.esc(o.branding.name)}</div>
+          <div class="rc-doc">${pay?"Fee Receipt":"Fee Statement"}</div></div>
+      </div>
+      <div class="rc-no"><b>${o.esc(rcNo)}</b><br>${o.esc(rcDate)}</div>
+    </div>
+    <div class="rc-id">
+      <div><div class="l">Student</div><div class="v">${o.esc(r.name)}</div></div>
+      <div><div class="l">Roll No</div><div class="v">${r.roll??"—"}</div></div>
+      <div><div class="l">Class</div><div class="v" style="font-size:12px">${o.esc(r.batch||"—")}</div></div>
+      <div><div class="l">Parent / Guardian</div><div class="v" style="font-size:12px">${o.esc(r.parent||"—")}</div></div>
+    </div>
+    <table class="rc-table">
+      <thead><tr><th>Date</th><th>Particulars</th><th>Mode</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody>${lines.length?lines.map(p=>`<tr>
+        <td>${o.esc(o.fmtDate(p.date))}</td>
+        <td>${o.esc(p.note||"Fee payment")}${p.receipt?` <span style="color:var(--mut);font-size:10px">(${o.esc(p.receipt)})</span>`:""}</td>
+        <td>${o.esc(p.mode)}</td>
+        <td style="text-align:right">${o.money(p.amount)}</td></tr>`).join(""):
+        `<tr><td colspan="4" style="color:var(--mut);font-style:italic">No payments recorded yet.</td></tr>`}</tbody>
+    </table>
+    <div class="rc-words">${o.esc(o.moneyInWords(total))}</div>
+    <div class="rc-sum">
+      <div><span>Total billed</span><span>${o.money(r.charged)}</span></div>
+      <div><span>Total paid</span><span>${o.money(r.paid)}</span></div>
+      ${pay?`<div><span>This receipt</span><span>${o.money(total)}</span></div>`:""}
+      <div class="grand"><span>${r.balance>0?"Balance due":"Balance"}</span>
+        <span style="color:${r.balance>0?"var(--b1)":"var(--b5)"}">${r.balance>0?o.money(r.balance):(r.advance>0?o.money(r.advance)+" advance":"Nil")}</span></div>
+    </div>
+    ${r.balance>0&&r.oldestOverdue?`<p style="margin-top:10px;font-size:11px;color:var(--b1)">
+      Overdue since ${o.esc(o.fmtDate(r.oldestOverdue))}. Kindly clear the balance at the earliest.</p>`:""}
+    <div class="rc-foot">
+      <div style="font-size:10.5px;color:var(--mut)">Received with thanks.</div>
+      <div class="rc-sign">Authorised Signatory</div>
+    </div>
+    <div class="rc-note">This is a computer-generated receipt from ${o.esc(o.branding.name)}. Please retain it for your records.</div>
+  </div>`;
+}
+
+function renderReceipt(){
+  const o=O();
+  if(!CUR&&D.rows[0])CUR=D.rows[0].name;
+  const r=D.rows.find(x=>x.name===CUR)||D.rows[0];
+  if(!r){MOUNT.innerHTML=`<div class="empty">No students.</div>`;return;}
+  const opts=D.rows.map(x=>`<option value="${o.esc(x.name)}"${x.name===r.name?" selected":""}>${o.esc(x.name)}</option>`).join("");
+  const payOpts=`<option value="__stmt">Full statement (all payments)</option>`+
+    r.payments.map((p,i)=>`<option value="${i}">${o.esc(p.receipt||"Payment "+(i+1))} · ${o.esc(o.fmtDate(p.date))} · ${o.money(p.amount)}</option>`).join("");
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-receipt">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Give the parent paper</div><h2>Receipt / Statement</h2></div>
+        <div class="of-filters">
+          <label class="flab">Student</label><select id="rStud">${opts}</select>
+          <label class="flab">Show</label><select id="rPay">${payOpts}</select>
+          <button class="btn btn-ghost" id="rAll">Print all students</button>
+          <button class="btn btn-ghost" id="rPrint">Print / Save as PDF</button>
+          <button class="btn btn-primary" id="rShare">Share this</button>
+        </div>
+      </div>
+      <div id="rcHolder">${receiptHTML(r,null,0)}</div>
+    </div>`;
+  document.getElementById("rStud").addEventListener("change",e=>{CUR=e.target.value;renderReceipt();});
+  document.getElementById("rPay").addEventListener("change",e=>{
+    const v=e.target.value;
+    document.getElementById("rcHolder").innerHTML=receiptHTML(r,v==="__stmt"?null:r.payments[+v],0);
+  });
+  document.getElementById("rPrint").addEventListener("click",()=>o.printView("v-receipt"));
+  document.getElementById("rAll").addEventListener("click",()=>{
+    document.getElementById("rcHolder").innerHTML=D.rows.map((x,i)=>
+      `<div class="${i?"page-break":""}">${receiptHTML(x,null,0)}</div>`).join("");
+    o.printView("v-receipt");
+  });
+  document.getElementById("rShare").addEventListener("click",e=>{
+    o.sharePDF(document.getElementById("rcHolder"),o.slugify(r.name)+"_fee_receipt.pdf",r.name+" — Fee Receipt",e.target);
+  });
+}
+
+function paint(){
+  OFFICE.tabs([{id:"register",label:"Dues Register"},{id:"receipt",label:"Receipt / Statement"}],VIEW,id=>{VIEW=id;paint();});
+  if(VIEW==="register")renderRegister();else renderReceipt();
+}
+
+OFFICE.boot({
+  title:"Fees & Dues",
+  kicker:"Front Office",
+  headline:"Know exactly who still owes you",
+  blurb:"Upload your fee ledger and get an outstanding-dues register plus printable receipts — installments, monthly fees or one-time payments all work.",
+  noteLeft:"Three sheets: Students, Charges (what you billed) and Payments (what came in). The tool works out the balance.",
+  manualHint:"Students, then what you charged them, then what they've paid. The balance is calculated for you.",
+  templateHref:"../../assets/templates/office/Fees_Template.xlsx",
+  cacheKey:"tool-fees",
+  sampleSheets:SAMPLE_SHEETS,
+  ledgerSheets:["Charges","Payments"], // a student owns many rows here — that's the point, not a typo
+  // Unlike ID cards and certificates, fees needs money data the roster can't hold, so the
+  // roster seeds the Students sheet and leaves Charges/Payments ready to fill in via Edit data.
+  rosterToSheets:students=>({
+    Students:SPDRoster.toAoa(students),
+    Charges:[["Roll No","Student Name","Item","Amount","Due Date"]],
+    Payments:[["Receipt No","Date","Roll No","Student Name","Amount","Mode","Note"]]
+  }),
+  pill:d=>`${d.rows.length} students · ${OFFICE.money(d.totals.balance)} outstanding`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;CUR=null;VIEW="register";paint();}
+});
+</script>
+</body>
+</html>

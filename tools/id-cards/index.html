@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ID Cards</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+/* CR80 — the standard plastic-card size (85.6 x 54 mm), so these fit any
+   off-the-shelf lanyard holder. Printed 10 to an A4 sheet with cut guides. */
+.card-sheet{background:#fff;width:210mm;max-width:100%;margin:0 auto 18px;padding:10mm 8mm;
+  border:1px solid var(--line);box-shadow:var(--shadow);
+  display:grid;grid-template-columns:repeat(2,85.6mm);grid-auto-rows:54mm;gap:6mm 8mm;justify-content:center}
+.card-item{width:85.6mm;height:54mm;border:1px dashed #C9C4B6;border-radius:3mm;overflow:hidden;
+  display:flex;flex-direction:column;background:#fff;position:relative}
+.card-strip{background:linear-gradient(90deg,#1B2540,#243257);color:#fff;padding:2mm 3mm;display:flex;align-items:center;gap:2mm;flex-shrink:0}
+.card-strip img{height:7mm;width:auto;border-radius:1mm;background:rgba(255,255,255,.08)}
+.card-acad{font-family:Georgia,serif;font-size:3.1mm;font-weight:600;line-height:1.15}
+.card-sub{font-size:1.9mm;color:#AEB9CC;letter-spacing:.04em;margin-top:.3mm}
+.card-body{flex:1;display:flex;gap:3mm;padding:2.5mm 3mm}
+.card-photo{width:19mm;height:24mm;border-radius:1.5mm;object-fit:cover;border:.4mm solid var(--line2);background:#F3F1EA;flex-shrink:0}
+.card-photo-fb{width:19mm;height:24mm;border-radius:1.5mm;display:flex;align-items:center;justify-content:center;
+  font-family:Georgia,serif;font-weight:700;font-size:7mm;flex-shrink:0}
+.card-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:.9mm}
+.card-name{font-family:Georgia,serif;font-size:3.6mm;font-weight:700;color:var(--navy);line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-row{display:flex;gap:1.5mm;font-size:2.3mm;line-height:1.25}
+.card-row .l{color:var(--mut);min-width:13mm;flex-shrink:0}
+.card-row .v{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-foot{border-top:.3mm solid var(--line);padding:1.4mm 3mm;display:flex;justify-content:space-between;
+  align-items:center;font-size:1.9mm;color:var(--mut2);flex-shrink:0}
+.card-sign{font-family:Georgia,serif;font-style:italic;color:var(--navy);font-size:2.2mm}
+.card-accent{position:absolute;left:0;top:11mm;bottom:0;width:1.2mm}
+@media print{
+  .card-sheet{width:auto;border:none;box-shadow:none;margin:0;padding:0;
+    grid-template-columns:repeat(2,85.6mm);justify-content:center}
+  .card-item{border:1px dashed #bbb}
+}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Students":[
+ ["Roll No","Student Name","Class / Batch","Parent / Guardian Name","Parent Phone","Blood Group","Address","Photo URL"],
+ [1,"Aarav Shah","11th Science","Mr. R. Shah","98765 43210","B+","Ichalkaranji, Kolhapur",""],
+ [2,"Diya Kulkarni","11th Science","Mrs. S. Kulkarni","98220 11223","O+","Ichalkaranji, Kolhapur",""],
+ [3,"Kabir Nair","12th Science","Mr. V. Nair","99700 55443","A+","Ichalkaranji, Kolhapur",""],
+ [4,"Ishita Mehra","12th Science","Mrs. P. Mehra","97650 88110","AB+","Ichalkaranji, Kolhapur",""],
+ [5,"Rohan Bhosale","11th Science","Mr. D. Bhosale","90280 33221","B+","Ichalkaranji, Kolhapur",""],
+ [6,"Sanya Bhatt","11th Science","Mr. A. Bhatt","98900 77112","O-","Ichalkaranji, Kolhapur",""]]};
+
+function parse(sheets){
+  const O=OFFICE;
+  const aoa=O.findSheet(sheets,"Students")||Object.values(sheets)[0];
+  if(!aoa)throw new Error("This workbook has no 'Students' sheet.");
+  const rows=O.readTable(aoa,{
+    roll:["Roll No","Roll","Sr. No."],name:["Student Name","Name"],
+    batch:["Class / Batch","Class","Batch","Division"],
+    parent:["Parent / Guardian Name","Parent Name","Guardian Name"],
+    phone:["Parent Phone","Phone","Contact","Mobile"],
+    blood:["Blood Group","Blood"],address:["Address","Residence"],
+    photo:["Photo URL","Photo","Picture","Image URL","Image"],
+    valid:["Valid Until","Valid Till","Expiry"]
+  }).map(r=>({roll:O.toNum(r.roll),name:O.norm(r.name),batch:O.norm(r.batch),
+    parent:O.norm(r.parent),phone:O.norm(r.phone),blood:O.norm(r.blood),
+    address:O.norm(r.address),photo:O.norm(r.photo),valid:O.norm(r.valid)})).filter(s=>s.name);
+  if(!rows.length)throw new Error("No students found — check that a 'Student Name' column exists.");
+  return{rows};
+}
+
+let D=null,MOUNT=null,FILTER="__all",ACCENT="#0E7C7B",VALID="";
+const O=()=>OFFICE;
+
+function initials(name){
+  const p=OFFICE.norm(name).split(/\s+/).filter(Boolean);
+  return ((p[0]||"")[0]||"")+((p[1]||"")[0]||"");
+}
+function photoBlock(s){
+  const o=O();
+  let hue=0;for(const ch of String(s.name))hue=(hue*31+ch.charCodeAt(0))%360;
+  const fb=`<div class="card-photo-fb" style="background:hsl(${hue},48%,88%);color:hsl(${hue},45%,32%)">${o.esc(initials(s.name).toUpperCase())}</div>`;
+  if(!s.photo)return fb;
+  // fail closed to initials rather than showing a broken-image icon on a printed card
+  return `<img class="card-photo" src="${o.esc(s.photo)}" alt="" onerror="this.outerHTML=${o.esc(JSON.stringify(fb)).replace(/"/g,'&quot;')}">`;
+}
+function cardHTML(s){
+  const o=O(),b=o.branding;
+  return `<div class="card-item">
+    <div class="card-accent" style="background:${o.esc(ACCENT)}"></div>
+    <div class="card-strip">
+      <img src="${o.esc(b.logoEmblem)}" alt="">
+      <div><div class="card-acad">${o.esc(b.name)}</div><div class="card-sub">STUDENT IDENTITY CARD</div></div>
+    </div>
+    <div class="card-body">
+      ${photoBlock(s)}
+      <div class="card-fields">
+        <div class="card-name">${o.esc(s.name)}</div>
+        ${s.batch?`<div class="card-row"><span class="l">Class</span><span class="v">${o.esc(s.batch)}</span></div>`:""}
+        ${s.roll!=null?`<div class="card-row"><span class="l">Roll No</span><span class="v">${s.roll}</span></div>`:""}
+        ${s.blood?`<div class="card-row"><span class="l">Blood</span><span class="v">${o.esc(s.blood)}</span></div>`:""}
+        ${s.phone?`<div class="card-row"><span class="l">Contact</span><span class="v">${o.esc(s.phone)}</span></div>`:""}
+        ${s.address?`<div class="card-row"><span class="l">Address</span><span class="v">${o.esc(s.address)}</span></div>`:""}
+      </div>
+    </div>
+    <div class="card-foot">
+      <span>${(s.valid||VALID)?"Valid until "+o.esc(s.valid||VALID):"If found, please return to the academy"}</span>
+      <span class="card-sign">Principal</span>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const o=O();
+  const batches=[...new Set(D.rows.map(r=>r.batch).filter(Boolean))];
+  const list=D.rows.filter(r=>FILTER==="__all"||r.batch===FILTER);
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-cards">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Print and laminate</div><h2>Student ID Cards</h2></div>
+        <div class="of-filters">
+          ${batches.length>1?`<label class="flab">Class</label><select id="fBatch">
+            <option value="__all">All classes</option>
+            ${batches.map(b=>`<option value="${o.esc(b)}"${FILTER===b?" selected":""}>${o.esc(b)}</option>`).join("")}
+          </select>`:""}
+          <label class="flab">Valid until</label>
+          <input type="text" id="fValid" placeholder="e.g. Mar 2026" value="${o.esc(VALID)}" style="width:110px">
+          <label class="flab">Accent</label>
+          <input type="color" id="fAccent" value="${o.esc(ACCENT)}" style="width:44px;height:34px;padding:2px;border:1px solid var(--line2);border-radius:8px">
+          <button class="btn btn-ghost" id="bPrint">Print / Save as PDF</button>
+          <button class="btn btn-primary" id="bShare">Share as PDF</button>
+        </div>
+      </div>
+      <p class="no-print" style="font-size:12px;color:var(--mut);margin:-8px 0 16px">
+        ${list.length} card${list.length===1?"":"s"} · standard CR80 size (85.6 × 54 mm), 10 per A4 sheet.
+        Add a <b>Photo URL</b> column to the Students sheet to show photos; otherwise each card gets a colour-coded initials block.
+      </p>
+      <div class="card-sheet">${list.map(cardHTML).join("")}</div>
+    </div>`;
+  const fb=document.getElementById("fBatch");
+  if(fb)fb.addEventListener("change",e=>{FILTER=e.target.value;render();});
+  document.getElementById("fValid").addEventListener("change",e=>{VALID=e.target.value.trim();render();});
+  document.getElementById("fAccent").addEventListener("input",e=>{ACCENT=e.target.value;render();});
+  document.getElementById("bPrint").addEventListener("click",()=>o.printView("v-cards"));
+  document.getElementById("bShare").addEventListener("click",e=>{
+    o.sharePDF(document.querySelector(".card-sheet"),o.slugify(o.branding.name)+"_id_cards.pdf","Student ID Cards",e.target);
+  });
+}
+
+OFFICE.boot({
+  title:"ID Cards",
+  kicker:"Front Office",
+  headline:"Print student ID cards in one go",
+  blurb:"Upload your roster and get print-ready identity cards at standard plastic-card size — ten to an A4 sheet, with your academy's logo and colours.",
+  noteLeft:"One sheet: Students. Roll no, class, contact, blood group and an optional Photo URL all appear on the card.",
+  manualHint:"One row per student. Only the name is required — everything else just adds detail to the card.",
+  templateHref:"../../assets/templates/office/Office_Roster_Template.xlsx",
+  cacheKey:"tool-idcards",
+  sampleSheets:SAMPLE_SHEETS,
+  // Cards need nothing but the roster, so the shared master alone can drive this tool.
+  rosterToSheets:students=>({Students:SPDRoster.toAoa(students)}),
+  pill:d=>`${d.rows.length} students`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;render();}
+});
+</script>
+</body>
+</html>

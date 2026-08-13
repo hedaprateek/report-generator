@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Master</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --teal-soft:#E2F0EF; --line:#E4E0D6; --line2:#D8D3C6;
+  --mut:#7C8598; --mut2:#9AA3B2;
+  --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.top{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#1B2540,#243257);color:#fff;
+  display:flex;align-items:center;gap:16px;padding:0 22px;height:60px;box-shadow:0 2px 14px rgba(31,42,68,.14)}
+.top img{height:38px;width:auto;border-radius:8px;background:rgba(255,255,255,.06)}
+.brand{display:flex;flex-direction:column;line-height:1.1}
+.brand b{font-family:Georgia,serif;font-size:16px}
+.brand span{font-size:10.5px;color:#AEB9CC;letter-spacing:.05em;margin-top:2px}
+.mini-btn{margin-left:auto;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;
+  padding:8px 13px;font-size:12.5px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center}
+.mini-btn:hover{background:rgba(255,255,255,.18)}
+.wrap{max-width:1200px;margin:0 auto;padding:26px 22px 60px}
+.intro{margin-bottom:18px}
+.intro h1{font-family:Georgia,serif;font-weight:600;font-size:26px;color:var(--navy);margin:2px 0 6px}
+.intro .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.intro p{margin:0;font-size:13.5px;color:var(--mut);line-height:1.6;max-width:74ch}
+#mgr .sm-card{box-shadow:var(--shadow);border:1px solid var(--line);border-radius:14px}
+#mgr .sm-body{max-height:60vh}
+.uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:20px}
+.use{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+  box-shadow:var(--shadow);text-decoration:none;color:inherit;display:block}
+.use:hover{border-color:var(--line2)}
+.use b{display:block;font-size:13.5px;color:var(--navy);margin-bottom:3px}
+.use span{font-size:12px;color:var(--mut);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="top">
+  <img id="topLogo" alt="">
+  <div class="brand"><b class="serif" id="brandName">Academy</b><span>Student Master</span></div>
+  <a class="mini-btn" href="../../index.html">⌂ Home</a>
+</div>
+<div class="wrap">
+  <div class="intro">
+    <div class="eyebrow">One roster, every tool</div>
+    <h1>Student Master</h1>
+    <p>This is the single list of students shared by every report app and office tool on this device.
+       Upload it once at the start of the year, add a student mid-year here, and ID cards, certificates,
+       fee statements and student files all just have them — no re-uploading the same names into each tool.
+       Students you upload anywhere else are collected into this list automatically.</p>
+  </div>
+  <div id="mgr"></div>
+  <div class="uses">
+    <a class="use" href="../id-cards/index.html"><b>ID Cards →</b><span>Print identity cards straight from this roster.</span></a>
+    <a class="use" href="../documents/index.html"><b>Certificates →</b><span>Bonafide, transfer and character certificates.</span></a>
+    <a class="use" href="../student-file/index.html"><b>Student File →</b><span>Everything for one student as a single PDF.</span></a>
+    <a class="use" href="../fees/index.html"><b>Fees &amp; Dues →</b><span>Seed the fee ledger with these students.</span></a>
+  </div>
+</div>
+<script>
+// Branding is shared with every other page via the same localStorage key.
+const DEFAULTS={name:"The Extra Step Academy",logoEmblem:"../../assets/images/tesa-emblem.png"};
+try{
+  const saved=JSON.parse(localStorage.getItem("spdBrandingOverrides_v1")||"{}")||{};
+  document.getElementById("brandName").textContent=saved.name||DEFAULTS.name;
+  document.getElementById("topLogo").src=saved.logoEmblem||DEFAULTS.logoEmblem;
+}catch(e){
+  document.getElementById("brandName").textContent=DEFAULTS.name;
+  document.getElementById("topLogo").src=DEFAULTS.logoEmblem;
+}
+SPDRoster.mountManager(document.getElementById("mgr"));
+</script>
+</body>
+</html>

@@ -6,6 +6,8 @@
 <title>Student Progress Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
 <style>
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
@@ -311,6 +313,7 @@ svg text{font-family:system-ui,sans-serif}
       <div class="land-actions">
         <button class="btn btn-primary" id="pick">Choose file</button>
         <button class="btn btn-ghost" id="demo">Explore with sample data</button>
+        <button class="btn btn-ghost" id="manualEntry">Type data in manually</button>
       </div>
       <div class="land-note">
         <div>
@@ -340,6 +343,7 @@ svg text{font-family:system-ui,sans-serif}
     <div class="top-right">
       <select id="batchPick" class="mini-select hidden" title="Switch batch"></select>
       <span class="pill" id="dataPill"></span>
+      <button class="mini-btn" id="editDataBtn" title="View or edit the data behind these reports">✎ Edit data</button>
       <button class="mini-btn" id="settingsBtn" title="Customize branding & labels">⚙ Settings</button>
       <button class="mini-btn" id="reload">New file</button>
       <a class="mini-btn" href="../../index.html" style="text-decoration:none;display:inline-flex;align-items:center" title="Back to segment picker">⌂ Segments</a>
@@ -1440,6 +1444,63 @@ function bindTypeFilter(el){
   if(mf)mf.addEventListener("change",e=>{FILTER.month=e.target.value;applyFilter();
     const active=document.querySelector(".tab.active").dataset.view;switchView(active);});
 }
+/* =================================================================
+   WORKBOOK CACHE (IndexedDB) — remembers the last uploaded file for this
+   app, so a refresh or accidental tab close doesn't force a re-upload.
+   Demo data is never cached. Keyed per-segment in case the browser shares
+   storage across file:// pages (it already does for BRANDING_KEY above).
+   ================================================================= */
+const WB_CACHE_DB="spdWorkbookCache_v1",WB_CACHE_STORE="workbooks",WB_CACHE_KEY="junior-college",PHOTO_STORE="photoOverrides";
+function wbCacheOpen(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(WB_CACHE_DB,2);
+    req.onupgradeneeded=()=>{
+      if(!req.result.objectStoreNames.contains(WB_CACHE_STORE))req.result.createObjectStore(WB_CACHE_STORE);
+      if(!req.result.objectStoreNames.contains(PHOTO_STORE))req.result.createObjectStore(PHOTO_STORE);
+    };
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+}
+async function wbCacheSave(filename,bytes){
+  try{const db=await wbCacheOpen();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readwrite");
+      tx.objectStore(WB_CACHE_STORE).put({filename,savedAt:Date.now(),bytes},WB_CACHE_KEY);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    db.close();
+  }catch(e){/* storage unavailable/full — app still works, just won't auto-restore next time */}
+}
+async function wbCacheLoad(){
+  try{const db=await wbCacheOpen();
+    const rec=await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readonly");
+      const req=tx.objectStore(WB_CACHE_STORE).get(WB_CACHE_KEY);
+      req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});
+    db.close();return rec;
+  }catch(e){return null;}
+}
+async function wbCacheClear(){
+  try{const db=await wbCacheOpen();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readwrite");
+      tx.objectStore(WB_CACHE_STORE).delete(WB_CACHE_KEY);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    db.close();
+  }catch(e){/* ignore */}
+}
+function showRestoredToast(filename){
+  const old=document.getElementById("shareToast");if(old)old.remove();
+  const box=document.createElement("div");
+  box.id="shareToast";box.className="share-toast";
+  box.innerHTML=`<div class="share-toast-head">Welcome back ✓</div>
+    <div class="share-toast-body">Restored "${esc(filename)}" from your last session on this device.</div>
+    <div class="share-toast-actions">
+      <button class="btn btn-ghost" id="restoredNewFile">Upload a different file</button>
+      <button class="mini-x" id="shareToastClose">✕</button>
+    </div>`;
+  document.body.appendChild(box);
+  document.getElementById("shareToastClose").addEventListener("click",()=>box.remove());
+  document.getElementById("restoredNewFile").addEventListener("click",()=>{box.remove();document.getElementById("reload").click();});
+  setTimeout(()=>{if(document.getElementById("shareToast"))box.remove();},15000);
+}
+
 function boot(batches){
   BATCHES=batches;CURRENT_BATCH=0;
   loadBatch(0);
@@ -1463,23 +1524,57 @@ function showUploadError(html){
   box.innerHTML=html;box.classList.remove("hidden");
 }
 function clearUploadError(){document.getElementById("uploadError").classList.add("hidden");}
+// shared by real uploads and by the IndexedDB cache-restore path below, so both go through
+// identical validation (throws NO_TESTS if the workbook has no usable test data)
+let LAST_SHEETS=null;
+function parseWorkbookBytes(bytes){
+  const wb=XLSX.read(new Uint8Array(bytes),{type:"array"}); // no cellDates — decoded manually below (SheetJS's own cellDates conversion is timezone-dependent and can shift dates by a day)
+  const sheets={};wb.SheetNames.forEach(n=>{sheets[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null,raw:true});});
+  const batches=detectBatches(sheets);
+  const hasTests=batches.some(b=>b.data.tests.length);
+  if(!hasTests){const e=new Error("NO_TESTS");e.code="NO_TESTS";throw e;}
+  LAST_SHEETS=sheets;
+  return batches;
+}
+// Only interrupt the teacher when something actually looks off — a clean workbook
+// goes straight to the dashboard, exactly as it did before.
+function bootWithReview(batches,sheets){
+  const parserWarnings=batches.reduce((a,b)=>a.concat(b.data.warnings||[]),[]);
+  const issues=(window.SPDGrid?SPDGrid.audit(sheets,parserWarnings):[]);
+  if(!issues.length){boot(batches);return;}
+  SPDGrid.open(sheets,{
+    title:"Check this before we build the reports",
+    subtitle:"We spotted a few things that are usually typos. Fix anything that's wrong, or continue if it's intentional.",
+    issues,
+    filename:slugify(DATA&&DATA.academy||BRANDING.name)+"_data.xlsx",
+    onApply:edited=>{
+      LAST_SHEETS=edited;
+      try{boot(detectBatches(edited));}
+      catch(err){showUploadError(`<b>Could not use the edited data.</b> <p style="margin:6px 0 0">${esc(err.message)}</p>`);}
+    }
+  });
+}
 function readFile(file){
   clearUploadError();
   const rd=new FileReader();
-  rd.onload=e=>{try{
-    const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"}); // no cellDates — decoded manually below (SheetJS's own cellDates conversion is timezone-dependent and can shift dates by a day)
-    const sheets={};wb.SheetNames.forEach(n=>{sheets[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null,raw:true});});
-    const batches=detectBatches(sheets);
-    const hasTests=batches.some(b=>b.data.tests.length);
-    if(!hasTests){
-      showUploadError(`<b>No tests were found in the Marks sheet.</b>
-        <p style="margin:6px 0 0">This usually means the header row got moved or its "Student Name" label was renamed. The app looks for one exact cell — subject names, test names, and totals can all change freely, but this one can't:</p>
-        <ul><li>A header cell that says <b>"Student Name"</b> (or "Name") on the row above your student rows</li></ul>
-        <p style="margin:8px 0 0">Check that row is still there and re-upload. If it looks right and this still happens, the file may be missing the Marks sheet entirely.</p>`);
-      return;
+  rd.onload=e=>{
+    const bytes=e.target.result;
+    try{
+      const batches=parseWorkbookBytes(bytes);
+      bootWithReview(batches,LAST_SHEETS);
+      wbCacheSave(file.name,bytes.slice(0));
+      if(window.SPDRoster)SPDRoster.merge(SPDRoster.fromSheets(LAST_SHEETS)); // top up the shared roster
+    }catch(err){
+      if(err.code==="NO_TESTS"){
+        showUploadError(`<b>No tests were found in the Marks sheet.</b>
+          <p style="margin:6px 0 0">This usually means the header row got moved or its "Student Name" label was renamed. The app looks for one exact cell — subject names, test names, and totals can all change freely, but this one can't:</p>
+          <ul><li>A header cell that says <b>"Student Name"</b> (or "Name") on the row above your student rows</li></ul>
+          <p style="margin:8px 0 0">Check that row is still there and re-upload. If it looks right and this still happens, the file may be missing the Marks sheet entirely.</p>`);
+      }else{
+        showUploadError(`<b>Could not read this file.</b> <p style="margin:6px 0 0">${esc(err.message)}. Make sure it's an .xlsx file saved from the template.</p>`);
+      }
     }
-    boot(batches);
-  }catch(err){showUploadError(`<b>Could not read this file.</b> <p style="margin:6px 0 0">${esc(err.message)}. Make sure it's an .xlsx file saved from the template.</p>`);}};
+  };
   rd.readAsArrayBuffer(file);
 }
 // events
@@ -1490,8 +1585,44 @@ fileIn.addEventListener("change",e=>{if(e.target.files[0])readFile(e.target.file
 ["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("drag");}));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag");}));
 drop.addEventListener("drop",e=>{if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
-document.getElementById("demo").addEventListener("click",()=>{clearUploadError();boot(detectBatches(SAMPLE_SHEETS));});
+document.getElementById("demo").addEventListener("click",()=>{clearUploadError();LAST_SHEETS=SAMPLE_SHEETS;boot(detectBatches(SAMPLE_SHEETS));});
 document.getElementById("batchPick").addEventListener("change",e=>loadBatch(Number(e.target.value)));
+// Manual entry: reuse the sample workbook purely as scaffolding — same sheets, same
+// header rows, no student data — so a teacher can type straight in without Excel.
+document.getElementById("manualEntry").addEventListener("click",()=>{
+  clearUploadError();
+  SPDGrid.open(SPDGrid.blankFrom(SAMPLE_SHEETS),{
+    title:"Type your data in",
+    subtitle:"Fill the rows below — one student per row. Add more rows as you need, then continue. You can also download it as an Excel file to keep for next time.",
+    applyLabel:"Build the reports",
+    filename:slugify(BRANDING.name)+"_data.xlsx",
+    onApply:edited=>{
+      LAST_SHEETS=edited;
+      try{
+        const batches=detectBatches(edited);
+        if(!batches.some(b=>b.data.tests.length)){
+          showUploadError(`<b>No test data yet.</b> <p style="margin:6px 0 0">Add at least one student row with marks, then try again.</p>`);
+          return;
+        }
+        boot(batches);
+      }catch(err){showUploadError(`<b>Could not use that data.</b> <p style="margin:6px 0 0">${esc(err.message)}</p>`);}
+    }
+  });
+});
+document.getElementById("editDataBtn").addEventListener("click",()=>{
+  if(!LAST_SHEETS)return;
+  SPDGrid.open(LAST_SHEETS,{
+    title:"Edit data",
+    subtitle:"Change any value and continue — the reports rebuild instantly. Nothing is saved back to your original file.",
+    applyLabel:"Rebuild reports",
+    filename:slugify(DATA&&DATA.academy||BRANDING.name)+"_data.xlsx",
+    onApply:edited=>{
+      LAST_SHEETS=edited;
+      try{boot(detectBatches(edited));}
+      catch(err){alert("Could not use the edited data: "+err.message);}
+    }
+  });
+});
 function applyBranding(){
   document.getElementById("landingLogo").src=BRANDING.logoFull;
   document.getElementById("landingLogo").alt=BRANDING.name+" logo";
@@ -1549,9 +1680,18 @@ document.getElementById("settingsReset").addEventListener("click",()=>{
   LABELS.band5="Strong";LABELS.band4="Good";LABELS.band3="Fair";LABELS.band2="Watch";LABELS.band1="Concern";
   openSettings();
 });
-document.getElementById("reload").addEventListener("click",()=>{DATA=null;document.getElementById("app").style.display="none";document.getElementById("landing").style.display="flex";fileIn.value="";});
+document.getElementById("reload").addEventListener("click",()=>{DATA=null;document.getElementById("app").style.display="none";document.getElementById("landing").style.display="flex";fileIn.value="";wbCacheClear();});
 applyBranding();
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>switchView(t.dataset.view)));
+(async function tryRestoreLastWorkbook(){
+  const rec=await wbCacheLoad();
+  if(!rec)return;
+  try{
+    const batches=parseWorkbookBytes(rec.bytes);
+    boot(batches);
+    showRestoredToast(rec.filename);
+  }catch(e){wbCacheClear();}
+})();
 </script>
 </body>
 </html>
