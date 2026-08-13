@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMR Sheet Designer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --b1:#B4472F;
+  --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  /* generic design-token aliases so the ported component's CSS resolves against our theme */
+  --color-text-primary:var(--ink);
+  --color-text-secondary:var(--mut);
+  --color-text-tertiary:var(--mut2);
+  --color-background-primary:var(--card);
+  --color-background-secondary:#F3F1EA;
+  --color-border-secondary:var(--line2);
+  --color-border-tertiary:var(--line);
+  --border-radius-lg:12px;
+  --border-radius-md:8px;
+  --color-danger:var(--b1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+a{color:var(--teal)}
+
+.tool-top{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#1B2540,#243257);color:#fff;
+  display:flex;align-items:center;gap:14px;padding:0 22px;height:60px;box-shadow:0 2px 14px rgba(31,42,68,.14)}
+.tool-logo{height:38px;width:auto;border-radius:8px;background:rgba(255,255,255,.06)}
+.tool-title{display:flex;flex-direction:column;line-height:1.1}
+.tool-title b{font-family:Georgia,serif;font-size:16px;letter-spacing:.01em}
+.tool-title span{font-size:10.5px;color:#AEB9CC;letter-spacing:.05em;margin-top:2px}
+.tool-back{margin-left:auto;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;
+  padding:8px 13px;font-size:12.5px;font-weight:600;text-decoration:none}
+.tool-back:hover{background:rgba(255,255,255,.18)}
+.wrap{max-width:1160px;margin:0 auto;padding:22px}
+
+/* ============ ported OMR designer component ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+.root{display:grid;grid-template-columns:310px 1fr;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);overflow:hidden;background:var(--color-background-primary)}
+.sidebar{background:var(--color-background-secondary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;height:760px}
+.sb-tabs{display:flex;border-bottom:0.5px solid var(--color-border-tertiary)}
+.sb-tab{flex:1;padding:10px 3px;font-size:11px;font-weight:500;text-align:center;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.sb-tab.on{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary)}
+.sb-body{flex:1;overflow-y:auto;padding:14px}
+.sb-pane{display:none}.sb-pane.on{display:block}
+.sec{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary);margin:14px 0 8px;padding-bottom:5px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.sec:first-child{margin-top:0}
+.fl{margin-bottom:9px}
+.fl label{display:block;font-size:12px;color:var(--color-text-secondary);margin-bottom:3px}
+.fl input,.fl select,.fl textarea{width:100%;font-size:13px;font-family:inherit;padding:7px 8px;border:1px solid var(--color-border-secondary);border-radius:6px;color:var(--color-text-primary);background:var(--color-background-primary)}
+.fl input[type=color]{height:34px;padding:2px 4px;cursor:pointer}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.subj-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px;margin-bottom:8px}
+.subj-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.subj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.subj-name-inp{flex:1;margin:0 8px;font-size:13px;font-weight:500}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:16px;line-height:1;padding:0 2px}
+.del-btn:hover{color:var(--color-danger)}
+.add-subj{width:100%;padding:7px;font-size:12px;cursor:pointer;margin-top:4px;font-family:inherit;border:1px solid var(--color-border-secondary);border-radius:6px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.gen-btn{margin:14px 14px 14px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--navy);color:#fff;border:none;border-radius:var(--border-radius-md);width:calc(100% - 28px)}
+.gen-btn:hover{filter:brightness(1.12)}
+.preview-col{background:#d4d4d4;display:flex;flex-direction:column;align-items:center;padding:16px;gap:10px;overflow-y:auto;max-height:760px}
+.prev-label{font-size:11px;color:#555;align-self:flex-start}
+.omr{background:white;width:595px;height:842px;font-family:Arial,sans-serif;color:#111;line-height:1.2;border:0.5px solid #bbb;overflow:hidden}
+.wm-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.hint{font-size:11px;color:var(--color-text-tertiary);margin-top:3px}
+.lbl-tg{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.tg{font-size:10px;color:var(--color-text-tertiary);display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;user-select:none}
+.fl .tg input[type=checkbox]{width:auto;margin:0;flex-shrink:0}
+@media(max-width:1000px){.root{grid-template-columns:1fr}.sidebar{height:auto}.preview-col{max-height:none}}
+</style>
+</head>
+<body>
+
+<div class="tool-top">
+  <img class="tool-logo" src="../../assets/images/tesa-emblem.png" alt="">
+  <div class="tool-title"><b>OMR Sheet Designer</b><span>Printable bubble answer sheets for exams</span></div>
+  <a class="tool-back" href="../../index.html">⌂ All programs</a>
+</div>
+
+<div class="wrap">
+<div class="root">
+<div class="sidebar">
+  <div class="sb-tabs">
+    <button class="sb-tab on" onclick="sbTab(0,this)">Institute</button>
+    <button class="sb-tab" onclick="sbTab(1,this)">Test</button>
+    <button class="sb-tab" onclick="sbTab(2,this)">Subjects</button>
+    <button class="sb-tab" onclick="sbTab(3,this)">Student</button>
+    <button class="sb-tab" onclick="sbTab(4,this)">Style</button>
+  </div>
+
+  <div class="sb-body">
+    <div class="sb-pane on" id="pane0">
+      <div class="sec">Institute</div>
+      <div class="fl"><label class="lbl-tg"><span>Academy / Institute name</span><span class="tg"><input type="checkbox" id="showAcademy" checked> show</span></label><input id="academy" value="The Extra Step Academy"></div>
+      <div class="fl"><label class="lbl-tg"><span>Tagline or address</span><span class="tg"><input type="checkbox" id="showTagline" checked> show</span></label><input id="tagline" value="Excellence in Competitive Exam Coaching, Ichalkaranji"></div>
+      <div class="fl"><label class="lbl-tg"><span>Sub-heading (optional)</span><span class="tg"><input type="checkbox" id="showSubhead" checked> show</span></label><input id="subhead" value="Affiliated to Maharashtra State Board" placeholder="e.g. Est. 2010 · ISO Certified"></div>
+      <div class="hint">Untick <b>show</b> to drop a line from the sheet — the space is handed back to the bubble grid.</div>
+    </div>
+
+    <div class="sb-pane" id="pane1">
+      <div class="sec">Test info</div>
+      <div class="fl"><label class="lbl-tg"><span>Exam / Test name</span><span class="tg"><input type="checkbox" id="showTestName" checked> show</span></label><input id="testName" value="Full Mock Test — Series 04"></div>
+      <div class="fl"><label class="lbl-tg"><span>Subject group / Batch</span><span class="tg"><input type="checkbox" id="showBatch" checked> show</span></label><input id="batch" value="PCM · 2025 Batch"></div>
+      <div class="fl" style="margin-bottom:6px"><label class="tg" style="font-size:11px"><input type="checkbox" id="showMeta" checked> Show the date / duration / marks line</label></div>
+      <div class="row2">
+        <div class="fl"><label>Date</label><input id="testDate" value="25 Apr 2026"></div>
+        <div class="fl"><label>Duration</label><input id="duration" value="3 Hours"></div>
+      </div>
+      <div class="row2">
+        <div class="fl"><label>Total marks</label><input id="totalMarks" value="300"></div>
+        <div class="fl"><label>Passing marks</label><input id="passMark" value="120" placeholder="optional"></div>
+      </div>
+      <div class="fl"><label>Marking scheme</label><input id="marking" value="+2 per correct · No negative marking"></div>
+      <div class="sec">Faculty</div>
+      <div id="teacherFields"></div>
+      <div class="hint">Teacher fields update when you add/remove subjects.</div>
+    </div>
+
+    <div class="sb-pane" id="pane2">
+      <div class="sec">Subjects</div>
+      <div id="subjList"></div>
+      <button class="add-subj" onclick="addSubject()">+ Add subject</button>
+      <div class="hint" style="margin-top:8px">Add as many subjects and questions as you need · question numbers auto-sequence · layout adapts to fit A4</div>
+      <div id="capacityWarning" class="hint" style="margin-top:8px;color:#b71c1c;font-weight:600;display:none"></div>
+    </div>
+
+    <div class="sb-pane" id="pane3">
+      <div class="sec">Student fields</div>
+      <div class="fl"><label class="tg" style="font-size:11px"><input type="checkbox" id="showStudentBar" checked> Show the student details bar</label></div>
+      <div id="studentFields"></div>
+      <button class="add-subj" onclick="addStudentField()">+ Add field</button>
+      <div class="sec" style="margin-top:14px">Instructions bar</div>
+      <div class="fl"><textarea id="instr" rows="2" style="width:100%;font-size:12px;padding:6px;resize:vertical">Use blue/black ballpoint pen only · Darken bubble completely · Do NOT use whitener · Rough work on separate sheet</textarea></div>
+      <div class="sec">Footer</div>
+      <div class="fl"><label class="lbl-tg"><span>Footer note</span><span class="tg"><input type="checkbox" id="showFooterNote" checked> show</span></label><input id="footer" value="For practice purposes only · Not an official document"></div>
+      <div class="fl"><label class="tg" style="font-size:11px"><input type="checkbox" id="showBrand"> Show "Powered by Report Generator" credit</label></div>
+      <div class="hint">Turn both off and the footer strip disappears completely.</div>
+    </div>
+
+    <div class="sb-pane" id="pane4">
+      <div class="sec">Colour &amp; font</div>
+      <div class="fl"><label>Header colour</label><input id="hdrColor" type="color" value="#1a3a6b"></div>
+      <div class="fl"><label>Text size on sheet</label>
+        <select id="textScale">
+          <option value="0.9">Compact</option>
+          <option value="1" selected>Normal (bold)</option>
+          <option value="1.15">Large</option>
+          <option value="1.3">Extra large</option>
+        </select>
+        <div class="hint">All sheet text is bold; this scales every label, heading and option letter together.</div>
+      </div>
+      <div class="fl"><label>Student field font</label>
+        <select id="sfFont">
+          <option value="Arial, sans-serif">Arial (clean, modern)</option>
+          <option value="'Times New Roman', serif">Times New Roman (formal)</option>
+          <option value="'Courier New', monospace">Courier New (monospace / typewriter)</option>
+          <option value="Georgia, serif">Georgia (elegant serif)</option>
+          <option value="Verdana, sans-serif">Verdana (wide, legible)</option>
+          <option value="Tahoma, sans-serif">Tahoma (compact, crisp)</option>
+        </select>
+      </div>
+      <div class="fl"><label>Options per question</label>
+        <select id="optCount">
+          <option value="4">4 options (A B C D)</option>
+          <option value="5">5 options (A B C D E)</option>
+          <option value="3">3 options (A B C)</option>
+        </select>
+      </div>
+      <div class="fl"><label>Columns per section</label>
+        <select id="colCount">
+          <option value="5">5 columns (default)</option>
+          <option value="4">4 columns (larger bubbles)</option>
+          <option value="6">6 columns (compact)</option>
+        </select>
+      </div>
+      <div class="sec">Bubble style</div>
+      <div class="fl"><label>Bubble shape</label>
+        <select id="bubbleShape">
+          <option value="circle">Circle (standard)</option>
+          <option value="square">Square</option>
+          <option value="oval">Oval</option>
+        </select>
+      </div>
+      <div class="sec">Watermark</div>
+      <div class="fl"><label>Watermark text</label><input id="wmText" value="TESA" placeholder="Leave blank to disable"></div>
+      <div class="wm-row">
+        <div class="fl"><label>Opacity (1&ndash;20%)</label><input type="number" id="wmOpacity" value="6" min="1" max="20" style="font-size:13px"></div>
+        <div class="fl"><label>Angle (&deg;)</label><input type="number" id="wmAngle" value="35" min="0" max="90" style="font-size:13px"></div>
+      </div>
+      <div class="fl"><label>Watermark colour</label><input id="wmColor" type="color" value="#555555"></div>
+      <div class="sec">Show / hide sections</div>
+      <div class="fl"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="showScore" checked style="width:auto"> Score summary box</label></div>
+      <div class="fl"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="showSig" checked style="width:auto"> Signature line</label></div>
+      <div class="fl"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="showInstr" checked style="width:auto"> Instructions bar</label></div>
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generatePDF()">Download PDF</button>
+</div>
+
+<div class="preview-col">
+  <div class="prev-label">Live preview — updates as you type</div>
+  <div id="omrPreview" class="omr"></div>
+</div>
+</div>
+</div>
+
+<script>
+const SUBJECT_PALETTE = ['#1565c0','#1b5e20','#4a148c','#b71c1c','#e65100','#00695c'];
+
+let subjects = [
+  {name:'Physics',   q:50, color:'#1565c0', teacher:'Prof. P Heda'},
+  {name:'Chemistry', q:50, color:'#1b5e20', teacher:'Prof. P Waghire'},
+  {name:'Mathematics',q:50,color:'#4a148c', teacher:'Prof. Patil'},
+];
+let studentFields = [
+  {label:"Student's full name", wide:true},
+  {label:'Roll number', wide:false},
+  {label:'Division / Batch', wide:false},
+  {label:'Mobile no.', wide:false},
+  {label:'Set code', wide:false},
+];
+
+function sbTab(i, el) {
+  document.querySelectorAll('.sb-tab').forEach((t,j)=>t.classList.toggle('on',j===i));
+  document.querySelectorAll('.sb-pane').forEach((p,j)=>p.classList.toggle('on',j===i));
+}
+
+function g(id){const el=document.getElementById(id);return el?el.value:'';}
+function chk(id){const el=document.getElementById(id);return el?el.checked:true;}
+
+function renderSubjectList() {
+  const list = document.getElementById('subjList');
+  list.innerHTML = subjects.map((s,i)=>`
+    <div class="subj-card">
+      <div class="subj-card-head">
+        <span class="subj-dot" style="background:${s.color}"></span>
+        <input class="subj-name-inp" value="${s.name}" oninput="subjects[${i}].name=this.value;renderTeachers();render()" placeholder="Subject name">
+        ${subjects.length>1?`<button class="del-btn" onclick="delSubject(${i})">&times;</button>`:''}
+      </div>
+      <div class="row3">
+        <div class="fl" style="margin:0"><label style="font-size:11px">Questions</label><input type="number" value="${s.q}" min="1" style="font-size:13px" oninput="subjects[${i}].q=Math.max(1,parseInt(this.value)||1);render()"></div>
+        <div class="fl" style="margin:0"><label style="font-size:11px">Colour</label><input type="color" value="${s.color}" style="height:34px;padding:2px 4px;width:100%;cursor:pointer" oninput="subjects[${i}].color=this.value;render()"></div>
+        <div class="fl" style="margin:0"><label style="font-size:11px">Marks each</label><input type="number" value="${s.marks||2}" min="1" max="10" style="font-size:13px" oninput="subjects[${i}].marks=parseInt(this.value)||2;render()"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTeachers() {
+  const tf = document.getElementById('teacherFields');
+  tf.innerHTML = subjects.map((s,i)=>`
+    <div class="fl">
+      <label style="display:flex;align-items:center;gap:6px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0"></span>
+        ${s.name} teacher
+      </label>
+      <input value="${s.teacher||''}" oninput="subjects[${i}].teacher=this.value;render()" placeholder="Teacher name">
+    </div>`).join('');
+}
+
+function renderStudentFields() {
+  const sf = document.getElementById('studentFields');
+  sf.innerHTML = studentFields.map((f,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
+      <input value="${f.label}" style="flex:1;font-size:13px" oninput="studentFields[${i}].label=this.value;render()" placeholder="Field label">
+      <label style="font-size:11px;color:var(--color-text-secondary);white-space:nowrap;cursor:pointer">
+        <input type="checkbox" ${f.wide?'checked':''} style="width:auto" onchange="studentFields[${i}].wide=this.checked;render()"> Wide
+      </label>
+      <button class="del-btn" onclick="delStudentField(${i})">&times;</button>
+    </div>`).join('');
+}
+
+function addSubject() {
+  const i = subjects.length;
+  subjects.push({name:'Subject '+(i+1), q:30, color:SUBJECT_PALETTE[i%SUBJECT_PALETTE.length], teacher:'', marks:2});
+  renderSubjectList(); renderTeachers(); render();
+}
+function delSubject(i) {
+  subjects.splice(i,1);
+  renderSubjectList(); renderTeachers(); render();
+}
+function addStudentField() {
+  if(studentFields.length>=8) return;
+  studentFields.push({label:'Field '+(studentFields.length+1), wide:false});
+  renderStudentFields(); render();
+}
+function delStudentField(i) {
+  studentFields.splice(i,1);
+  renderStudentFields(); render();
+}
+
+function bubble(shape, opt, sz) {
+  const s = shape||'circle';
+  sz = sz||13;
+  const fs = Math.max(6, Math.min(10, sz*0.58));
+  const base = `align-items:center;justify-content:center;border:1px solid #333;font-size:${fs}px;font-weight:bold;color:#222;display:inline-flex`;
+  if(s==='square') return `<span style="${base};width:${sz}px;height:${sz}px">${opt}</span>`;
+  if(s==='oval')   return `<span style="${base};width:${sz+3}px;height:${sz-2}px;border-radius:50%">${opt}</span>`;
+  return `<span style="${base};width:${sz}px;height:${sz}px;border-radius:50%">${opt}</span>`;
+}
+
+function render() {
+  const hc = g('hdrColor')||'#1a3a6b';
+  const sfFont = g('sfFont')||'Arial, sans-serif';
+  const cols = parseInt(g('colCount'))||5;
+  const optN = parseInt(g('optCount'))||4;
+  const opts = 'ABCDE'.slice(0,optN).split('');
+  const shape = g('bubbleShape')||'circle';
+  const showScore = document.getElementById('showScore')?.checked !== false;
+  const showSig   = document.getElementById('showSig')?.checked !== false;
+  const showInstr = document.getElementById('showInstr')?.checked !== false;
+  const wmText    = g('wmText');
+  const wmOpacity = (parseInt(g('wmOpacity'))||6)/100;
+  const wmAngle   = parseInt(g('wmAngle'))||35;
+  const wmColor   = g('wmColor')||'#555555';
+  const ts        = parseFloat(g('textScale'))||1;
+
+  // which optional text blocks are actually on the sheet
+  const showAcademy  = chk('showAcademy')  && !!g('academy');
+  const showTagline  = chk('showTagline')  && !!g('tagline');
+  const showSubhead  = chk('showSubhead')  && !!g('subhead');
+  const showTestName = chk('showTestName') && !!g('testName');
+  const showBatch    = chk('showBatch')    && !!g('batch');
+  const metaParts = [
+    g('testDate') ? 'Date: '+g('testDate') : null,
+    g('duration') ? 'Duration: '+g('duration') : null,
+    g('totalMarks') ? 'Max: '+g('totalMarks') : null,
+    g('passMark') ? 'Pass: '+g('passMark') : null,
+    g('marking') || null
+  ].filter(Boolean);
+  const showMeta = chk('showMeta') && metaParts.length>0;
+  const headerAny = showAcademy||showTagline||showSubhead||showTestName||showBatch||showMeta;
+  const showStudentBar = chk('showStudentBar') && studentFields.length>0;
+  const showFooterNote = chk('showFooterNote') && !!g('footer');
+  const showBrand      = chk('showBrand');
+  const footerAny      = showFooterNote||showBrand;
+
+  let totalQ = 0, totalM = 0;
+  subjects.forEach(s=>{ totalM += s.q*(s.marks||2); totalQ += s.q; });
+
+  // Adaptive row height (px) for 595x842 preview. Every block below is
+  // measured from what is actually switched on, so hiding a line of
+  // header/footer text genuinely frees vertical space.
+  const A4H = 842;
+  let headerH = 0;
+  if(headerAny){
+    headerH = 11;
+    if(showAcademy)  headerH += 18*ts;
+    if(showTagline)  headerH += 11*ts;
+    if(showSubhead)  headerH += 10.5*ts;
+    if(showTestName||showBatch) headerH += 18*ts + 4;
+    if(showMeta)     headerH += 11*ts + 2;
+  }
+  const instrH  = showInstr&&g('instr') ? 11*ts+6 : 0;
+  const sfH     = showStudentBar ? 30*ts+14 : 0;
+  const scoreH  = showScore ? 26*ts+6 : 0;
+  const sigH    = showSig ? 12*ts+6 : 0;
+  const footerH = footerAny ? 10*ts+4 : 0;
+  const bandH   = Math.round(13*ts)+3, sectGap = 4;
+  const fixedH  = headerH+instrH+sfH+scoreH+sigH+footerH + subjects.length*(bandH+sectGap);
+  const availH  = A4H - fixedH - 16;
+  const totalRows = subjects.reduce((sum,s)=>sum+Math.ceil(s.q/cols),0);
+  const minRH = Math.round(13*ts), maxRH = Math.round(28*ts);
+  const rH = totalRows>0 ? Math.max(minRH, Math.min(maxRH, Math.floor(availH/totalRows))) : 18;
+  const bubSz = Math.max(11, Math.min(19, rH-4));
+
+  // Capacity warning: row height floors at 14px (preview) / 3.8mm (PDF) —
+  // once content needs less than that per row to fit, it will genuinely
+  // overflow the A4 page. Warn the user instead of silently shipping a
+  // clipped/overflowing PDF.
+  const capWarn = document.getElementById('capacityWarning');
+  if(capWarn){
+    const neededH = totalRows*minRH;
+    if(totalRows>0 && neededH>availH){
+      const overflowPct = Math.round((neededH/availH-1)*100);
+      capWarn.style.display='block';
+      capWarn.textContent = `⚠ Too much content for one A4 page (~${overflowPct}% over capacity). Reduce questions/subjects, use fewer columns, or expect bubbles to print very small / overflow.`;
+    } else {
+      capWarn.style.display='none';
+    }
+  }
+
+  // Student fields
+  const sfHTML = (()=>{
+    const wide = studentFields.filter(f=>f.wide);
+    const narrow = studentFields.filter(f=>!f.wide);
+    let rows = '';
+    const lblCSS = `font-size:${8*ts}px;font-weight:bold;color:${hc};text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid ${hc};padding-bottom:1px;margin-bottom:2px`;
+    if(wide.length) rows+=`<div style="display:flex;gap:8px;margin-bottom:4px">${wide.map(f=>`
+      <div style="flex:2;min-width:120px;font-family:${sfFont}">
+        <div style="${lblCSS}">${f.label}</div>
+        <div style="height:${13*ts}px"></div>
+      </div>`).join('')}</div>`;
+    if(narrow.length) rows+=`<div style="display:flex;gap:8px">${narrow.map(f=>`
+      <div style="flex:1;min-width:60px;font-family:${sfFont}">
+        <div style="${lblCSS}">${f.label}</div>
+        <div style="height:${13*ts}px"></div>
+      </div>`).join('')}</div>`;
+    return rows;
+  })();
+
+  // Sections
+  const colW = 575/cols;
+  const sectionsHTML = (()=>{
+    let html='';
+    subjects.forEach(s=>{
+      const qs = Array.from({length:s.q},(_,i)=>i+1);
+      const rowsPerCol = Math.ceil(qs.length/cols);
+      // Build a [row][col] grid where numbering fills DOWN each column
+      // first (1,2,3...rowsPerCol in col 1, then continues in col 2),
+      // rather than across each row.
+      const grid = Array.from({length:rowsPerCol},()=>Array(cols).fill(null));
+      qs.forEach((q,idx)=>{
+        const ci = Math.floor(idx/rowsPerCol);
+        const ri = idx%rowsPerCol;
+        grid[ri][ci]=q;
+      });
+      const gridHTML = grid.map((row,ri)=>`
+        <div style="display:flex;background:${ri%2===0?'#f7f9fc':'white'};height:${rH}px;align-items:center">
+          ${row.map(q=>q===null?`<span style="display:inline-block;width:${colW}px"></span>`:`
+            <span style="display:inline-flex;align-items:center;gap:1px;padding:1px 2px;width:${colW}px">
+              <span style="font-size:${8*ts}px;font-weight:bold;color:#333;min-width:${17*ts}px;text-align:right;flex-shrink:0;margin-right:2px">${q}.</span>
+              ${opts.map(o=>bubble(shape,o,bubSz)).join('')}
+            </span>`).join('')}
+        </div>`).join('');
+      const marksLabel = ` · ${s.marks||2} marks each`;
+      html += `
+        <div style="margin-bottom:${sectGap}px">
+          <div style="background:${s.color};color:#fff;padding:2px 6px;font-size:${8.5*ts}px;display:flex;justify-content:space-between;align-items:center;height:${bandH}px">
+            <span style="font-weight:bold">${s.name} &nbsp;(Q.${qs[0]}&ndash;${qs[qs.length-1]})${marksLabel}</span>
+            <span style="font-style:italic;font-weight:bold;font-size:${7.5*ts}px;opacity:.92">${s.teacher||''}</span>
+          </div>
+          <div style="border:1px solid ${s.color}40;border-top:none">${gridHTML}</div>
+        </div>`;
+    });
+    return html;
+  })();
+
+  const scoreHTML = !showScore ? '' : `
+    <div style="margin:2px 5px;border:1px solid ${hc}55;border-radius:2px;overflow:hidden">
+      <div style="background:${hc};color:#fff;font-size:${8*ts}px;font-weight:bold;padding:1.5px 6px">Score summary</div>
+      <div style="display:flex">
+        ${subjects.map(s=>`
+          <div style="flex:1;border-right:1px solid ${hc}30;padding:2px 3px;text-align:center">
+            <div style="font-size:${7.5*ts}px;font-weight:bold;color:#444">${s.name}</div>
+            <div style="font-size:${9.5*ts}px;font-weight:bold;color:${hc}">__ / ${s.q*(s.marks||2)}</div>
+          </div>`).join('')}
+        <div style="flex:1;border-right:1px solid ${hc}30;padding:2px 3px;text-align:center">
+          <div style="font-size:${7.5*ts}px;font-weight:bold;color:#444">Total</div>
+          <div style="font-size:${9.5*ts}px;font-weight:bold;color:${hc}">__ / ${totalM}</div>
+        </div>
+        <div style="flex:1;padding:2px 3px;text-align:center">
+          <div style="font-size:${7.5*ts}px;font-weight:bold;color:#444">Percentile</div>
+          <div style="font-size:${9.5*ts}px;font-weight:bold;color:${hc}">______</div>
+        </div>
+      </div>
+    </div>`;
+
+  const sigHTML = !showSig ? '' : `
+    <div style="padding:2px 8px;display:flex;justify-content:space-between;font-size:${8*ts}px;font-weight:bold;color:#444;border-top:0.5px solid #ddd;margin-top:1px">
+      <span>Invigilator: _______________________</span>
+      <span>Student: _______________________</span>
+      <span>Date: ____________</span>
+    </div>`;
+
+  const wmHTML = wmText ? `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-${wmAngle}deg);font-size:36px;font-weight:bold;color:${wmColor};opacity:${wmOpacity};white-space:nowrap;pointer-events:none;z-index:10;letter-spacing:3px;text-transform:uppercase;user-select:none">${wmText}</div>` : '';
+
+  document.getElementById('omrPreview').innerHTML = `
+  <div style="font-family:Arial,sans-serif;width:595px;height:842px;position:relative;display:flex;flex-direction:column;overflow:hidden">
+    ${wmHTML}
+    ${!headerAny?'':`<div style="background:${hc};color:#fff;padding:5px 10px;text-align:center;flex-shrink:0">
+      ${showAcademy?`<div style="font-size:${15*ts}px;font-weight:bold;letter-spacing:.4px">${g('academy')}</div>`:''}
+      ${showTagline?`<div style="font-size:${8.5*ts}px;font-weight:bold;opacity:.9;margin-top:1px">${g('tagline')}</div>`:''}
+      ${showSubhead?`<div style="font-size:${8*ts}px;font-weight:bold;opacity:.82;margin-top:1px">${g('subhead')}</div>`:''}
+      ${(showTestName||showBatch)?`<div style="margin-top:4px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.18);padding:2px 10px;border-radius:2px">
+        ${showTestName?`<span style="font-size:${11*ts}px;font-weight:bold">${g('testName')}</span>`:''}
+        ${showBatch?`<span style="font-size:${8.5*ts}px;font-weight:bold;opacity:.9">${g('batch')}</span>`:''}
+      </div>`:''}
+      ${showMeta?`<div style="margin-top:2px;font-size:${8*ts}px;font-weight:bold;opacity:.9;display:flex;justify-content:center;gap:10px;flex-wrap:wrap">${metaParts.map(m=>`<span>${m}</span>`).join('')}</div>`:''}
+    </div>`}
+    ${showInstr&&g('instr')?`<div style="background:#fff8e1;border-bottom:0.5px solid #f0c040;padding:2px 8px;font-size:${8*ts}px;font-weight:bold;color:#5a4000;text-align:center;flex-shrink:0">${g('instr')}</div>`:''}
+    ${showStudentBar?`<div style="padding:4px 7px 3px;background:#f5f7fc;border-bottom:0.5px solid #dde4ef;flex-shrink:0;font-family:${sfFont}">${sfHTML}</div>`:''}
+    <div style="flex:1;padding:3px 5px 2px;overflow:hidden">${sectionsHTML}</div>
+    <div style="flex-shrink:0">${scoreHTML}${sigHTML}</div>
+    ${!footerAny?'':`<div style="flex-shrink:0;padding:1px 8px;border-top:0.5px solid #eee;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:${7*ts}px;font-weight:bold;color:#9a9a9a;letter-spacing:.03em">${showBrand?'Powered by Report Generator':''}</span>
+      <span style="font-size:${7*ts}px;font-weight:bold;color:#9a9a9a;text-align:center">${showFooterNote?g('footer'):''}</span>
+      <span style="font-size:${7*ts}px;font-weight:bold;color:#9a9a9a"></span>
+    </div>`}
+  </div>`;
+}
+
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  const hc = g('hdrColor')||'#1a3a6b';
+  const cols = parseInt(g('colCount'))||5;
+  const optN = parseInt(g('optCount'))||4;
+  const opts = 'ABCDE'.slice(0,optN).split('');
+  const shape = g('bubbleShape')||'circle';
+  const showScore = document.getElementById('showScore')?.checked !== false;
+  const showSig   = document.getElementById('showSig')?.checked !== false;
+  const showInstr = document.getElementById('showInstr')?.checked !== false;
+  const wmText    = g('wmText');
+  const wmOpacity = (parseInt(g('wmOpacity'))||6)/100;
+  const wmAngle   = parseInt(g('wmAngle'))||35;
+  const wmColor   = g('wmColor')||'#555555';
+  const ts        = parseFloat(g('textScale'))||1;
+
+  const showAcademy  = chk('showAcademy')  && !!g('academy');
+  const showTagline  = chk('showTagline')  && !!g('tagline');
+  const showSubhead  = chk('showSubhead')  && !!g('subhead');
+  const showTestName = chk('showTestName') && !!g('testName');
+  const showBatch    = chk('showBatch')    && !!g('batch');
+  const metaParts = [
+    g('testDate') ? 'Date: '+g('testDate') : null,
+    g('duration') ? 'Duration: '+g('duration') : null,
+    g('totalMarks') ? 'Max: '+g('totalMarks') : null,
+    g('passMark') ? 'Pass: '+g('passMark') : null,
+    g('marking') || null
+  ].filter(Boolean);
+  const showMeta = chk('showMeta') && metaParts.length>0;
+  const headerAny = showAcademy||showTagline||showSubhead||showTestName||showBatch||showMeta;
+  const showStudentBar = chk('showStudentBar') && studentFields.length>0;
+  const showFooterNote = chk('showFooterNote') && !!g('footer');
+  const showBrand      = chk('showBrand');
+  const footerAny      = showFooterNote||showBrand;
+
+  const W=210, H=297, M=7;
+  const hr=parseInt(hc.slice(1,3),16), hgc=parseInt(hc.slice(3,5),16), hb=parseInt(hc.slice(5,7),16);
+  const wmR=parseInt(wmColor.slice(1,3),16), wmG=parseInt(wmColor.slice(3,5),16), wmB=parseInt(wmColor.slice(5,7),16);
+
+  // Adaptive row height in mm. Header height is summed from the lines
+  // actually enabled, so switching text off returns those millimetres
+  // to the bubble grid.
+  const hL = {academy:6.4*ts, tagline:3.7*ts, subhead:3.5*ts, testName:5*ts, batch:3.7*ts, meta:3.7*ts};
+  let headerMM = 0;
+  if(headerAny){
+    headerMM = 4;
+    if(showAcademy)  headerMM += hL.academy;
+    if(showTagline)  headerMM += hL.tagline;
+    if(showSubhead)  headerMM += hL.subhead;
+    if(showTestName) headerMM += hL.testName;
+    if(showBatch)    headerMM += hL.batch;
+    if(showMeta)     headerMM += hL.meta;
+  }
+  const instrMM = showInstr&&g('instr') ? 5*ts : 0;
+  const sfMM    = showStudentBar ? 9*ts+5 : 0;
+  const scoreBandMM = 4*ts, scoreBoxMM = 10*ts;
+  const scoreMM = showScore ? scoreBandMM+scoreBoxMM : 0;
+  const sigMM   = showSig ? 6*ts : 0;
+  const footerMM = footerAny ? 5 : 0;
+  const bandMM=4.8*ts, sectGapMM=1;
+  const fixedMM=headerMM+instrMM+sfMM+scoreMM+sigMM+footerMM+subjects.length*(bandMM+sectGapMM);
+  const availMM=H-fixedMM-6;
+  const totalRows=subjects.reduce((sum,s)=>sum+Math.ceil(s.q/cols),0);
+  const rH=totalRows>0 ? Math.max(3.7*ts, Math.min(8.5*ts, availMM/totalRows)) : 5.4;
+  const bubR=Math.max(1.35,Math.min(2.2,rH*0.32));
+
+  let y=0;
+
+  // Header — each enabled line stacks; disabled lines take up no space
+  if(headerAny){
+    doc.setFillColor(hr,hgc,hb); doc.rect(0,0,W,headerMM,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    let ty=2.5;
+    const line=(h,size,txt)=>{ ty+=h; doc.setFontSize(size); doc.text(txt,W/2,ty-h*0.25,{align:'center'}); };
+    if(showAcademy)  line(hL.academy, 15*ts, g('academy'));
+    if(showTagline)  line(hL.tagline, 8.5*ts, g('tagline'));
+    if(showSubhead)  line(hL.subhead, 8*ts, g('subhead'));
+    if(showTestName) line(hL.testName, 11*ts, g('testName'));
+    if(showBatch)    line(hL.batch, 8.5*ts, g('batch'));
+    if(showMeta)     line(hL.meta, 8*ts, metaParts.join('   '));
+  }
+  y=headerMM;
+
+  if(instrMM>0){
+    doc.setFillColor(255,248,225); doc.rect(0,y,W,instrMM,'F');
+    doc.setTextColor(90,64,0); doc.setFont('helvetica','bold'); doc.setFontSize(7.5*ts);
+    doc.text(g('instr'),W/2,y+instrMM*0.68,{align:'center'});
+    y+=instrMM;
+  }
+
+  if(sfMM>0){
+    doc.setFillColor(244,247,251); doc.rect(0,y,W,sfMM,'F');
+    doc.setDrawColor(200,210,230); doc.setLineWidth(0.3); doc.rect(0,y,W,sfMM,'S');
+    const wideFW=(W-M*2)*0.28, narrowFW=(W-M*2)*0.16;
+    let fx=M;
+    studentFields.forEach(f=>{
+      const fw=f.wide?wideFW:narrowFW;
+      doc.setFont('helvetica','bold'); doc.setFontSize(7*ts); doc.setTextColor(hr,hgc,hb);
+      doc.text(f.label.toUpperCase(),fx,y+4.5*ts);
+      doc.setDrawColor(150,160,180); doc.setLineWidth(0.4);
+      doc.line(fx,y+sfMM-2,fx+fw,y+sfMM-2);
+      fx+=fw+5;
+    });
+    y+=sfMM;
+  }
+
+  // Bubble sections
+  subjects.forEach(s=>{
+    const sr=parseInt(s.color.slice(1,3),16),sg=parseInt(s.color.slice(3,5),16),sb2=parseInt(s.color.slice(5,7),16);
+    const qs=Array.from({length:s.q},(_,i)=>i+1);
+    const rows=Math.ceil(qs.length/cols);
+    const colW=(W-M*2)/cols;
+    const qlW=7, optGap=(colW-qlW-1)/(optN+0.5);
+
+    doc.setFillColor(sr,sg,sb2); doc.rect(0,y,W,bandMM,'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8*ts);
+    doc.text(`${s.name}  (Q.${qs[0]}–${qs[qs.length-1]}) · ${s.marks||2} marks each`,M,y+bandMM*0.7);
+    if(s.teacher){doc.setFont('helvetica','bolditalic');doc.setFontSize(7*ts);doc.text(s.teacher,W-M,y+bandMM*0.7,{align:'right'});}
+    y+=bandMM;
+
+    qs.forEach((q,idx)=>{
+      const ci=Math.floor(idx/rows), ri=idx%rows;
+      const cx=M+ci*colW, cy=y+ri*rH;
+      if(ri%2===0){doc.setFillColor(244,247,252);doc.rect(cx,cy,colW,rH,'F');}
+      doc.setFont('helvetica','bold'); doc.setFontSize(6.5*ts); doc.setTextColor(50,50,50);
+      doc.text(`${q}.`,cx+qlW-0.5,cy+rH*0.65,{align:'right'});
+      opts.forEach((opt,oi)=>{
+        const bx=cx+qlW+oi*optGap+optGap*0.7, by=cy+rH*0.5;
+        doc.setFillColor(255,255,255); doc.setDrawColor(60,60,60); doc.setLineWidth(0.25);
+        if(shape==='square'){doc.rect(bx-bubR,by-bubR,bubR*2,bubR*2,'FD');}
+        else if(shape==='oval'){doc.ellipse(bx,by,bubR+0.7,bubR-0.3,'FD');}
+        else{doc.circle(bx,by,bubR,'FD');}
+        doc.setFont('helvetica','bold'); doc.setFontSize(Math.min(6.5,Math.max(4,bubR*2.6)));
+        doc.setTextColor(45,45,45);
+        doc.text(opt,bx,by+bubR*0.55,{align:'center'});
+      });
+    });
+    y+=rows*rH+sectGapMM;
+  });
+
+  let totalM=subjects.reduce((s,sub)=>s+sub.q*(sub.marks||2),0);
+
+  if(showScore){
+    doc.setFillColor(hr,hgc,hb); doc.rect(0,y,W,scoreBandMM,'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7.5*ts);
+    doc.text('Score summary',M,y+scoreBandMM*0.72);
+    y+=scoreBandMM;
+    doc.setFillColor(240,244,252); doc.rect(0,y,W,scoreBoxMM,'F');
+    const scCols=[...subjects.map(s=>({l:s.name,m:s.q*(s.marks||2)})),{l:'Total',m:totalM},{l:'Percentile',m:null}];
+    const scW=(W-M*2)/scCols.length;
+    scCols.forEach((col,i)=>{
+      const bx=M+i*scW;
+      if(i>0){doc.setDrawColor(hr,hgc,hb);doc.setLineWidth(0.2);doc.line(bx,y,bx,y+scoreBoxMM);}
+      doc.setFont('helvetica','bold');doc.setFontSize(7*ts);doc.setTextColor(80,80,80);
+      doc.text(col.l,bx+scW/2,y+scoreBoxMM*0.35,{align:'center'});
+      doc.setFont('helvetica','bold');doc.setFontSize(9.5*ts);doc.setTextColor(hr,hgc,hb);
+      doc.text(col.m?`__ / ${col.m}`:'________',bx+scW/2,y+scoreBoxMM*0.85,{align:'center'});
+    });
+    y+=scoreBoxMM;
+  }
+
+  if(showSig){
+    doc.setDrawColor(200,200,200); doc.setLineWidth(0.3); doc.line(0,y,W,y);
+    y+=1;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7*ts); doc.setTextColor(70,70,70);
+    doc.text('Invigilator: _______________________',M,y+sigMM*0.6);
+    doc.text('Student: _______________________',W/2,y+sigMM*0.6,{align:'center'});
+    doc.text('Date: _______________',W-M,y+sigMM*0.6,{align:'right'});
+    y+=sigMM;
+  }
+
+  // Footer — user note + tool credit (both optional)
+  if(footerAny){
+    const footerY=H-3.5;
+    doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.line(0,footerY-2.5,W,footerY-2.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(6*ts); doc.setTextColor(150,150,150);
+    if(showBrand){
+      doc.text('Powered by Report Generator',M,footerY);
+    }
+    if(showFooterNote) doc.text(g('footer'),W/2,footerY,{align:'center'});
+  }
+
+  // Watermark
+  if(wmText){
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({opacity:wmOpacity}));
+    doc.setFont('helvetica','bold'); doc.setFontSize(38);
+    doc.setTextColor(wmR,wmG,wmB);
+    doc.text(wmText,W/2,H/2,{align:'center',angle:wmAngle});
+    doc.restoreGraphicsState();
+  }
+
+  doc.save('OMR_Sheet_A4.pdf');
+}
+
+function listenAll() {
+  document.querySelectorAll('input:not([type=color]):not([type=checkbox]):not([type=number]), select, textarea').forEach(el=>el.addEventListener('input',render));
+  document.querySelectorAll('input[type=color]').forEach(el=>el.addEventListener('input',render));
+  document.querySelectorAll('input[type=checkbox]').forEach(el=>el.addEventListener('change',render));
+  document.querySelectorAll('input[type=number]').forEach(el=>el.addEventListener('input',render));
+}
+
+renderSubjectList();
+renderTeachers();
+renderStudentFields();
+listenAll();
+render();
+
+const origAddSubj = addSubject;
+window.addSubject = function() { origAddSubj(); listenAll(); };
+const origDel = delSubject;
+window.delSubject = function(i) { origDel(i); listenAll(); };
+const origAddSF = addStudentField;
+window.addStudentField = function() { origAddSF(); listenAll(); };
+const origDelSF = delStudentField;
+window.delStudentField = function(i) { origDelSF(i); listenAll(); };
+</script>
+</body>
+</html>
