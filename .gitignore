@@ -1,0 +1,6 @@
+# Excel lock/temp files
+~$*.xlsx
+~$*.xls
+
+# Personal/working data — not part of the app or template, may contain real student data
+/11th_Science_Sample_Filled JULY.xlsx

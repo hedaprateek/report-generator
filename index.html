@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Dashboards</title>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink); min-height:100vh;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.serif{font-family:Georgia,"Times New Roman",serif}
+.head{background:linear-gradient(135deg,#1B2540 0%,#25335A 55%,#1F2A44 100%);color:#fff;
+  padding:44px 24px 40px;text-align:center}
+.head img{height:64px;width:auto;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.28);margin-bottom:14px}
+.head .kicker{color:#D9B94A;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
+.head h1{font-family:Georgia,serif;font-weight:600;font-size:28px;margin:8px 0 6px;letter-spacing:-.01em}
+.head p{margin:0;color:#C6CEDC;font-size:14px;max-width:52ch;margin:0 auto}
+
+.wrap{max-width:1080px;margin:0 auto;padding:40px 22px 60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:22px 20px 20px;box-shadow:var(--shadow);text-decoration:none;color:inherit;
+  display:flex;flex-direction:column;gap:6px;transition:transform .15s,box-shadow .15s;min-height:190px}
+a.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(31,42,68,.12);border-color:var(--line2)}
+.card.disabled{opacity:.62;cursor:default}
+.card .ic{font-size:30px;line-height:1;margin-bottom:2px}
+.card h3{font-family:Georgia,serif;font-size:18px;color:var(--navy);margin:0;font-weight:600}
+.card .range{font-size:11.5px;color:var(--teal);font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.card p{font-size:12.5px;color:var(--mut);line-height:1.5;margin:2px 0 0;flex:1}
+.badge{position:absolute;top:16px;right:16px;font-size:10px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;padding:3px 9px;border-radius:20px}
+.badge.live{background:var(--teal-soft);color:#22595a}
+.badge.soon{background:#EAECEF;color:#5B6472}
+.card .go{margin-top:10px;font-size:12.5px;font-weight:700;color:var(--teal);display:flex;align-items:center;gap:5px}
+.card.disabled .go{color:var(--mut2)}
+
+.foot{text-align:center;margin-top:44px;font-size:11.5px;color:var(--mut2)}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <img id="hubLogo" alt="" src="assets/images/tesa-logo-full.png">
+  <div class="kicker">Progress Dashboards</div>
+  <h1 class="serif">Choose a program</h1>
+  <p>Each program has its own evaluation format, upload template, and printable parent reports.</p>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+    <a class="card" href="segments/pre-primary/index.html">
+      <span class="badge live">Available</span>
+      <div class="ic">🧸</div>
+      <div class="range">Pre-Primary</div>
+      <h3>Kindergarten</h3>
+      <p>Nursery, LKG &amp; UKG. Holistic development reports for parents — academics plus social, physical and emotional growth.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <div class="card disabled">
+      <span class="badge soon">Coming soon</span>
+      <div class="ic">✏️</div>
+      <div class="range">Primary · 1st–4th</div>
+      <h3>Primary School</h3>
+      <p>Subject-wise term reports and skill tracking for young learners.</p>
+      <div class="go">Coming soon</div>
+    </div>
+
+    <div class="card disabled">
+      <span class="badge soon">Coming soon</span>
+      <div class="ic">📘</div>
+      <div class="range">Secondary · 5th–10th</div>
+      <h3>Secondary School</h3>
+      <p>Test-wise performance tracking and board-exam readiness reports.</p>
+      <div class="go">Coming soon</div>
+    </div>
+
+    <a class="card" href="segments/junior-college/index.html">
+      <span class="badge live">Available</span>
+      <div class="ic">🎓</div>
+      <div class="range">Junior College · 11th–12th</div>
+      <h3>Junior College</h3>
+      <p>Weekly test tracking, rankings, awards and printable report cards for CET / JEE / NEET batches.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <div class="card disabled">
+      <span class="badge soon">Coming soon</span>
+      <div class="ic">🏛️</div>
+      <div class="range">College</div>
+      <h3>College</h3>
+      <p>Semester-wise academic performance and attendance reports.</p>
+      <div class="go">Coming soon</div>
+    </div>
+  </div>
+
+  <div class="foot">The Extra Step Academy · all data stays in your browser, nothing is uploaded anywhere</div>
+</div>
+
+<script>
+// Mirrors the branding override used by each segment app, so a custom logo set from within
+// a segment's Settings modal is reflected here too (same localStorage key, same origin).
+try{
+  const raw=localStorage.getItem("spdBrandingOverrides_v1");
+  if(raw){
+    const saved=JSON.parse(raw);
+    if(saved.logoFull)document.getElementById("hubLogo").src=saved.logoFull;
+  }
+}catch(e){/* ignore — falls back to the default TESA logo */}
+</script>
+</body>
+</html>
