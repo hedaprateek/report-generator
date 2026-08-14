@@ -91,10 +91,13 @@ function findNameCol(aoa,hr){
 /* ---------------- audit: generic, template-agnostic sanity checks --------------- */
 // opts.ledgerSheets — names of sheets where one student legitimately owns many rows
 // (fee charges, payments, timetable slots). The duplicate-name rule is meaningless there.
+// These names are ledgers by their very nature, so they're known here rather than left
+// for every caller to remember — forgetting produced a screen full of false alarms.
+const KNOWN_LEDGERS=["charges","payments","notes","timetable","homework","milestones"];
 function audit(sheets,parserWarnings,opts){
   opts=opts||{};
   const issues=[];
-  const declaredLedgers=(opts.ledgerSheets||[]).map(keyName);
+  const declaredLedgers=(opts.ledgerSheets||[]).map(keyName).concat(KNOWN_LEDGERS);
   (parserWarnings||[]).forEach(w=>issues.push({sheet:null,row:null,col:null,msg:w,level:"warn"}));
 
   Object.keys(sheets||{}).forEach(sheetName=>{

@@ -139,46 +139,55 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .snap-detail .teacher-note-line{font-style:italic;color:#3f4756}
 
 /* kid-friendly skill tiles */
-.tile-grid{display:grid;gap:8px;margin:6px 0 4px}
-.skill-tile{border:2px solid var(--line);border-radius:13px;padding:10px 5px 9px;text-align:center;min-width:0}
+.tile-grid{display:grid;gap:6px;margin:4px 0 2px}
+.skill-tile{border:1.5px solid var(--line);border-radius:10px;padding:6px 4px 5px;text-align:center;min-width:0}
 .skill-tile:hover{border-color:var(--line2)}
-.skill-tile .ic{font-size:22px;line-height:1}
-.skill-tile .nm{font-size:9.5px;font-weight:700;color:var(--navy);margin:5px 0 3px;line-height:1.2;min-height:22px;overflow-wrap:break-word}
-.skill-tile .stars{font-size:13px;letter-spacing:1px;line-height:1}
+.skill-tile .ic{font-size:15px;line-height:1}
+.skill-tile .nm{font-size:8.5px;font-weight:700;color:var(--navy);margin:3px 0 2px;line-height:1.15;min-height:19px;overflow-wrap:break-word}
+.skill-tile .stars{font-size:11px;letter-spacing:.5px;line-height:1}
 .skill-tile .star{color:#DDD6C4}
 .skill-tile .star.on{color:#E0A639}
-.skill-tile .tile-band{font-size:8.5px;font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:.02em}
+.skill-tile .tile-band{font-size:7.5px;font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.02em}
+/* the term-by-term line lives inside the tile now, so progress is read next to the
+   grade instead of in a separate section further down the page */
+.skill-tile .tile-spark{margin:3px 2px 0;height:13px}
+.skill-tile .tile-spark svg{width:100%;height:13px;display:block}
 .skill-tile .tile-trend .trend{font-size:8px;margin-left:0}
 .skill-tile .snap-detail{text-align:left}
 
 /* highlights: badges + growth story */
-.badge-row{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .badge{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#FFF6DE,#FFFFFF);
   border:1.5px solid #E9CE7A;border-radius:30px;padding:7px 15px;font-size:12px;font-weight:700;color:#8A5310}
-.badge .ic{font-size:16px}
+.badge .ic{font-size:12px}
 .growth-story{background:linear-gradient(90deg,var(--teal-soft),#FCFBF7);border-left:3px solid var(--teal);
   border-radius:9px;padding:11px 15px;font-size:12.5px;color:#22595a;line-height:1.5;font-style:italic}
 
 /* verbose narrative spotlights */
-.spotlight{border-radius:14px;padding:16px 19px;margin-bottom:10px;border:1px solid var(--line)}
+.spot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media print{.spot-grid{grid-template-columns:1fr 1fr}}
+.spotlight{border-radius:10px;padding:9px 12px;border:1px solid var(--line)}
 .spotlight:last-child{margin-bottom:0}
 .spotlight.strength{border-left:5px solid var(--b5);background:linear-gradient(135deg,#F2FAF6,#FFFFFF)}
 .spotlight.attention{border-left:5px solid var(--b2);background:linear-gradient(135deg,#FFF8ED,#FFFFFF)}
-.spotlight-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
-.spotlight-ic{font-size:21px;line-height:1}
-.spotlight h4{margin:0;font-size:14.5px;color:var(--navy);font-family:Georgia,serif;font-weight:600;flex:1}
-.spotlight p{margin:0 0 7px;font-size:12.5px;line-height:1.6;color:#3f4756}
+.spotlight-head{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.spotlight-ic{font-size:14px;line-height:1}
+.spotlight h4{margin:0;font-size:11px;color:var(--navy);font-family:Georgia,serif;font-weight:700;flex:1;border:none;padding:0;text-transform:none;letter-spacing:0}
+.spotlight p{margin:0 0 4px;font-size:10.5px;line-height:1.5;color:#3f4756}
 .spotlight p:last-child{margin-bottom:0}
 .spotlight p b{color:var(--navy)}
 
 /* suggestions from school */
-.suggest-list{margin:0;padding-left:19px;font-size:12px;color:#3f4756;line-height:1.7}
-.suggest-list li{margin-bottom:4px}
+.suggest-list{margin:0;padding-left:17px;font-size:11px;color:#3f4756;line-height:1.55}
+.suggest-list li{margin-bottom:2px}
 .suggest-list b{color:var(--navy)}
+.suggest-wrap{margin-top:7px;border-top:1px dashed var(--line2);padding-top:7px}
+.suggest-head{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--teal);margin-bottom:4px}
 
 /* ---------- STUDENT REPORT (A4) ---------- */
 #report-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
-.sheet{background:#fff;width:210mm;max-width:100%;margin:0 auto;border:1px solid var(--line);box-shadow:var(--shadow);padding:16mm 15mm;color:#22262F}
+.sheet{background:#fff;width:210mm;max-width:100%;margin:0 auto;border:1px solid var(--line);box-shadow:var(--shadow);padding:12mm 13mm;color:#22262F}
 .rep-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid var(--navy);padding-bottom:8px}
 .rep-head .acad{font-family:Georgia,serif;font-size:18px;color:var(--navy);font-weight:600}
 .rep-head .doc{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-top:1px}
@@ -210,22 +219,31 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .avatar-remove-btn:hover{background:var(--navy)}
 
 /* topics / goals */
-.topics-line{font-size:12px;color:#3f4756;line-height:1.6;margin:0 0 5px}
+.topics-line{font-size:10.5px;color:#3f4756;line-height:1.5;margin:0 0 3px}
 .topics-line:last-child{margin-bottom:0}
 .topics-line b{color:var(--navy)}
-.goals-box{border:1px solid var(--line2);border-left:3px solid var(--teal);border-radius:8px;padding:11px 14px;font-size:12px;color:#22595a;background:#FBFDFC;line-height:1.6}
+.goals-box{border:1px solid var(--line2);border-left:3px solid var(--teal);border-radius:7px;padding:7px 11px;font-size:10.5px;color:#22595a;background:#FBFDFC;line-height:1.5}
 
-.rep-sec{margin-top:12px}
-.rep-sec h4{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);font-weight:700;margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid var(--line2)}
+/* Tightened for a one-page, office-grade sheet: the report used to run long enough
+   that the signature block fell onto a second page. */
+.rep-sec{margin-top:9px}
+.rep-sec h4{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--navy);font-weight:700;margin:0 0 5px;padding-bottom:3px;border-bottom:1px solid var(--line2)}
 .rep-sec .tile-grid{gap:6px}
 
 /* marks table */
-.marks-table{width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:10px}
-.marks-table:last-child{margin-bottom:0}
-.marks-table caption{text-align:left;font-size:11px;font-weight:700;color:var(--navy);margin-bottom:4px;caption-side:top}
-.marks-table th{font-size:9px;padding:5px 7px;background:#F6F5F0;border-bottom:1px solid var(--line2);color:var(--navy)}
-.marks-table td{padding:5px 7px;border-bottom:1px solid var(--line)}
+.marks-table{width:100%;border-collapse:collapse;font-size:10.5px}
+.marks-table th{font-size:8.5px;padding:5px 6px;background:#F6F5F0;border-bottom:1px solid var(--line2);
+  color:var(--navy);text-transform:uppercase;letter-spacing:.03em;font-weight:700;text-align:left;vertical-align:bottom}
+.marks-table th .sub{display:block;font-size:7.5px;font-weight:600;color:var(--mut);
+  text-transform:none;letter-spacing:0;margin-top:1px}
+.marks-table td{padding:5px 6px;border-bottom:1px solid var(--line)}
 .marks-table td.c,.marks-table th.c{text-align:center}
+.marks-table td.sj{font-weight:600;color:var(--navy)}
+.marks-table .mx{color:var(--mut2);font-size:8.5px}
+.marks-table .dim{color:var(--line2)}
+.marks-table .ab{color:var(--b1);font-weight:700}
+.marks-table tr.tot td{border-top:1.5px solid var(--line2);border-bottom:none;background:#FAF8F2}
+.marks-table tr:last-child td{border-bottom:none}
 
 /* progress over time */
 .prog-row{display:flex;align-items:center;gap:14px;padding:8px 4px;border-bottom:1px solid var(--line)}
@@ -820,7 +838,7 @@ function parseCycleSheet(aoa,warnings,nameKeywords,sheetLabel){
     const ptCols=[];let remarksCol=-1,goalsCol=-1,cc=c,lastPt=null;
     while(cc<header.length){
       const hk=keyName(header[cc]);
-      if(hk==="remarks"){
+      if(hk==="remarks"||hk==="teacher’s note"||hk==="teachers note"||hk==="teacher note"){
         remarksCol=cc;cc++;
         if(cc<header.length&&keyName(header[cc]).includes("goal")){goalsCol=cc;cc++;}
         break;
@@ -1123,16 +1141,21 @@ function attentionSpotlightHTML(s){
   }
   return spotlightHTML("attention",s,s.growth[0]);
 }
-function suggestionsHTML(s){
+// One place for everything the school wants to say. The teacher's own words come first,
+// then the auto-generated practice suggestions — previously these were two separate
+// sections saying overlapping things in different voices.
+function teacherSectionHTML(s,noteText){
   const allNames=[...AN.subjectNames,...AN.areaNames];
   const tips=allNames
     .filter(n=>{const t=s.areaStats[n].latestTier;return t===1||t===2;})
     .map(n=>({n,tip:areaActivity(n,s.areaStats[n].latestTier)}))
     .filter(t=>t.tip);
-  return `<div class="rep-sec"><h4>💡 Suggestions From School</h4>
-    ${tips.length
-      ?`<ul class="suggest-list">${tips.map(t=>`<li><b>${esc(t.n)}:</b> ${esc(t.tip)}</li>`).join("")}</ul>`
-      :`<p style="margin:0;font-size:12px;color:#3f4756">No specific action items this term — keep up the great all-round work at home!</p>`}
+  return `<div class="rep-sec"><h4>${esc(LABELS.teacherNoteHeading)}</h4>
+    <div class="remarks" contenteditable="true">${noteText||"—"}</div>
+    ${tips.length?`<div class="suggest-wrap">
+      <div class="suggest-head">How you can help at home</div>
+      <ul class="suggest-list">${tips.map(t=>`<li><b>${esc(t.n)}:</b> ${esc(t.tip)}</li>`).join("")}</ul>
+    </div>`:""}
   </div>`;
 }
 function tileGridHTML(s,names){
@@ -1148,7 +1171,8 @@ function tileGridHTML(s,names){
       <div class="nm">${esc(n)}</div>
       <div class="stars">${starsHTML(tier)}</div>
       <div class="tile-band" style="color:${b.c}">${esc(b.name)}</div>
-      ${showTrend?`<div class="tile-trend">${trendTag(stat.trend)}</div>`:""}
+      ${showTrend?`<div class="tile-spark">${miniLineSVG(stat.series)}</div>
+        <div class="tile-trend">${trendTag(stat.trend)}</div>`:""}
       <div class="snap-detail">
         ${pctLine}
         <p>${esc(areaPhrase(n,tier))}</p>
@@ -1157,46 +1181,59 @@ function tileGridHTML(s,names){
     </div>`;
   }).join("")}</div>`;
 }
+// One grid: subjects down, tests across. Previously this printed a separate table per
+// test, which pushed the report over a page and made it impossible to see a subject
+// move across the term — the comparison a parent actually wants.
 function marksTableHTML(s){
-  if(!AN.tests.length)return"";
-  const tables=AN.tests.map(t=>{
+  const taken=AN.tests.filter(t=>{const r=s.marksRec.tests[t.name];return r&&r.applies;});
+  if(!taken.length)return"";
+  const subjects=AN.subjectNames.filter(sn=>taken.some(t=>t.subjects.some(su=>su.name===sn)));
+  if(!subjects.length)return"";
+  const cell=(t,sn)=>{
+    const su=t.subjects.find(x=>x.name===sn);
     const rec=s.marksRec.tests[t.name];
-    if(!rec||!rec.applies)return"";
-    const rows=t.subjects.map(su=>{
-      const sd=rec.subjects[su.name];
-      const val=sd.state==="ok"?sd.mark:sd.state==="absent"?"A":"—";
-      return `<tr><td>${areaIcon(su.name)} ${esc(su.name)}</td><td class="c">${val}</td><td class="c">${su.max||"—"}</td></tr>`;
-    }).join("");
-    return `<table class="marks-table"><caption>${esc(t.name)} · ${esc(t.date)} ${rec.pct!=null?`— ${rec.pct.toFixed(0)}%`:""}</caption>
-      <thead><tr><th>Subject</th><th class="c">Marks</th><th class="c">Max</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
-  }).filter(Boolean).join("");
-  return tables?`<div class="rep-sec"><h4>Marks By Test</h4>${tables}</div>`:"";
-}
-function progressGraphicHTML(s){
-  const allNames=[...AN.subjectNames,...AN.areaNames];
-  const usable=allNames.filter(n=>s.areaStats[n].series.length>=2);
-  if(!usable.length)return"";
-  const rows=usable.map(n=>{
-    const stat=s.areaStats[n];
-    return `<div class="prog-row">
-      <div class="prog-name">${areaIcon(n)} ${esc(n)}</div>
-      <div class="prog-bars">${miniLineSVG(stat.series)}</div>
-      ${trendTag(stat.trend)}
-    </div>`;
-  }).join("");
-  return `<div class="rep-sec"><h4>Progress Over Time</h4>${rows}</div>`;
+    if(!su||!rec)return`<td class="c dim">·</td>`;
+    const sd=rec.subjects[sn];
+    if(!sd||sd.state==="na"||sd.state==="blank")return`<td class="c dim">·</td>`;
+    if(sd.state==="absent")return`<td class="c"><span class="ab">A</span></td>`;
+    return `<td class="c"><b>${sd.mark}</b><span class="mx">/${su.max||"—"}</span></td>`;
+  };
+  const avg=sn=>{
+    const v=taken.map(t=>{
+      const su=t.subjects.find(x=>x.name===sn);const rec=s.marksRec.tests[t.name];
+      if(!su||!su.max||!rec)return null;
+      const sd=rec.subjects[sn];
+      return sd&&sd.state==="ok"?sd.mark/su.max*100:null;
+    }).filter(x=>x!=null);
+    return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
+  };
+  return `<div class="rep-sec"><h4>Marks by test</h4>
+    <table class="marks-table">
+      <thead><tr><th>Subject</th>
+        ${taken.map(t=>`<th class="c">${esc(t.name)}${t.date?`<span class="sub">${esc(t.date)}</span>`:""}</th>`).join("")}
+        <th class="c">Average</th></tr></thead>
+      <tbody>${subjects.map(sn=>{
+        const a=avg(sn);
+        return `<tr><td class="sj">${esc(sn)}</td>${taken.map(t=>cell(t,sn)).join("")}
+          <td class="c"><b style="color:${a==null?"var(--mut)":bandInfo(pctToTier(a)).c}">${a==null?"—":a.toFixed(0)+"%"}</b></td></tr>`;
+      }).join("")}
+      <tr class="tot"><td class="sj">Overall</td>
+        ${taken.map(t=>{const r=s.marksRec.tests[t.name];
+          return `<td class="c">${r&&r.pct!=null?`<b>${r.pct.toFixed(0)}%</b>`:"—"}</td>`;}).join("")}
+        <td class="c"><b>${s.latestOverallPct!=null?s.latestOverallPct.toFixed(0)+"%":"—"}</b></td></tr>
+      </tbody>
+    </table></div>`;
 }
 function topicsHTML(){
   const withTopics=AN.cycles.filter(cy=>cy.topics);
   if(!withTopics.length)return"";
-  return `<div class="rep-sec"><h4>📚 What We Learned This Term</h4>
+  return `<div class="rep-sec"><h4>What we covered this term</h4>
     ${withTopics.map(cy=>`<p class="topics-line"><b>${esc(cy.name)}:</b> ${esc(cy.topics)}</p>`).join("")}
   </div>`;
 }
 function goalsHTML(s){
   if(!s.latestGoals)return"";
-  return `<div class="rep-sec"><h4>🎯 Goals For Next Term</h4><div class="goals-box">${esc(s.latestGoals)}</div></div>`;
+  return `<div class="rep-sec"><h4>Goals for next term</h4><div class="goals-box">${esc(s.latestGoals)}</div></div>`;
 }
 function studentPickerHTML(){
   return AN.S.map((s,i)=>`<option value="${i}" ${i===curStudent?"selected":""}>${esc(s.name)}${s.roll!=null?" (Roll "+s.roll+")":""}</option>`).join("");
@@ -1237,20 +1274,15 @@ function reportSheetHTML(s){
       ${s.growthStory?`<div class="growth-story">${esc(s.growthStory)}</div>`:""}
     </div>
     ${topicsHTML()}
-    ${AN.subjectNames.length?`<div class="rep-sec"><h4>Academic Snapshot</h4>${tileGridHTML(s,AN.subjectNames)}</div>`:""}
-    ${AN.areaNames.length?`<div class="rep-sec"><h4>Beyond Academics</h4>${tileGridHTML(s,AN.areaNames)}</div>`:""}
-    <div class="rep-sec">
+    ${AN.subjectNames.length?`<div class="rep-sec"><h4>Academic snapshot</h4>${tileGridHTML(s,AN.subjectNames)}</div>`:""}
+    ${AN.areaNames.length?`<div class="rep-sec"><h4>Beyond academics</h4>${tileGridHTML(s,AN.areaNames)}</div>`:""}
+    <div class="rep-sec"><div class="spot-grid">
       ${spotlightHTML("strength",s,s.strengths[0])}
       ${attentionSpotlightHTML(s)}
-    </div>
-    ${suggestionsHTML(s)}
-    ${goalsHTML(s)}
+    </div></div>
     ${marksTableHTML(s)}
-    ${progressGraphicHTML(s)}
-    <div class="rep-sec">
-      <h4>${esc(LABELS.teacherNoteHeading)}</h4>
-      <div class="remarks" contenteditable="true">${noteText||"—"}</div>
-    </div>
+    ${goalsHTML(s)}
+    ${teacherSectionHTML(s,noteText)}
     <div class="sign">
       <div>${esc(LABELS.sign1)}</div><div>${esc(LABELS.sign2)}</div><div>${esc(LABELS.sign3)}</div>
     </div>

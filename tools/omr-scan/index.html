@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMR Scanner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../../assets/js/omr-vision.js"></script>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --b1:#B4472F; --b1s:#F6E3DD; --b5:#1F7A4D; --b5s:#DEEEE4;
+  --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;font-variant-numeric:tabular-nums;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none !important}
+.top{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#1B2540,#243257);color:#fff;
+  display:flex;align-items:center;gap:16px;padding:0 22px;height:60px;box-shadow:0 2px 14px rgba(31,42,68,.14)}
+.top img{height:38px;border-radius:8px;background:rgba(255,255,255,.06)}
+.brand{display:flex;flex-direction:column;line-height:1.1}
+.brand b{font-family:Georgia,serif;font-size:16px}
+.brand span{font-size:10.5px;color:#AEB9CC;letter-spacing:.05em;margin-top:2px}
+.top-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.pill{font-size:11.5px;color:#C6CEDC;background:rgba(255,255,255,.08);padding:6px 12px;border-radius:20px}
+.mini-btn{background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;padding:8px 13px;
+  font-size:12.5px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center}
+.mini-btn:hover{background:rgba(255,255,255,.18)}
+.wrap{max-width:1240px;margin:0 auto;padding:26px 22px 60px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;font-weight:600;
+  font-size:14px;padding:11px 18px;text-decoration:none}
+.btn-primary{background:var(--teal);color:#fff}.btn-primary:hover{filter:brightness(1.06)}
+.btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--line2)}
+.btn-ghost:hover{background:#F0EEE7}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+.panel h3{margin:0 0 3px;font-size:14.5px;color:var(--navy);font-weight:700}
+.panel .sub{font-size:12px;color:var(--mut);margin:0 0 14px;line-height:1.5}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600}
+h2{font-family:Georgia,serif;font-weight:600;font-size:24px;color:var(--navy);margin:2px 0 18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow)}
+.step .n{width:24px;height:24px;border-radius:50%;background:var(--line);color:var(--mut);display:grid;
+  place-items:center;font-weight:800;font-size:12px;margin-bottom:8px}
+.step.done .n{background:var(--b5s);color:var(--b5)}
+.step.done{border-color:#BFDFCF}
+.step b{display:block;font-size:13.5px;color:var(--navy);margin-bottom:3px}
+.step span{font-size:12px;color:var(--mut);line-height:1.5}
+.key-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;max-height:260px;overflow:auto;padding:2px}
+.key-item{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:5px 7px}
+.key-item .q{font-size:11px;color:var(--mut);min-width:26px;font-weight:700}
+.key-item select{flex:1;font-family:inherit;font-size:12.5px;padding:3px 4px;border:1px solid var(--line2);border-radius:6px}
+.key-item.unset select{border-color:var(--amber);background:var(--amber-soft)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);
+  font-weight:700;padding:9px 10px;border-bottom:2px solid var(--line2)}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+th.c,td.c{text-align:center}th.r,td.r{text-align:right}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+.ok{background:var(--b5s);color:var(--b5)}
+.warn{background:var(--amber-soft);color:var(--amber)}
+.bad{background:var(--b1s);color:var(--b1)}
+.drop{border:2px dashed var(--line2);border-radius:12px;padding:26px;text-align:center;background:#FCFBF7;cursor:pointer}
+.drop.drag{border-color:var(--teal);background:var(--teal-soft)}
+.drop h4{margin:0 0 4px;font-size:15px;color:var(--navy)}
+.drop p{margin:0;font-size:12.5px;color:var(--mut)}
+.sheet-row{display:flex;gap:14px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--line)}
+.sheet-row:last-child{border-bottom:none}
+.thumb{width:74px;height:100px;object-fit:cover;border-radius:6px;border:1px solid var(--line2);flex-shrink:0;background:#F3F1EA}
+.sheet-main{flex:1;min-width:0}
+.sheet-name{font-weight:700;color:var(--navy);font-size:13.5px}
+.sheet-meta{font-size:11.5px;color:var(--mut);margin-top:2px}
+.sheet-flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.sheet-score{text-align:right;flex-shrink:0;min-width:104px}
+.sheet-score .v{font-family:Georgia,serif;font-size:22px;color:var(--navy);font-weight:700;line-height:1}
+.sheet-score .l{font-size:10.5px;color:var(--mut);margin-top:3px}
+.rowlink{border:none;background:none;color:var(--teal);font-size:11.5px;font-weight:600;padding:2px 0;cursor:pointer}
+.review{margin-top:10px;background:#FCFBF7;border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.review table{font-size:12px}
+.review td,.review th{padding:5px 7px}
+.tune label{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin:10px 0 4px}
+.tune .val{float:right;color:var(--navy);font-weight:700}
+.tune input[type=range]{width:100%;accent-color:var(--teal)}
+.two{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:980px){.two{grid-template-columns:1fr}}
+.note{font-size:12px;color:var(--mut);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="top">
+  <img id="topLogo" alt="">
+  <div class="brand"><b id="brandName">Academy</b><span>OMR Scanner</span></div>
+  <div class="top-right">
+    <span class="pill" id="pill">No sheets scanned</span>
+    <a class="mini-btn" href="../omr-designer/index.html">✎ Designer</a>
+    <a class="mini-btn" href="../../index.html">⌂ Home</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">After the test</div>
+  <h2>OMR Scanner</h2>
+
+  <div class="steps">
+    <div class="step" id="st1"><div class="n">1</div><b>Load the scan file</b>
+      <span>The <code>.omr.json</code> the designer saved next to your PDF. It holds every bubble position.</span></div>
+    <div class="step" id="st2"><div class="n">2</div><b>Set the answer key</b>
+      <span>Type it, or read it off a sheet you filled in yourself as the key.</span></div>
+    <div class="step" id="st3"><div class="n">3</div><b>Scan the sheets</b>
+      <span>Photos or scans — several at once. Scores come out the other end.</span></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="panel">
+    <h3>1 · Sheet definition</h3>
+    <p class="sub">Open the OMR Designer, build your sheet, then use <b>Download scan file</b>. Without it the scanner
+      has no idea where the bubbles are — this is what makes reading reliable rather than guesswork.</p>
+    <input type="file" id="defFile" accept=".json,.omr.json" class="hidden">
+    <button class="btn btn-primary" id="defPick">Choose scan file</button>
+    <span id="defInfo" class="note" style="margin-left:12px"></span>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="panel hidden" id="keyPanel">
+    <h3>2 · Answer key</h3>
+    <p class="sub">Set the correct option for each question. Leave any question blank and it is simply excluded from
+      the score rather than counted wrong.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <input type="file" id="keySheet" accept="image/*" class="hidden">
+      <button class="btn btn-ghost" id="keyFromSheet">Read key from a filled sheet</button>
+      <button class="btn btn-ghost" id="keyClear">Clear key</button>
+      <span id="keyInfo" class="note" style="align-self:center"></span>
+    </div>
+    <div class="key-grid" id="keyGrid"></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="panel hidden" id="scanPanel">
+    <h3>3 · Scan filled sheets</h3>
+    <p class="sub">Lay the sheet flat, get all four corner squares in frame, and avoid heavy shadow.
+      Several images at once is fine.</p>
+    <div class="two">
+      <div>
+        <div class="drop" id="drop">
+          <h4>Drop filled sheets here</h4>
+          <p>or click to choose — photos or scans, several at a time</p>
+          <input type="file" id="scanFiles" accept="image/*" multiple class="hidden">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="exportBtn" disabled>Export marks to Excel</button>
+          <button class="btn btn-ghost" id="clearBtn" disabled>Clear results</button>
+        </div>
+      </div>
+      <div class="panel tune" style="margin:0">
+        <h3>Reading sensitivity</h3>
+        <p class="sub" style="margin-bottom:0">Only touch these if sheets are misreading.</p>
+        <label>Darkness to count as filled <span class="val" id="vFill">35%</span></label>
+        <input type="range" id="wFill" min="15" max="70" value="35">
+        <label>Clear-winner margin <span class="val" id="vMargin">55%</span></label>
+        <input type="range" id="wMargin" min="30" max="90" value="55">
+        <p class="note" style="margin-top:12px">Raise the first if faint printing is read as a mark.
+          Lower the second if double-marks are being reported on clean sheets.</p>
+        <button class="btn btn-ghost" id="reRun" style="width:100%;justify-content:center;margin-top:10px" disabled>Re-read all sheets</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="resultsPanel">
+    <h3>Results</h3>
+    <p class="sub" id="resSub"></p>
+    <div id="results"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- branding (shared with every other page) ---------------- */
+const DEF_BRAND={name:"The Extra Step Academy",logoEmblem:"../../assets/images/tesa-emblem.png"};
+let BRAND=DEF_BRAND;
+try{const s=JSON.parse(localStorage.getItem("spdBrandingOverrides_v1")||"{}")||{};
+  BRAND={name:s.name||DEF_BRAND.name,logoEmblem:s.logoEmblem||DEF_BRAND.logoEmblem};}catch(e){}
+document.getElementById("brandName").textContent=BRAND.name;
+document.getElementById("topLogo").src=BRAND.logoEmblem;
+
+let DEF=null, KEY={}, SHEETS=[], OPTS={fillThreshold:.35,marginRatio:.55};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function step(n,done){$("st"+n).classList.toggle("done",!!done);}
+
+/* ---------------- step 1: definition ---------------- */
+$("defPick").addEventListener("click",()=>$("defFile").click());
+$("defFile").addEventListener("change",e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.bubbles||!d.bubbles.length||!d.fiducials||d.fiducials.length!==4||!d.page)
+        throw new Error("This doesn't look like a scan file from the OMR Designer.");
+      DEF=d;
+      const qs=[...new Set(d.bubbles.map(b=>b.q))].length;
+      $("defInfo").innerHTML=`<b style="color:var(--b5)">✓ Loaded</b> — ${qs} questions ·
+        ${d.subjects.map(s=>esc(s.name)+" ("+s.questions+")").join(" · ")}`;
+      step(1,true);
+      $("keyPanel").classList.remove("hidden");
+      $("scanPanel").classList.remove("hidden");
+      buildKeyGrid();
+      SHEETS=[];renderResults();
+    }catch(err){alert("Could not read that file: "+err.message);}
+  };
+  rd.readAsText(f);
+});
+
+/* ---------------- step 2: answer key ---------------- */
+// Keyed on qid because printed numbers repeat across subjects; the label still shows
+// the number the student saw, prefixed by subject where there is more than one.
+function questionList(){
+  const m={};
+  DEF.bubbles.forEach(b=>{
+    const id=b.qid!=null?b.qid:(b.subject+"|"+b.q);
+    if(!m[id])m[id]={id,q:b.q,subject:b.subject,options:[]};
+    if(!m[id].options.includes(b.option))m[id].options.push(b.option);
+  });
+  return Object.values(m).sort((a,b)=>{
+    const na=Number(a.id),nb=Number(b.id);
+    return (isFinite(na)&&isFinite(nb))?na-nb:String(a.id).localeCompare(String(b.id));
+  });
+}
+function buildKeyGrid(){
+  const list=questionList();
+  const multi=new Set(list.map(x=>x.subject)).size>1;
+  $("keyGrid").innerHTML=list.map(it=>`
+    <div class="key-item ${KEY[it.id]?"":"unset"}" data-q="${esc(String(it.id))}"
+         title="${esc(it.subject)} · Q${it.q}">
+      <span class="q">${multi?esc(it.subject.slice(0,3))+" ":""}${it.q}.</span>
+      <select data-kq="${esc(String(it.id))}">
+        <option value="">—</option>
+        ${it.options.map(o=>`<option value="${o}"${KEY[it.id]===o?" selected":""}>${o}</option>`).join("")}
+      </select>
+    </div>`).join("");
+  $("keyGrid").querySelectorAll("[data-kq]").forEach(sel=>sel.addEventListener("change",e=>{
+    const q=e.target.dataset.kq;
+    if(e.target.value)KEY[q]=e.target.value;else delete KEY[q];
+    e.target.closest(".key-item").classList.toggle("unset",!e.target.value);
+    updateKeyInfo();rescoreAll();
+  }));
+  updateKeyInfo();
+}
+function updateKeyInfo(){
+  const total=questionList().length,set=Object.keys(KEY).length;
+  $("keyInfo").textContent=`${set} of ${total} set`;
+  step(2,set>0);
+}
+$("keyClear").addEventListener("click",()=>{KEY={};buildKeyGrid();rescoreAll();});
+$("keyFromSheet").addEventListener("click",()=>$("keySheet").click());
+$("keySheet").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f||!DEF)return;
+  try{
+    const img=await loadImage(f);
+    const read=OMRVision.readSheet(imageData(img),DEF,OPTS);
+    if(!read.ok){alert(read.reason);return;}
+    KEY={};
+    Object.keys(read.answers).forEach(q=>{if(read.answers[q])KEY[q]=read.answers[q];});
+    buildKeyGrid();rescoreAll();
+    const missing=questionList().length-Object.keys(KEY).length;
+    alert(`Key read from that sheet.${missing?`\n\n${missing} question(s) had no clear mark — set those by hand.`:""}`);
+  }catch(err){alert("Could not read that image: "+err.message);}
+});
+
+/* ---------------- image helpers ---------------- */
+function loadImage(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const im=new Image();
+    im.onload=()=>{URL.revokeObjectURL(url);res(im);};
+    im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("not a readable image"));};
+    im.src=url;
+  });
+}
+// Cap the working size: a 12MP phone photo is far more pixels than this needs,
+// and the extra only costs time.
+function imageData(img,maxDim){
+  maxDim=maxDim||1700;
+  const scale=Math.min(1,maxDim/Math.max(img.naturalWidth,img.naturalHeight));
+  const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
+  const c=document.createElement("canvas");c.width=w;c.height=h;
+  const ctx=c.getContext("2d",{willReadFrequently:true});
+  ctx.drawImage(img,0,0,w,h);
+  return ctx.getImageData(0,0,w,h);
+}
+function thumbURL(img){
+  const c=document.createElement("canvas");
+  const s=Math.min(1,150/Math.max(img.naturalWidth,img.naturalHeight));
+  c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL("image/jpeg",.7);
+}
+
+/* ---------------- step 3: scanning ---------------- */
+const drop=$("drop");
+drop.addEventListener("click",e=>{if(!e.target.closest("button"))$("scanFiles").click();});
+["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag");}));
+drop.addEventListener("drop",e=>{if(e.dataTransfer.files.length)handleFiles([...e.dataTransfer.files]);});
+$("scanFiles").addEventListener("change",e=>{const f=[...e.target.files];e.target.value="";handleFiles(f);});
+
+async function handleFiles(files){
+  if(!DEF){alert("Load the scan file first.");return;}
+  for(const f of files){
+    if(!/^image\//.test(f.type))continue;
+    const rec={name:f.name.replace(/\.[^.]+$/,""),file:f,status:"reading"};
+    SHEETS.push(rec);renderResults();
+    try{
+      const img=await loadImage(f);
+      rec.thumb=thumbURL(img);
+      rec.imgData=imageData(img);
+      readAndScore(rec);
+    }catch(err){rec.status="error";rec.reason=err.message;}
+    renderResults();
+    await new Promise(r=>setTimeout(r,0)); // let the UI paint between sheets
+  }
+  $("exportBtn").disabled=!SHEETS.some(s=>s.status==="done");
+  $("clearBtn").disabled=!SHEETS.length;
+  $("reRun").disabled=!SHEETS.length;
+  renderResults();
+}
+function readAndScore(rec){
+  const read=OMRVision.readSheet(rec.imgData,DEF,OPTS);
+  if(!read.ok){rec.status="error";rec.reason=read.reason;rec.read=null;rec.score=null;return;}
+  rec.read=read;rec.status="done";
+  rec.score=OMRVision.score(read,KEY,DEF.subjects,null);
+}
+function rescoreAll(){
+  SHEETS.forEach(r=>{if(r.read)r.score=OMRVision.score(r.read,KEY,DEF.subjects,null);});
+  renderResults();
+}
+$("reRun").addEventListener("click",()=>{
+  SHEETS.forEach(r=>{if(r.imgData)readAndScore(r);});
+  renderResults();
+});
+$("clearBtn").addEventListener("click",()=>{
+  SHEETS=[];$("exportBtn").disabled=true;$("clearBtn").disabled=true;$("reRun").disabled=true;renderResults();
+});
+[["wFill","fillThreshold","vFill"],["wMargin","marginRatio","vMargin"]].forEach(([id,k,vid])=>{
+  $(id).addEventListener("input",e=>{
+    OPTS[k]=Number(e.target.value)/100;
+    $(vid).textContent=e.target.value+"%";
+  });
+});
+
+/* ---------------- results ---------------- */
+function confChip(rec){
+  if(rec.status==="error")return `<span class="chip bad">Unreadable</span>`;
+  const c=rec.read.confidence;
+  if(c>=.95)return `<span class="chip ok">Clean read</span>`;
+  if(c>=.8)return `<span class="chip warn">Check ${rec.read.stats.multiple+rec.read.stats.faint}</span>`;
+  return `<span class="chip bad">Needs review</span>`;
+}
+function renderResults(){
+  const done=SHEETS.filter(s=>s.status==="done");
+  $("pill").textContent=SHEETS.length?`${done.length} of ${SHEETS.length} read`:"No sheets scanned";
+  step(3,done.length>0);
+  if(!SHEETS.length){$("resultsPanel").classList.add("hidden");return;}
+  $("resultsPanel").classList.remove("hidden");
+  const keySet=Object.keys(KEY).length;
+  $("resSub").textContent=keySet?`Scored against ${keySet} keyed question${keySet===1?"":"s"}.`
+    :"No answer key set yet — showing what was marked, without scoring.";
+
+  $("results").innerHTML=SHEETS.map((rec,i)=>{
+    if(rec.status==="reading")return `<div class="sheet-row"><div class="sheet-main">
+      <div class="sheet-name">${esc(rec.name)}</div><div class="sheet-meta">Reading…</div></div></div>`;
+    if(rec.status==="error")return `<div class="sheet-row">
+      ${rec.thumb?`<img class="thumb" src="${rec.thumb}" alt="">`:""}
+      <div class="sheet-main"><div class="sheet-name">${esc(rec.name)}</div>
+        <div class="sheet-meta" style="color:var(--b1)">${esc(rec.reason||"Could not read this sheet.")}</div></div>
+      <div class="sheet-score">${confChip(rec)}</div></div>`;
+    const st=rec.read.stats,sc=rec.score;
+    return `<div class="sheet-row">
+      <img class="thumb" src="${rec.thumb}" alt="">
+      <div class="sheet-main">
+        <div class="sheet-name">${esc(rec.name)}</div>
+        <div class="sheet-meta">${st.answered} of ${st.questions} answered${sc&&sc.total?` · ${sc.correct} correct · ${sc.wrong} wrong · ${sc.blank} blank`:""}</div>
+        <div class="sheet-flags">${confChip(rec)}
+          ${st.multiple?`<span class="chip bad">${st.multiple} double-marked</span>`:""}
+          ${st.faint?`<span class="chip warn">${st.faint} faint</span>`:""}
+          ${rec.read.flags.length?`<button class="rowlink" data-rev="${i}">Review ${rec.read.flags.length} flagged</button>`:""}
+        </div>
+        ${rec.showReview?reviewHTML(rec):""}
+      </div>
+      <div class="sheet-score">
+        ${sc&&sc.max>0?`<div class="v">${sc.marks}<span style="font-size:13px;color:var(--mut)">/${sc.max}</span></div>
+          <div class="l">${sc.pct!=null?sc.pct.toFixed(1)+"%":""}</div>`:`<div class="l">no key</div>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  $("results").querySelectorAll("[data-rev]").forEach(b=>b.addEventListener("click",()=>{
+    const rec=SHEETS[Number(b.dataset.rev)];rec.showReview=!rec.showReview;renderResults();
+  }));
+  $("results").querySelectorAll("[data-fix]").forEach(sel=>sel.addEventListener("change",e=>{
+    const[i,q]=e.target.dataset.fix.split(":");
+    const rec=SHEETS[Number(i)];
+    rec.read.answers[q]=e.target.value||null;
+    rec.read.detail[q].state=e.target.value?"manual":"blank";
+    rec.read.flags=rec.read.flags.filter(f=>String(f.q)!==String(q));
+    rec.score=OMRVision.score(rec.read,KEY,DEF.subjects,null);
+    renderResults();
+  }));
+}
+// Ambiguous marks are surfaced for a human rather than silently resolved — a
+// wrong auto-guess on a real exam is worse than asking.
+function reviewHTML(rec){
+  const i=SHEETS.indexOf(rec);
+  const opts=[...new Set(DEF.bubbles.map(b=>b.option))];
+  return `<div class="review">
+    <table><thead><tr><th>Q</th><th>What we saw</th><th>Darkness</th><th>Answer</th></tr></thead>
+    <tbody>${rec.read.flags.map(f=>{
+      const d=rec.read.detail[f.q];
+      return `<tr><td><b>${esc(d.subject)} Q${d.label!=null?d.label:f.q}</b></td>
+        <td>${esc(f.detail)}</td>
+        <td style="font-size:11px;color:var(--mut)">${d.reads.map(r=>r.option+" "+Math.round(r.coverage*100)+"%").join(" · ")}</td>
+        <td><select data-fix="${i}:${f.q}">
+          <option value="">— blank —</option>
+          ${opts.map(o=>`<option value="${o}"${d.picked===o?" selected":""}>${o}</option>`).join("")}
+        </select></td></tr>`;}).join("")}
+    </tbody></table></div>`;
+}
+
+/* ---------------- export: feeds the segment dashboards ---------------- */
+$("exportBtn").addEventListener("click",()=>{
+  const done=SHEETS.filter(s=>s.status==="done"&&s.score&&s.score.max>0);
+  if(!done.length){alert("Nothing scored yet — set an answer key first.");return;}
+  const subjects=DEF.subjects.map(s=>s.name);
+  // Written in the same block layout the segment apps parse, so this file can be
+  // uploaded straight into a dashboard without any retyping.
+  const rows=[];
+  rows.push(["ACADEMY",BRAND.name]);
+  rows.push(["BATCH",DEF.meta.batch||"",null,"YEAR",""]);
+  rows.push([]);
+  rows.push([null,"TEST →",DEF.meta.testName||"OMR Test"]);
+  rows.push([null,"DATE →",DEF.meta.date||""]);
+  rows.push([null,"TYPE →","OMR"]);
+  const maxRow=[null,"MAX MARKS →"];
+  subjects.forEach(sn=>{
+    const s=DEF.subjects.find(x=>x.name===sn);
+    maxRow.push(s.questions*(s.marks||1));
+  });
+  maxRow.push(subjects.reduce((a,sn)=>{const s=DEF.subjects.find(x=>x.name===sn);return a+s.questions*(s.marks||1);},0));
+  rows.push(maxRow);
+  rows.push(["Roll No","Student Name",...subjects,"Total"]);
+  done.forEach((rec,i)=>{
+    const line=[i+1,rec.name];
+    subjects.forEach(sn=>line.push(rec.score.perSubject[sn]?rec.score.perSubject[sn].marks:0));
+    line.push(rec.score.marks);
+    rows.push(line);
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Marks");
+  // a second sheet with the raw per-question record, for disputes
+  const detail=[["Student","Question","Subject","Marked","Key","Result"]];
+  done.forEach(rec=>{
+    Object.keys(rec.read.answers).forEach(q=>{
+      const d=rec.read.detail[q];
+      const given=rec.read.answers[q]||"",want=KEY[q]||"";
+      detail.push([rec.name,d.label!=null?d.label:q,d.subject,given,want,
+        !want?"not keyed":!given?"blank":given===want?"correct":"wrong"]);
+    });
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(detail),"Answers");
+  XLSX.writeFile(wb,(DEF.meta.testName||"OMR_Results").replace(/[^\w\-]+/g,"_")+"_results.xlsx");
+});
+</script>
+</body>
+</html>

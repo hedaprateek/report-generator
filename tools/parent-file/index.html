@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parent File</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/revision-plan.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.pf-layout{display:grid;grid-template-columns:310px 1fr;gap:18px;align-items:start}
+@media(max-width:1000px){.pf-layout{grid-template-columns:1fr}}
+.pf-side label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.03em;margin:13px 0 5px}
+.pf-side label:first-of-type{margin-top:0}
+.pf-side input[type=text],.pf-side input[type=date],.pf-side input[type=number],.pf-side select{width:100%}
+.pf-check{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.pf-check:last-of-type{border-bottom:none}
+.pf-check input{margin:2px 0 0;width:16px;height:16px;accent-color:var(--teal);flex-shrink:0}
+.pf-check b{display:block;font-size:12.5px;color:var(--navy)}
+.pf-check span{font-size:11px;color:var(--mut);line-height:1.4}
+.pf-check.disabled{opacity:.5}
+.phone{width:390px;max-width:100%;height:760px;border:10px solid #1B2540;border-radius:26px;
+  background:#fff;overflow:hidden;box-shadow:0 16px 44px rgba(31,42,68,.3);margin:0 auto}
+.phone iframe{width:100%;height:100%;border:0;display:block}
+.pf-stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+.pf-caption{font-size:11.5px;color:var(--mut);text-align:center}
+.pf-warn{background:var(--amber-soft);border:1px solid #EBD3A8;border-left:3px solid var(--amber);
+  border-radius:9px;padding:11px 13px;font-size:12px;color:#6E4A1A;line-height:1.55;margin-top:12px}
+.logo-row{display:flex;gap:10px;align-items:center;margin-top:6px}
+.logo-row img{height:38px;width:auto;max-width:90px;object-fit:contain;border:1px solid var(--line);
+  border-radius:7px;background:#F6F5F0}
+</style>
+</head>
+<body>
+<script>
+/* =================================================================
+   Sample carries TOPICS, because the revision plan is the point of
+   this tool and a demo without topic data would quietly hide it.
+   ================================================================= */
+const SAMPLE_SHEETS={
+"Students":[
+ ["Roll No","Student Name","Class / Batch","Parent / Guardian Name","Parent Phone"],
+ [1,"Aarav Shah","12th Science","Mr. R. Shah","98765 43210"],
+ [2,"Diya Kulkarni","12th Science","Mrs. S. Kulkarni","98220 11223"],
+ [3,"Kabir Nair","12th Science","Mr. V. Nair","99700 55443"]],
+"Marks":[
+ [null,"TEST →","Unit Test 1",null,null,null,"Unit Test 2",null,null,null,"Prelims",null,null,null],
+ [null,"TOPICS COVERED →","Kinematics","Mole Concept","Quadratics","Cell Biology",
+   "Laws of Motion","Chemical Bonding","Trigonometry","Genetics",
+   "Rotational Motion","Thermodynamics","Calculus","Human Physiology"],
+ [null,"MAX MARKS →",50,50,50,50,50,50,50,50,50,50,50,50],
+ ["Roll No","Student Name","Physics","Chemistry","Maths","Biology",
+   "Physics","Chemistry","Maths","Biology","Physics","Chemistry","Maths","Biology"],
+ [1,"Aarav Shah",41,22,45,38, 39,18,47,40, 43,16,46,41],
+ [2,"Diya Kulkarni",28,35,24,44, 31,38,21,46, 33,40,19,45],
+ [3,"Kabir Nair",36,34,33,20, 38,35,35,18, 40,36,37,17]],
+"Attendance":[
+ ["Roll No","Student Name","W1","W2","W3","W4","W5","W6","W7","W8"],
+ [1,"Aarav Shah","P","P","P","P","P","P","A","P"],
+ [2,"Diya Kulkarni","P","P","P","P","P","P","P","P"],
+ [3,"Kabir Nair","P","A","P","P","A","P","P","P"]]};
+
+function parse(sheets){
+  const O=OFFICE;
+  const acad=O.readAcademic(sheets);
+  if(!acad)throw new Error("This workbook has no readable Marks sheet.");
+  const att=O.readAttendance(sheets);
+  const notes=O.readNotes(sheets);
+  const studAoa=O.findSheet(sheets,"Students");
+  const roster={};
+  if(studAoa)O.readTable(studAoa,{roll:["Roll No","Roll"],name:["Student Name","Name"],
+    batch:["Class / Batch","Program / Division","Class","Batch"],
+    parent:["Parent / Guardian Name","Parent Name","Guardian Name"],
+    phone:["Parent Phone","Phone","Contact","Mobile"]})
+    .forEach(r=>{const nm=O.norm(r.name);if(nm)roster[O.keyName(nm)]=
+      {roll:O.toNum(r.roll),batch:O.norm(r.batch),parent:O.norm(r.parent),phone:O.norm(r.phone)};});
+
+  const rows=Object.keys(acad.byName).map(k=>{
+    const a=acad.byName[k],info=roster[k]||{};
+    return{key:k,name:a.name,...info,acad:a,att:att?att.byName[k]:null,
+      notes:notes&&notes.byName[k]?notes.byName[k]:[]};
+  }).sort((a,b)=>(a.roll??9e9)-(b.roll??9e9)||a.name.localeCompare(b.name));
+
+  // class averages give the parent something to measure against
+  const classSubj={};
+  acad.subjects.forEach(s=>{
+    const v=rows.map(r=>r.acad.bySubject[s]).filter(x=>x!=null);
+    classSubj[s]=v.length?O.mean(v):null;
+  });
+  const classAvg=O.mean(rows.map(r=>r.acad.avg).filter(x=>x!=null));
+  const ranked=[...rows].filter(r=>r.acad.avg!=null).sort((a,b)=>b.acad.avg-a.acad.avg);
+  ranked.forEach((r,i)=>r.rank=i+1);
+  return{rows,acad,classSubj,classAvg,ranked:ranked.length,hasTopics:acad.hasTopics};
+}
+
+let D=null,MOUNT=null,CUR=null,LOGO=null;
+let CFG={examName:"Final Examination",examDate:"",sessions:4,target:80,
+  note:"",showRank:true,showAttendance:true,showPlan:true,showTopics:true,showChart:true,showNotes:true};
+const O=()=>OFFICE;
+
+/* ---------- logo: must end up inline, or the file stops being self-contained ---------- */
+async function tryInlineLogo(){
+  const src=O().branding.logoFull;
+  if(!src)return null;
+  if(/^data:/.test(src))return src;      // already inline (custom upload via Settings)
+  try{
+    const r=await fetch(src);const b=await r.blob();
+    return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res(null);fr.readAsDataURL(b);});
+  }catch(e){return null;}                 // file:// blocks this — user can upload instead
+}
+
+function planFor(s){
+  if(!CFG.showPlan||!D.hasTopics)return null;
+  return RevisionPlan.build(s.acad.byTopic,{
+    from:new Date(),
+    examDate:CFG.examDate?new Date(CFG.examDate+"T00:00:00"):null,
+    sessionsPerWeek:CFG.sessions,target:CFG.target});
+}
+
+/* =================================================================
+   THE PARENT FILE
+   Everything below is baked into one .html: no CDN, no fonts, no
+   images by URL, no network of any kind. It has to open on a cheap
+   phone, in a village with no signal, two years from now.
+   ================================================================= */
+function buildFile(s){
+  const o=O(),b=o.branding;
+  const plan=planFor(s);
+  const data={
+    academy:b.name,logo:LOGO||"",
+    student:s.name,roll:s.roll??null,batch:s.batch||"",parent:s.parent||"",
+    generated:o.fmtDate(o.today()),
+    examName:CFG.examName,examDate:CFG.examDate?o.fmtDate(new Date(CFG.examDate+"T00:00:00")):"",
+    overall:s.acad.avg,classAvg:D.classAvg,
+    rank:CFG.showRank&&s.rank?{pos:s.rank,of:D.ranked}:null,
+    attendance:CFG.showAttendance&&s.att?{pct:s.att.pct,present:s.att.present,total:s.att.total}:null,
+    trend:s.acad.slope,
+    subjects:Object.keys(s.acad.bySubject).map(k=>({name:k,avg:s.acad.bySubject[k],cls:D.classSubj[k]??null})),
+    tests:CFG.showChart?s.acad.byTest.filter(t=>t.pct!=null):[],
+    topics:CFG.showTopics?s.acad.byTopic:[],
+    plan:plan&&plan.weeks.length?{
+      summary:{...plan.summary,examDate:plan.summary.examDate?o.fmtDate(plan.summary.examDate):null},
+      weeks:plan.weeks.map(w=>({n:w.n,label:w.label,
+        start:o.fmtDate(w.start),end:o.fmtDate(w.end),items:w.items}))}:null,
+    observations:CFG.showNotes?(s.notes||[]).slice(0,5).map(n=>({
+      date:n.date?o.fmtDate(n.date):"",by:n.by,type:n.type,note:n.note})):[],
+    note:CFG.note||""
+  };
+  return FILE_TEMPLATE(data);
+}
+
+// Kept as one function returning a complete document so there is exactly one
+// place to look when asking "what does the parent actually receive?"
+function FILE_TEMPLATE(d){
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const band=p=>p==null?"#7C8598":p>=75?"#1F7A4D":p>=60?"#2E8B8A":p>=45?"#C9791B":"#B4472F";
+  const pct=p=>p==null?"—":p.toFixed(0)+"%";
+
+  const spark=(()=>{
+    const t=d.tests;
+    if(t.length<2)return "";
+    const w=300,h=90,pad=8;
+    const xs=(i)=>pad+(w-pad*2)*(t.length===1?0.5:i/(t.length-1));
+    const ys=(v)=>pad+(h-pad*2)*(1-Math.max(0,Math.min(100,v))/100);
+    const pts=t.map((x,i)=>[xs(i),ys(x.pct)]);
+    const dpath=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+    const area=dpath+` L${pts[pts.length-1][0].toFixed(1)} ${h-pad} L${pts[0][0].toFixed(1)} ${h-pad} Z`;
+    return `<svg viewBox="0 0 ${w} ${h}" class="spark" role="img" aria-label="Progress across tests">
+      ${[25,50,75].map(g=>`<line x1="${pad}" y1="${ys(g)}" x2="${w-pad}" y2="${ys(g)}" stroke="#EDEAE1" stroke-width="1"/>`).join("")}
+      <path d="${area}" fill="rgba(14,124,123,.10)"/>
+      <path d="${dpath}" fill="none" stroke="#0E7C7B" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.4" fill="#0E7C7B"/>`).join("")}
+    </svg>
+    <div class="sparkx">${t.map(x=>`<span>${esc(x.test)}</span>`).join("")}</div>`;
+  })();
+
+  const strong=[...d.topics].sort((a,b)=>b.avg-a.avg).slice(0,3);
+  const weak=d.topics.slice(0,3);
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(d.student)} — Progress</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;padding-bottom:30px}
+.wrap{max-width:560px;margin:0 auto;padding:0 14px}
+.hero{background:linear-gradient(150deg,#1B2540,#0E7C7B);color:#fff;padding:26px 18px 30px;text-align:center}
+.hero img{height:52px;width:auto;border-radius:10px;background:rgba(255,255,255,.1);margin-bottom:10px}
+.hero .ac{font-family:Georgia,serif;font-size:16px;font-weight:600;opacity:.95}
+.hero .nm{font-family:Georgia,serif;font-size:27px;font-weight:700;margin-top:12px;line-height:1.15}
+.hero .cl{font-size:12.5px;opacity:.85;margin-top:4px}
+.big{margin-top:16px;display:inline-flex;align-items:baseline;gap:3px}
+.big b{font-family:Georgia,serif;font-size:52px;font-weight:800;line-height:1}
+.big span{font-size:19px;opacity:.9}
+.biglab{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-top:4px}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.chip{background:rgba(255,255,255,.16);border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600}
+.card{background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:16px 16px;margin-top:14px;
+  box-shadow:0 1px 2px rgba(31,42,68,.04),0 6px 18px rgba(31,42,68,.05)}
+.card h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7C8598;font-weight:700;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F0EEE7;cursor:pointer}
+.row:last-child{border-bottom:none}
+.row .nm{flex:1;font-weight:600;font-size:14px;color:#1F2A44}
+.bar{height:8px;background:#EFEDE6;border-radius:5px;overflow:hidden;width:96px;flex-shrink:0}
+.bar>i{display:block;height:100%;border-radius:5px}
+.val{min-width:44px;text-align:right;font-weight:700;font-size:14px}
+.sub{font-size:11.5px;color:#7C8598;padding:0 0 10px 0;display:none;line-height:1.6}
+.row.open+.sub{display:block}
+.caret{color:#9AA3B2;font-size:11px;transition:transform .15s}
+.row.open .caret{transform:rotate(90deg)}
+.spark{width:100%;height:auto;display:block;margin-top:4px}
+.sparkx{display:flex;justify-content:space-between;font-size:9.5px;color:#9AA3B2;margin-top:2px}
+.sparkx span{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:420px){.two{grid-template-columns:1fr}}
+.tlist li{list-style:none;font-size:12.5px;padding:6px 0;border-bottom:1px dotted #EFEDE6;line-height:1.4}
+.tlist li:last-child{border-bottom:none}
+.tlist .t{font-weight:600;color:#1F2A44}
+.tlist .s{color:#9AA3B2;font-size:10.5px}
+.wk{border:1px solid #E4E0D6;border-radius:11px;margin-bottom:9px;overflow:hidden}
+.wkh{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#FCFBF7;cursor:pointer}
+.wkh .n{width:26px;height:26px;border-radius:50%;background:#0E7C7B;color:#fff;display:grid;place-items:center;
+  font-weight:800;font-size:11.5px;flex-shrink:0}
+.wkh .l{flex:1;font-weight:700;font-size:13px;color:#1F2A44}
+.wkh .d{font-size:10.5px;color:#9AA3B2}
+.wkb{display:none;padding:4px 13px 12px}
+.wk.open .wkb{display:block}
+.task{display:flex;gap:9px;padding:9px 0;border-bottom:1px dotted #EFEDE6}
+.task:last-child{border-bottom:none}
+.task .dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.task .tt{font-weight:600;font-size:12.5px;color:#1F2A44}
+.task .tn{font-size:11px;color:#7C8598;margin-top:2px;line-height:1.45}
+.note{background:#E2F0EF;border-left:3px solid #0E7C7B;border-radius:8px;padding:11px 13px;
+  font-size:13px;color:#22595a;line-height:1.6}
+.foot{text-align:center;font-size:10.5px;color:#9AA3B2;margin-top:18px;line-height:1.6}
+.legend{font-size:10.5px;color:#9AA3B2;margin-top:9px;line-height:1.5}
+</style></head>
+<body>
+<div class="hero">
+  ${d.logo?`<img src="${d.logo}" alt="">`:""}
+  <div class="ac">${esc(d.academy)}</div>
+  <div class="nm">${esc(d.student)}</div>
+  <div class="cl">${esc(d.batch)}${d.roll!=null?" · Roll "+d.roll:""}</div>
+  <div class="big"><b>${d.overall==null?"—":d.overall.toFixed(0)}</b><span>%</span></div>
+  <div class="biglab">Overall so far</div>
+  <div class="chips">
+    ${d.rank?`<span class="chip">Rank ${d.rank.pos} of ${d.rank.of}</span>`:""}
+    ${d.attendance?`<span class="chip">Attendance ${d.attendance.pct.toFixed(0)}%</span>`:""}
+    ${d.trend!=null?`<span class="chip">${d.trend>1.5?"▲ Improving":d.trend<-1.5?"▼ Slipping":"▬ Steady"}</span>`:""}
+    ${d.classAvg!=null?`<span class="chip">Class avg ${d.classAvg.toFixed(0)}%</span>`:""}
+  </div>
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <h2>Subject by subject</h2>
+    ${d.subjects.map((s,i)=>`
+      <div class="row" data-t="s${i}"><span class="nm">${esc(s.name)}</span>
+        <span class="bar"><i style="width:${Math.max(2,Math.min(100,s.avg||0))}%;background:${band(s.avg)}"></i></span>
+        <span class="val" style="color:${band(s.avg)}">${pct(s.avg)}</span><span class="caret">▸</span></div>
+      <div class="sub" id="s${i}">Class average in ${esc(s.name)} is ${pct(s.cls)}.
+        ${s.avg!=null&&s.cls!=null?(s.avg>=s.cls?`${esc(d.student.split(" ")[0])} is <b>${(s.avg-s.cls).toFixed(0)} points above</b> the class.`:`<b>${(s.cls-s.avg).toFixed(0)} points below</b> the class — worth some attention.`):""}</div>`).join("")}
+    <div class="legend">Tap a subject for detail.</div>
+  </div>
+
+  ${d.tests.length>1?`<div class="card"><h2>Progress across tests</h2>${spark}</div>`:""}
+
+  ${d.topics.length?`<div class="card"><h2>Topic strengths</h2>
+    <div class="two">
+      <div><div style="font-size:10.5px;font-weight:700;color:#1F7A4D;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px">Strong in</div>
+        <ul class="tlist">${strong.map(t=>`<li><span class="t">${esc(t.topic)}</span> <span class="s">${esc(t.subject)} · ${t.avg.toFixed(0)}%</span></li>`).join("")}</ul></div>
+      <div><div style="font-size:10.5px;font-weight:700;color:#B4472F;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px">Needs work</div>
+        <ul class="tlist">${weak.map(t=>`<li><span class="t">${esc(t.topic)}</span> <span class="s">${esc(t.subject)} · ${t.avg.toFixed(0)}%</span></li>`).join("")}</ul></div>
+    </div></div>`:""}
+
+  ${d.plan?`<div class="card">
+    <h2>Study plan${d.examName?" for "+esc(d.examName):""}</h2>
+    <p style="font-size:12.5px;color:#7C8598;line-height:1.6;margin-bottom:12px">
+      ${d.plan.summary.weeks} week${d.plan.summary.weeks===1?"":"s"} · ${d.plan.summary.sessionsPerWeek} sessions a week.
+      More time is given to the topics that need it most${d.plan.summary.examDate?`, working back from ${esc(d.plan.summary.examDate)}`:""}.
+      Tap a week to open it.</p>
+    ${d.plan.weeks.map(w=>`
+      <div class="wk" data-wk="${w.n}">
+        <div class="wkh"><span class="n">${w.n}</span>
+          <span class="l">${esc(w.label)}</span>
+          <span class="d">${esc(w.start)} – ${esc(w.end)}</span></div>
+        <div class="wkb">${w.items.map(it=>`
+          <div class="task"><span class="dot" style="background:${it.kind==="mock"?"#1F2A44":band(it.avg)}"></span>
+            <div><div class="tt">${esc(it.topic)}</div>
+              <div class="tn">${esc(it.subject)}${it.avg!=null?` · currently ${it.avg.toFixed(0)}%`:""} — ${esc(it.note)}</div></div></div>`).join("")}
+        </div>
+      </div>`).join("")}
+    <div class="legend">This plan is built from ${esc(d.student.split(" ")[0])}'s own topic marks, so it will look different for every student.</div>
+  </div>`:""}
+
+  ${d.observations&&d.observations.length?`<div class="card"><h2>What the teachers have noticed</h2>
+    ${d.observations.map(n=>`<div style="padding:9px 0;border-bottom:1px dotted #EFEDE6">
+      <div style="font-size:13px;color:#2B2F3A;line-height:1.55">${esc(n.note)}</div>
+      <div style="font-size:10.5px;color:#9AA3B2;margin-top:3px">
+        ${esc([n.date,n.by,n.type].filter(Boolean).join(" · "))}</div></div>`).join("")}
+    </div>`:""}
+
+  ${d.note?`<div class="card"><h2>A note from the academy</h2><div class="note">${esc(d.note)}</div></div>`:""}
+
+  <div class="foot">
+    Prepared for ${esc(d.parent||"the parent/guardian")} · ${esc(d.generated)}<br>
+    ${esc(d.academy)} — this file works offline; save it and open it any time.
+  </div>
+</div>
+<script>
+// Deliberately tiny and dependency-free: this has to run on an old phone forever.
+document.querySelectorAll('.row[data-t]').forEach(function(r){
+  r.addEventListener('click',function(){r.classList.toggle('open');});
+});
+document.querySelectorAll('.wkh').forEach(function(h){
+  h.addEventListener('click',function(){h.parentNode.classList.toggle('open');});
+});
+var first=document.querySelector('.wk');if(first)first.classList.add('open');
+<\/script>
+</body></html>`;
+}
+
+/* ---------------- generator UI ---------------- */
+function download(name,html){
+  const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function render(){
+  const o=O();
+  if(!CUR&&D.rows[0])CUR=D.rows[0].name;
+  const s=D.rows.find(x=>x.name===CUR)||D.rows[0];
+  const noTopics=!D.hasTopics;
+  const noNotes=!D.rows.some(r=>r.notes&&r.notes.length);
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-pf">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">One file, straight to WhatsApp</div><h2>Parent File</h2></div>
+        <div class="of-filters">
+          <label class="flab">Student</label>
+          <select id="pStud">${D.rows.map(x=>`<option value="${o.esc(x.name)}"${x.name===s.name?" selected":""}>${o.esc(x.name)}</option>`).join("")}</select>
+          <button class="btn btn-ghost" id="pAll">Download all (${D.rows.length})</button>
+          <button class="btn btn-primary" id="pOne">Download this file</button>
+          <button class="btn btn-ghost" id="pShare">Share</button>
+        </div>
+      </div>
+      <div class="pf-layout">
+        <div class="panel pf-side no-print">
+          <h3>What goes in the file</h3>
+          <p class="sub">Everything is baked into one .html — no app, no login, works with no signal.</p>
+          ${[["showRank","Class rank","Where they stand in the batch."],
+             ["showAttendance","Attendance","Days present out of total."],
+             ["showChart","Progress chart","Test-by-test line."],
+             ["showTopics","Topic strengths",noTopics?"Needs a TOPICS row in the Marks sheet.":"Strongest and weakest chapters."],
+             ["showPlan","Study plan",noTopics?"Needs a TOPICS row in the Marks sheet.":"Week-by-week, weighted to weak topics."],
+             ["showNotes","Teacher observations",noNotes?"Needs a Notes sheet in the workbook.":"Recent dated notes about this student."]]
+            .map(([k,t,h])=>{
+              const off=((k==="showTopics"||k==="showPlan")&&noTopics)||(k==="showNotes"&&noNotes);
+              return `<label class="pf-check${off?" disabled":""}">
+                <input type="checkbox" data-cfg="${k}" ${CFG[k]&&!off?"checked":""} ${off?"disabled":""}>
+                <span><b>${t}</b><span>${h}</span></span></label>`;}).join("")}
+          ${noTopics?`<div class="pf-warn"><b>No topic data in this workbook.</b>
+            Add a <b>TOPICS COVERED →</b> row above the subject headers in the Marks sheet, naming the chapter each
+            column tested. That one row is what makes the personalised study plan possible.</div>`:""}
+          <label>Exam name</label><input type="text" id="cExam" value="${o.esc(CFG.examName)}">
+          <label>Exam date</label><input type="date" id="cDate" value="${o.esc(CFG.examDate)}">
+          <label>Study sessions per week</label>
+          <input type="number" id="cSess" min="1" max="14" value="${CFG.sessions}">
+          <label>Target score (%)</label>
+          <input type="number" id="cTarget" min="40" max="100" value="${CFG.target}">
+          <label>Note from the academy (optional)</label>
+          <input type="text" id="cNote" value="${o.esc(CFG.note)}" placeholder="Shown at the bottom of the file">
+          <label>Logo inside the file</label>
+          <div class="logo-row">
+            ${LOGO?`<img src="${LOGO}" alt="">`:`<span class="note" style="font-size:11.5px;color:var(--mut)">Not embedded yet</span>`}
+            <input type="file" id="logoFile" accept="image/*" class="hidden">
+            <button class="btn btn-ghost" id="logoPick" style="padding:6px 11px;font-size:12px">${LOGO?"Replace":"Add logo"}</button>
+          </div>
+          ${!LOGO?`<div class="pf-warn" style="margin-top:8px">Opened from a folder, the browser won't let the logo be
+            read automatically. Pick it once here and it gets embedded in every file.</div>`:""}
+        </div>
+        <div class="pf-stage">
+          <div class="phone"><iframe id="pfPreview" title="Parent file preview"></iframe></div>
+          <div class="pf-caption">Live preview · what the parent sees on their phone</div>
+        </div>
+      </div>
+    </div>`;
+
+  paintPreview(s);
+  document.getElementById("pStud").addEventListener("change",e=>{CUR=e.target.value;render();});
+  MOUNT.querySelectorAll("[data-cfg]").forEach(cb=>cb.addEventListener("change",e=>{
+    CFG[e.target.dataset.cfg]=e.target.checked;render();}));
+  const bind=(id,k,num)=>{const el=document.getElementById(id);
+    if(el)el.addEventListener("input",e=>{CFG[k]=num?Number(e.target.value):e.target.value;
+      paintPreview(D.rows.find(x=>x.name===CUR)||D.rows[0]);});};
+  bind("cExam","examName");bind("cDate","examDate");bind("cSess","sessions",true);
+  bind("cTarget","target",true);bind("cNote","note");
+  document.getElementById("logoPick").addEventListener("click",()=>document.getElementById("logoFile").click());
+  document.getElementById("logoFile").addEventListener("change",e=>{
+    const f=e.target.files[0];e.target.value="";if(!f)return;
+    const rd=new FileReader();rd.onload=ev=>{LOGO=ev.target.result;render();};rd.readAsDataURL(f);});
+  document.getElementById("pOne").addEventListener("click",()=>{
+    download(o.slugify(s.name)+"_progress.html",buildFile(s));});
+  document.getElementById("pAll").addEventListener("click",async()=>{
+    // browsers throttle rapid downloads, so space them out
+    for(const r of D.rows){download(o.slugify(r.name)+"_progress.html",buildFile(r));
+      await new Promise(x=>setTimeout(x,350));}});
+  document.getElementById("pShare").addEventListener("click",async e=>{
+    const html=buildFile(s);
+    const file=new File([html],o.slugify(s.name)+"_progress.html",{type:"text/html"});
+    const text=`${s.name}'s progress report from ${o.branding.name}. Open the attached file on any phone — it works without internet.`;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:s.name+" — Progress",text});return;}
+      catch(err){if(err&&err.name==="AbortError")return;}
+    }
+    download(file.name,html);
+    const wa=s.phone?`https://wa.me/${s.phone.replace(/\D/g,"")}?text=${encodeURIComponent(text)}`
+                    :`https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(wa,"_blank","noopener");
+  });
+}
+function paintPreview(s){
+  const f=document.getElementById("pfPreview");
+  if(!f)return;
+  f.srcdoc=buildFile(s);
+}
+
+OFFICE.boot({
+  title:"Parent File",
+  kicker:"Parent experience",
+  headline:"Send parents a progress file, not a paragraph",
+  blurb:"One small HTML file per student — their marks, their weak chapters and a study plan built from their own topic scores. Opens on any phone, needs no app or internet, and keeps working forever.",
+  noteLeft:"Any workbook with a Marks sheet. Add a TOPICS COVERED row to unlock the personalised study plan.",
+  manualHint:"Students and their marks, with a TOPICS row naming the chapter each column tested.",
+  templateHref:"../../assets/templates/junior-college/Student_Progress_Template.xlsx",
+  cacheKey:"tool-parentfile",
+  sampleSheets:SAMPLE_SHEETS,
+  rosterToSheets:null,
+  pill:d=>`${d.rows.length} students${d.hasTopics?" · topics found":" · no topics"}`,
+  parse,
+  render:async(data,mount)=>{
+    D=data;MOUNT=mount;CUR=null;
+    if(!LOGO)LOGO=await tryInlineLogo();
+    render();
+  }
+});
+</script>
+</body>
+</html>

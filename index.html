@@ -45,6 +45,15 @@ a.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(31,42,68,.12
 .card.disabled .go{color:var(--mut2)}
 
 .section-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:38px 0 14px;padding-top:24px;border-top:1px solid var(--line)}
+.starter{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--teal);
+  border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:20px}
+.starter h3{font-family:Georgia,serif;font-size:18px;color:var(--navy);margin:0 0 5px;font-weight:600}
+.starter p{margin:0 0 14px;font-size:13px;color:var(--mut);line-height:1.6;max-width:76ch}
+.starter .dl{display:flex;flex-wrap:wrap;gap:9px}
+.starter a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+  text-decoration:none;color:var(--navy);background:#F3F1EA;border:1px solid var(--line2);
+  border-radius:8px;padding:8px 13px}
+.starter a:hover{background:var(--teal-soft);border-color:var(--teal);color:#22595a}
 .foot{text-align:center;margin-top:44px;font-size:11.5px;color:var(--mut2)}
 </style>
 </head>
@@ -58,6 +67,21 @@ a.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(31,42,68,.12
 </div>
 
 <div class="wrap">
+  <div class="starter">
+    <h3>Start here — one workbook per class</h3>
+    <p>Each master workbook holds everything for one class: roster, marks, attendance, fees, timetable
+       and teacher notes. Fill it once and the same file drives that class's progress dashboard
+       <b>and</b> every tool below — fee receipts, ID cards, certificates, the at-risk radar and parent files.
+       No sheet is compulsory; delete what you don't use.</p>
+    <div class="dl">
+      <a href="assets/templates/master/TESA_Master_Pre_Primary.xlsx" download>⬇ Pre-Primary</a>
+      <a href="assets/templates/master/TESA_Master_Primary.xlsx" download>⬇ Primary</a>
+      <a href="assets/templates/master/TESA_Master_Secondary.xlsx" download>⬇ Secondary</a>
+      <a href="assets/templates/master/TESA_Master_Junior_College.xlsx" download>⬇ Junior College</a>
+      <a href="assets/templates/master/TESA_Master_College.xlsx" download>⬇ College</a>
+    </div>
+  </div>
+
   <div class="grid">
     <a class="card" href="segments/pre-primary/index.html">
       <span class="badge live">Available</span>
@@ -115,6 +139,15 @@ a.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(31,42,68,.12
       <p>Design and print bubble answer sheets — pick subjects, question counts and layout, then export a ready-to-print A4 PDF.</p>
       <div class="go">Open →</div>
     </a>
+
+    <a class="card" href="tools/omr-scan/index.html">
+      <span class="badge live">Available</span>
+      <div class="ic">📷</div>
+      <div class="range">After the test</div>
+      <h3>OMR Scanner</h3>
+      <p>Photograph the filled sheets and get marks out — scored against your key, ambiguous marks flagged for review, exported straight into a dashboard.</p>
+      <div class="go">Open →</div>
+    </a>
   </div>
 
   <div class="section-label">Shared across everything</div>
@@ -146,6 +179,15 @@ a.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(31,42,68,.12
       <div class="range">Retention</div>
       <h3>At-Risk Radar</h3>
       <p>Crosses attendance, falling marks and unpaid fees to show who is drifting away — and how much revenue is walking out with them.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <a class="card" href="tools/parent-file/index.html">
+      <span class="badge live">Available</span>
+      <div class="ic">📱</div>
+      <div class="range">Parent experience</div>
+      <h3>Parent File</h3>
+      <p>One small file per student with their marks, weak chapters and a study plan built from their own topic scores. Opens on any phone, no app, no internet.</p>
       <div class="go">Open →</div>
     </a>
 

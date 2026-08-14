@@ -298,15 +298,33 @@ function readAcademic(sheets){
   const cName=nameColOf(aoa,hr);
   if(cName<0)return null;
   const header=aoa[hr]||[];
-  // a MAX MARKS meta row above the header gives the true ceiling when present
-  let maxRow=null;
+  // Meta rows above the header: MAX MARKS gives the true ceiling, TEST names the
+  // column block, TOPICS says which chapter each column examined. Only MAX is
+  // required; the other two simply unlock richer analysis when they're filled in.
+  let maxRow=null,testRow=null,topicRow=null;
   for(let i=hr-1;i>=Math.max(0,hr-10);i--){
     const row=aoa[i]||[];
-    if(row.some(c=>keyName(c).includes("max"))){maxRow=row;break;}
+    let label="";
+    for(let c=0;c<Math.min(4,row.length);c++){const k=keyName(row[c]);if(k){label=k;break;}}
+    if(!label)continue;
+    if(!maxRow&&label.includes("max"))maxRow=row;
+    else if(!topicRow&&label.includes("topic"))topicRow=row;
+    else if(!testRow&&(label.includes("test")||label.includes("exam")||label.includes("semester")||label.includes("eval")))testRow=row;
   }
   const cols=[];
   header.forEach((c,i)=>{if(i>cName&&!SKIP_COLS.has(keyName(c)))cols.push({label:norm(c),i});});
   if(!cols.length)return null;
+
+  // Test names sit only on the first column of each block, so carry them forward;
+  // topics are written per column and are read directly.
+  let curTest="";
+  cols.forEach(c=>{
+    if(testRow){const t=norm(testRow[c.i]);if(t)curTest=t;}
+    c.test=curTest||"Assessment";
+    c.topic=topicRow?norm(topicRow[c.i]):"";
+    if(c.topic==="-"||keyName(c.topic)==="na")c.topic="";
+    c.subject=c.label;
+  });
 
   const rows=[];
   for(let r=hr+1;r<aoa.length;r++){
@@ -326,13 +344,22 @@ function readAcademic(sheets){
   const byName={};
   rows.forEach(({name,row})=>{
     const seq=[],absent=[];
+    const subjAcc={},topicAcc={},testAcc={};
     cols.forEach(c=>{
       const raw=row[c.i];
       const s=norm(raw).toUpperCase();
       if(["A","AB","ABS","ABSENT"].includes(s)){absent.push(c.label);return;}
       const n=toNum(raw);
       if(n==null)return;
-      seq.push({label:c.label,pct:clamp(n/c.max*100,0,100)});
+      const pct=clamp(n/c.max*100,0,100);
+      seq.push({label:c.label,pct,test:c.test,topic:c.topic,subject:c.subject});
+      (subjAcc[c.subject]=subjAcc[c.subject]||[]).push(pct);
+      (testAcc[c.test]=testAcc[c.test]||{got:0,max:0,n:0});
+      testAcc[c.test].got+=n;testAcc[c.test].max+=c.max;testAcc[c.test].n++;
+      if(c.topic){
+        const k=c.subject+"||"+c.topic;
+        (topicAcc[k]=topicAcc[k]||{subject:c.subject,topic:c.topic,pcts:[]}).pcts.push(pct);
+      }
     });
     if(!seq.length&&!absent.length)return;
     const pcts=seq.map(x=>x.pct);
@@ -345,9 +372,21 @@ function readAcademic(sheets){
       const d=n*sxx-sx*sx;
       slope=d===0?0:(n*sxy-sx*sy)/d;
     }
-    byName[keyName(name)]={name,seq,avg,slope,absences:absent.length,absentIn:absent};
+    const bySubject={};Object.keys(subjAcc).forEach(k=>bySubject[k]=mean(subjAcc[k]));
+    const byTopic=Object.values(topicAcc).map(t=>({subject:t.subject,topic:t.topic,
+      avg:mean(t.pcts),n:t.pcts.length})).sort((a,b)=>a.avg-b.avg);
+    const byTest=Object.keys(testAcc).map(t=>({test:t,
+      pct:testAcc[t].max>0?testAcc[t].got/testAcc[t].max*100:null,n:testAcc[t].n}));
+    byName[keyName(name)]={name,seq,avg,slope,absences:absent.length,absentIn:absent,
+      bySubject,byTopic,byTest};
   });
-  return Object.keys(byName).length?{byName,columns:cols.map(c=>c.label)}:null;
+  if(!Object.keys(byName).length)return null;
+  return{byName,
+    columns:cols.map(c=>c.label),
+    subjects:[...new Set(cols.map(c=>c.subject))],
+    tests:[...new Set(cols.map(c=>c.test))],
+    topics:[...new Set(cols.map(c=>c.topic).filter(Boolean))],
+    hasTopics:cols.some(c=>c.topic)};
 }
 function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null;}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -380,6 +419,26 @@ function readAttendance(sheets){
     else if(pcts.length)byName[keyName(nm)]={pct:mean(pcts),present:null,total:null,kind:"subjectwise"};
   }
   return Object.keys(byName).length?{byName}:null;
+}
+
+// A dated observation log, one row per note. Richer than the single Notes column on the
+// roster because it keeps history — "what did we tell this parent in July" is a real question.
+function readNotes(sheets){
+  const aoa=findSheet(sheets,"notes");
+  if(!aoa)return null;
+  const rows=readTable(aoa,{
+    date:["Date","On","When"],name:["Student Name","Name"],
+    by:["By","Teacher","Staff","Recorded By"],
+    type:["Type","Category","Kind"],
+    note:["Note","Observation","Remark","Comment","Details"]
+  }).map(r=>({date:parseDate(r.date),name:norm(r.name),by:norm(r.by),
+    type:norm(r.type),note:norm(r.note)})).filter(n=>n.name&&n.note);
+  if(!rows.length)return null;
+  const byName={};
+  rows.forEach(n=>{(byName[keyName(n.name)]=byName[keyName(n.name)]||[]).push(n);});
+  // newest first — a teacher opening this wants the latest, not the oldest
+  Object.keys(byName).forEach(k=>byName[k].sort((a,b)=>(b.date?b.date.getTime():0)-(a.date?a.date.getTime():0)));
+  return{byName,all:rows};
 }
 
 // Same charges/payments model the Fees tool uses, so every tool quotes the same number.
@@ -708,7 +767,7 @@ window.OFFICE={
   parseDate,fmtDate,today,MONTHS,
   money,moneyInWords,
   findSheet,readTable,sheetsFromBytes,
-  readAcademic,readAttendance,readFees,mean,clamp,
+  readAcademic,readAttendance,readFees,readNotes,mean,clamp,
   printView,sharePDF,
   printHead(docTitle,meta){
     return `<div class="of-print-head"><img src="${esc(BRANDING.logoEmblem)}" alt="">

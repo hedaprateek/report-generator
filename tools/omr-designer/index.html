@@ -203,6 +203,9 @@ a{color:var(--teal)}
   </div>
 
   <button class="gen-btn" onclick="generatePDF()">Download PDF</button>
+  <button class="gen-btn" onclick="downloadSheetDefinition()"
+    style="margin-top:-6px;background:transparent;color:var(--navy);border:1px solid var(--color-border-secondary)"
+    title="The scanner needs this file to read filled sheets">Download scan file (.omr.json)</button>
 </div>
 
 <div class="preview-col">
@@ -472,8 +475,17 @@ function render() {
 
   const wmHTML = wmText ? `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-${wmAngle}deg);font-size:36px;font-weight:bold;color:${wmColor};opacity:${wmOpacity};white-space:nowrap;pointer-events:none;z-index:10;letter-spacing:3px;text-transform:uppercase;user-select:none">${wmText}</div>` : '';
 
+  // Preview fiducials mirror the PDF (595px ≈ 210mm, so 1mm ≈ 2.834px) purely so the
+  // printed sheet holds no surprises.
+  const MM=595/210, fp=9*MM, fs=5*MM, fi=2.5*MM;
+  const fidHTML=[[fi,fi],[595-fi-fp,fi],[fi,842-fi-fp],[595-fi-fp,842-fi-fp]].map(([px,py])=>
+    `<div style="position:absolute;left:${px}px;top:${py}px;width:${fp}px;height:${fp}px;background:#fff;z-index:20">
+       <div style="position:absolute;left:${(fp-fs)/2}px;top:${(fp-fs)/2}px;width:${fs}px;height:${fs}px;background:#000"></div>
+     </div>`).join('');
+
   document.getElementById('omrPreview').innerHTML = `
   <div style="font-family:Arial,sans-serif;width:595px;height:842px;position:relative;display:flex;flex-direction:column;overflow:hidden">
+    ${fidHTML}
     ${wmHTML}
     ${!headerAny?'':`<div style="background:${hc};color:#fff;padding:5px 10px;text-align:center;flex-shrink:0">
       ${showAcademy?`<div style="font-size:${15*ts}px;font-weight:bold;letter-spacing:.4px">${g('academy')}</div>`:''}
@@ -497,9 +509,35 @@ function render() {
   </div>`;
 }
 
-function generatePDF() {
+/* =================================================================
+   SCAN SUPPORT
+   Four solid corner squares give the scanner something unambiguous to
+   lock onto, and CAPTURE records every bubble the PDF actually draws.
+   Together they mean the scanner never has to guess the layout — it
+   maps the photo onto the page and looks the coordinates up.
+   ================================================================= */
+const FID={pad:9,size:5,inset:2.5}; // mm: white pad, black square, distance from page edge
+let CAPTURE={bubbles:[],page:null,fiducials:null,subjects:null};
+
+function drawFiducials(doc,W,H){
+  const pts=[];
+  const corners=[[FID.inset,FID.inset],[W-FID.inset-FID.pad,FID.inset],
+                 [FID.inset,H-FID.inset-FID.pad],[W-FID.inset-FID.pad,H-FID.inset-FID.pad]];
+  corners.forEach(([px,py])=>{
+    // white pad first so the mark reads cleanly even over the coloured header band
+    doc.setFillColor(255,255,255);doc.rect(px,py,FID.pad,FID.pad,'F');
+    const off=(FID.pad-FID.size)/2;
+    doc.setFillColor(0,0,0);doc.rect(px+off,py+off,FID.size,FID.size,'F');
+    pts.push({x:+(px+FID.pad/2).toFixed(3),y:+(py+FID.pad/2).toFixed(3)});
+  });
+  return pts; // order: TL, TR, BL, BR
+}
+
+function generatePDF(genOpts) {
+  genOpts=genOpts||{};
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  CAPTURE={bubbles:[],page:null,fiducials:null,subjects:null};
   const hc = g('hdrColor')||'#1a3a6b';
   const cols = parseInt(g('colCount'))||5;
   const optN = parseInt(g('optCount'))||4;
@@ -606,6 +644,10 @@ function generatePDF() {
   }
 
   // Bubble sections
+  // Printed question numbers restart at 1 in every subject, so they can't identify a
+  // question on their own. qid is a sheet-wide sequence the scanner keys on; q stays
+  // the number the student actually sees.
+  let qidSeq=0;
   subjects.forEach(s=>{
     const sr=parseInt(s.color.slice(1,3),16),sg=parseInt(s.color.slice(3,5),16),sb2=parseInt(s.color.slice(5,7),16);
     const qs=Array.from({length:s.q},(_,i)=>i+1);
@@ -620,6 +662,7 @@ function generatePDF() {
     y+=bandMM;
 
     qs.forEach((q,idx)=>{
+      const qid=++qidSeq;
       const ci=Math.floor(idx/rows), ri=idx%rows;
       const cx=M+ci*colW, cy=y+ri*rH;
       if(ri%2===0){doc.setFillColor(244,247,252);doc.rect(cx,cy,colW,rH,'F');}
@@ -634,6 +677,9 @@ function generatePDF() {
         doc.setFont('helvetica','bold'); doc.setFontSize(Math.min(6.5,Math.max(4,bubR*2.6)));
         doc.setTextColor(45,45,45);
         doc.text(opt,bx,by+bubR*0.55,{align:'center'});
+        // Record exactly where this bubble was drawn. The scanner then reads coordinates
+        // rather than re-deriving the layout, so the two can never disagree about geometry.
+        CAPTURE.bubbles.push({qid,q,subject:s.name,option:opt,x:+bx.toFixed(3),y:+by.toFixed(3),r:+bubR.toFixed(3)});
       });
     });
     y+=rows*rH+sectGapMM;
@@ -691,7 +737,39 @@ function generatePDF() {
     doc.restoreGraphicsState();
   }
 
+  // Fiducials last, so nothing can be drawn over them.
+  CAPTURE.fiducials=drawFiducials(doc,W,H);
+  CAPTURE.page={w:W,h:H};
+  CAPTURE.subjects=subjects.map(s=>({name:s.name,questions:s.q,marks:s.marks||2}));
+  CAPTURE.meta={options:opts2Letters(optN),shape,testName:g('testName'),batch:g('batch'),
+    academy:g('academy'),date:g('testDate'),marking:g('marking')};
+
+  if(genOpts.defOnly)return CAPTURE;
   doc.save('OMR_Sheet_A4.pdf');
+  return CAPTURE;
+}
+function opts2Letters(n){return 'ABCDE'.slice(0,n).split('');}
+
+// The scanner needs this file; without it a printed sheet is just paper.
+function downloadSheetDefinition(){
+  const def=generatePDF({defOnly:true});
+  if(!def.bubbles.length){alert("Nothing to export — add at least one subject with questions.");return;}
+  const out={
+    version:1,
+    createdAt:new Date().toISOString(),
+    page:def.page,
+    fiducials:def.fiducials,      // TL, TR, BL, BR centres in mm
+    fiducialSize:FID.size,
+    subjects:def.subjects,
+    meta:def.meta,
+    bubbles:def.bubbles
+  };
+  const blob=new Blob([JSON.stringify(out)],{type:"application/json"});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(def.meta.testName?def.meta.testName.replace(/[^\w\-]+/g,'_'):'OMR_Sheet')+'.omr.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
 
 function listenAll() {

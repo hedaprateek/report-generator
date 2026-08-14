@@ -863,7 +863,7 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","
 let DATA=null, AN=null, FILTER={type:"__all",month:"__all"}, curStudent=null, BATCHES=[], CURRENT_BATCH=0;
 const LABELS={
   remarksHeading:"AI Evaluation",
-  teacherNoteHeading:"Note from the Teacher",
+  teacherNoteHeading:"Teacher’s Note & Evaluation",
   sign1:"Class Teacher", sign2:"Academy Head", sign3:"Parent / Guardian",
   overviewBanner:"",
   showAttention:true,
@@ -1270,10 +1270,9 @@ function buildReportSheetHTML(s,a,sheetId){
           </div>
         </div>`; })()}
 
-      ${s.info&&s.info.notes?`<div class="rep-sec"><h4>${esc(LABELS.teacherNoteHeading)}</h4>
-        <div class="tnote">${esc(s.info.notes)}</div></div>`:""}
       <div class="rep-sec">
-        <h4>${esc(LABELS.remarksHeading)}</h4>
+        <h4>${esc(LABELS.teacherNoteHeading)}</h4>
+        ${s.info&&s.info.notes?`<div class="tnote">${esc(s.info.notes)}</div>`:""}
         <div class="remarks" contenteditable="true" spellcheck="false">${remark}</div>
       </div>
 
@@ -1674,7 +1673,7 @@ document.getElementById("settingsSave").addEventListener("click",()=>{
   applyBranding();
 });
 document.getElementById("settingsReset").addEventListener("click",()=>{
-  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Note from the Teacher";
+  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Teacher’s Note & Evaluation";
   LABELS.sign1="Class Teacher";LABELS.sign2="Academy Head";LABELS.sign3="Parent / Guardian";
   LABELS.overviewBanner="";LABELS.showAttention=true;
   LABELS.band5="Strong";LABELS.band4="Good";LABELS.band3="Fair";LABELS.band2="Watch";LABELS.band1="Concern";
