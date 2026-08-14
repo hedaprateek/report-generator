@@ -97,7 +97,30 @@ function parse(sheets){
   return{rows,acad,classSubj,classAvg,ranked:ranked.length,hasTopics:acad.hasTopics};
 }
 
-let D=null,MOUNT=null,CUR=null,LOGO=null;
+let D=null,MOUNT=null,CUR=null,LOGO=null,VIEW="build";
+/* Sending forty files one at a time is the actual chore, and what goes wrong is losing
+   your place halfway. The sent list is keyed per class + exam and persisted, so the queue
+   survives closing the tab and resumes exactly where it stopped. */
+const SENT_KEY="pfSent_v1";
+function sentAll(){try{return JSON.parse(localStorage.getItem(SENT_KEY)||"{}")||{};}catch(e){return{};}}
+function sentBucket(){return OFFICE.keyName((D.rows[0]&&D.rows[0].batch)||"class")+"|"+OFFICE.keyName(CFG.examName||"");}
+function isSent(name){const a=sentAll()[sentBucket()]||{};return !!a[OFFICE.keyName(name)];}
+function markSent(name,on){
+  const all=sentAll(),k=sentBucket();
+  all[k]=all[k]||{};
+  if(on)all[k][OFFICE.keyName(name)]=Date.now();else delete all[k][OFFICE.keyName(name)];
+  try{localStorage.setItem(SENT_KEY,JSON.stringify(all));}catch(e){}
+}
+function waLink(s,text){
+  const digits=String(s.phone||"").replace(/\D/g,"");
+  // Indian numbers are usually stored without the country code; wa.me needs it.
+  const num=digits.length===10?"91"+digits:digits;
+  return num?`https://wa.me/${num}?text=${encodeURIComponent(text)}`
+            :`https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+function shareText(s){
+  return `${s.name}'s progress report from ${OFFICE.branding.name}. Open the attached file on any phone — it works without internet.`;
+}
 let CFG={examName:"Final Examination",examDate:"",sessions:4,target:80,
   note:"",showRank:true,showAttendance:true,showPlan:true,showTopics:true,showChart:true,showNotes:true};
 const O=()=>OFFICE;
@@ -333,6 +356,82 @@ function download(name,html){
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
+function paint(){
+  OFFICE.tabs([{id:"build",label:"Build"},{id:"send",label:`Send (${D.rows.filter(r=>!isSent(r.name)).length} left)`}],
+    VIEW,id=>{VIEW=id;paint();});
+  if(VIEW==="send")renderSend();else render();
+}
+
+/* ---------------- send queue ---------------- */
+function renderSend(){
+  const o=O();
+  const rows=D.rows;
+  const done=rows.filter(r=>isSent(r.name)).length;
+  const noPhone=rows.filter(r=>!r.phone).length;
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-send">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Work down the list</div><h2>Send to parents</h2></div>
+        <div class="of-filters">
+          <button class="btn btn-ghost" id="sDownAll">Download all files</button>
+          <button class="btn btn-ghost" id="sReset">Reset ticks</button>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Sent</div><div class="v" style="color:var(--b5)">${done}</div><div class="s">of ${rows.length}</div></div>
+        <div class="kpi"><div class="k">Remaining</div><div class="v" style="color:var(--amber)">${rows.length-done}</div><div class="s">still to send</div></div>
+        <div class="kpi"><div class="k">No phone number</div><div class="v" style="color:${noPhone?"var(--b1)":"var(--mut)"}">${noPhone}</div><div class="s">opens WhatsApp blank</div></div>
+      </div>
+      <div class="panel">
+        <h3>${o.esc(CFG.examName||"Progress")} · ${o.esc((rows[0]&&rows[0].batch)||"")}</h3>
+        <p class="sub">Tapping <b>WhatsApp</b> opens that parent's chat with the message ready — attach the
+          downloaded file and send. The tick is saved on this device, so you can stop and come back.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>
+            <th style="width:40px" class="c">Sent</th><th>Student</th><th>Parent</th>
+            <th class="c" style="width:110px">File</th><th class="c" style="width:130px">Message</th></tr></thead>
+          <tbody>${rows.map((r,i)=>`<tr style="${isSent(r.name)?"opacity:.55":""}">
+            <td class="c"><input type="checkbox" data-sent="${i}" ${isSent(r.name)?"checked":""}
+              style="width:17px;height:17px;accent-color:var(--teal)"></td>
+            <td><b style="color:var(--navy)">${o.esc(r.name)}</b>
+              <div style="font-size:11px;color:var(--mut)">${r.roll!=null?"Roll "+r.roll:""}${r.acad.avg!=null?` · ${r.acad.avg.toFixed(0)}%`:""}</div></td>
+            <td>${o.esc(r.parent||"—")}
+              <div style="font-size:11.5px;color:${r.phone?"var(--navy)":"var(--b1)"};font-weight:600">${o.esc(r.phone||"no number")}</div></td>
+            <td class="c"><button class="btn btn-ghost" style="padding:5px 10px;font-size:11.5px" data-dl="${i}">Download</button></td>
+            <td class="c"><a class="btn btn-ghost" style="padding:5px 10px;font-size:11.5px" target="_blank" rel="noopener"
+              href="${o.esc(waLink(r,shareText(r)))}" data-wa="${i}">WhatsApp →</a></td>
+          </tr>`).join("")}</tbody>
+        </table>
+      </div>
+      <p style="font-size:11.5px;color:var(--mut2);margin-top:12px">
+        On a phone the <b>Download</b> button offers a direct share sheet, so the file can go straight into the chat.
+        On a computer the file lands in Downloads and you attach it in WhatsApp Web.</p>
+    </div>`;
+
+  MOUNT.querySelectorAll("[data-sent]").forEach(cb=>cb.addEventListener("change",e=>{
+    markSent(rows[+e.target.dataset.sent].name,e.target.checked);paint();}));
+  MOUNT.querySelectorAll("[data-dl]").forEach(b=>b.addEventListener("click",async()=>{
+    const r=rows[+b.dataset.dl],html=buildFile(r);
+    const file=new File([html],o.slugify(r.name)+"_progress.html",{type:"text/html"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:r.name,text:shareText(r)});markSent(r.name,true);paint();return;}
+      catch(err){if(err&&err.name==="AbortError")return;}
+    }
+    download(file.name,html);
+  }));
+  MOUNT.querySelectorAll("[data-wa]").forEach(a=>a.addEventListener("click",()=>{
+    // opening the chat is the last step, so tick it then
+    markSent(rows[+a.dataset.wa].name,true);setTimeout(paint,300);}));
+  document.getElementById("sDownAll").addEventListener("click",async()=>{
+    for(const r of rows){download(o.slugify(r.name)+"_progress.html",buildFile(r));
+      await new Promise(x=>setTimeout(x,350));}});
+  document.getElementById("sReset").addEventListener("click",()=>{
+    if(!confirm("Clear every tick for this class and exam?"))return;
+    const all=sentAll();delete all[sentBucket()];
+    try{localStorage.setItem(SENT_KEY,JSON.stringify(all));}catch(e){}
+    paint();});
+}
+
 function render(){
   const o=O();
   if(!CUR&&D.rows[0])CUR=D.rows[0].name;
@@ -446,9 +545,9 @@ OFFICE.boot({
   pill:d=>`${d.rows.length} students${d.hasTopics?" · topics found":" · no topics"}`,
   parse,
   render:async(data,mount)=>{
-    D=data;MOUNT=mount;CUR=null;
+    D=data;MOUNT=mount;CUR=null;VIEW="build";
     if(!LOGO)LOGO=await tryInlineLogo();
-    render();
+    paint();
   }
 });
 </script>

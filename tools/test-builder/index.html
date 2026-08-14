@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/test-codec.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.tb-layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+@media(max-width:1000px){.tb-layout{grid-template-columns:1fr}}
+.tb-side label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.03em;margin:13px 0 5px}
+.tb-side label:first-of-type{margin-top:0}
+.tb-side input[type=text],.tb-side input[type=number],.tb-side select{width:100%}
+.tb-check{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.tb-check:last-of-type{border-bottom:none}
+.tb-check input{margin:2px 0 0;width:16px;height:16px;accent-color:var(--teal);flex-shrink:0}
+.tb-check b{display:block;font-size:12.5px;color:var(--navy)}
+.tb-check span{font-size:11px;color:var(--mut);line-height:1.4}
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.mode{border:1.5px solid var(--line2);border-radius:10px;padding:10px 11px;cursor:pointer;background:#fff}
+.mode.on{border-color:var(--teal);background:var(--teal-soft)}
+.mode b{display:block;font-size:12.5px;color:var(--navy)}
+.mode span{font-size:10.5px;color:var(--mut);line-height:1.4;display:block;margin-top:2px}
+.warnbox{background:var(--amber-soft);border:1px solid #EBD3A8;border-left:3px solid var(--amber);
+  border-radius:9px;padding:11px 13px;font-size:11.5px;color:#6E4A1A;line-height:1.55;margin-top:12px}
+.warnbox ul{margin:6px 0 0;padding-left:16px}
+.phone{width:390px;max-width:100%;height:720px;border:10px solid #1B2540;border-radius:26px;
+  background:#fff;overflow:hidden;box-shadow:0 16px 44px rgba(31,42,68,.3);margin:0 auto}
+.phone iframe{width:100%;height:100%;border:0;display:block}
+.tb-stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+.qtable{width:100%;border-collapse:collapse;font-size:12px}
+.qtable th{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+  text-align:left;padding:7px 8px;border-bottom:2px solid var(--line2)}
+.qtable td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.qtable .k{font-weight:700;color:var(--b5)}
+.qtable .bad{color:var(--b1);font-weight:700}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Questions":[
+ ["Q No","Section","Topic","Question","Option A","Option B","Option C","Option D","Correct","Marks","Negative","Explanation"],
+ [1,"Physics","Kinematics","A body starts from rest and accelerates uniformly at 2 m/s². How far does it travel in 5 seconds?","10 m","25 m","50 m","100 m","B",2,0.5,"s = ut + ½at² = 0 + ½(2)(25) = 25 m"],
+ [2,"Physics","Laws of Motion","Newton's third law is best described as:","Force equals mass times acceleration","Every action has an equal and opposite reaction","A body stays at rest unless acted upon","Momentum is always conserved","B",2,0.5,""],
+ [3,"Physics","Kinematics","The slope of a distance–time graph gives:","Acceleration","Speed","Displacement","Force","B",2,0.5,""],
+ [4,"Chemistry","Mole Concept","How many molecules are there in 2 moles of water?","6.022 × 10²³","1.2044 × 10²⁴","3.011 × 10²³","2 × 10²³","B",2,0.5,"2 × Avogadro's number"],
+ [5,"Chemistry","Chemical Bonding","An ionic bond is formed by:","Sharing of electrons","Transfer of electrons","Overlap of orbitals","Metallic attraction","B",2,0.5,""],
+ [6,"Chemistry","Mole Concept","The molar mass of CO₂ is approximately:","28 g/mol","44 g/mol","32 g/mol","12 g/mol","B",2,0.5,""],
+ [7,"Maths","Quadratics","The roots of x² − 5x + 6 = 0 are:","2 and 3","1 and 6","−2 and −3","2 and −3","A",2,0.5,""],
+ [8,"Maths","Trigonometry","The value of sin 30° is:","1","1/2","√3/2","0","B",2,0.5,""],
+ [9,"Maths","Quadratics","The discriminant of ax² + bx + c = 0 is:","b² − 4ac","b² + 4ac","2a/b","−b/2a","A",2,0.5,""],
+ [10,"Maths","Trigonometry","cos 0° equals:","0","1","−1","undefined","B",2,0.5,""]]};
+
+function parse(sheets){
+  const q=OFFICE.readQuestions(sheets);
+  if(!q)throw new Error("This workbook has no readable 'Questions' sheet. It needs a Question column and at least two option columns.");
+  return q;
+}
+
+let D=null,MOUNT=null,LOGO=null;
+let CFG={title:"Weekly Test",subject:"",duration:30,mode:"exam",
+  shuffleQuestions:false,shuffleOptions:false,requireName:true,allowBack:true,showTimer:true,relay:false};
+const O=()=>OFFICE;
+
+async function tryInlineLogo(){
+  const src=O().branding.logoFull;
+  if(!src)return null;
+  if(/^data:/.test(src))return src;
+  try{const r=await fetch(src);const b=await r.blob();
+    return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res(null);fr.readAsDataURL(b);});
+  }catch(e){return null;}
+}
+
+/* =================================================================
+   THE STUDENT TEST FILE
+   One .html, no network of any kind. It must survive a cheap phone,
+   a dead signal, and an accidental tab close mid-test.
+
+   In exam mode the correct answers are NOT written into this file.
+   Anything shipped to a device can be read, so the honest design is
+   to omit the key entirely and let the teacher evaluate.
+   ================================================================= */
+function buildTest(){
+  const o=O(),b=o.branding;
+  const practice=CFG.mode==="practice";
+  const qs=D.questions.map(q=>({
+    n:q.no,s:q.section,t:q.text,
+    o:q.options.map(x=>({l:x.letter,t:x.text})),
+    m:q.marks,g:q.negative,
+    ...(practice?{k:q.correct,e:q.explain}:{})
+  }));
+  const meta={title:CFG.title,subject:CFG.subject,academy:b.name,logo:LOGO||"",
+    duration:CFG.duration,mode:CFG.mode,total:D.totalMarks,
+    shuffleQ:CFG.shuffleQuestions,shuffleO:CFG.shuffleOptions,
+    requireName:CFG.requireName,allowBack:CFG.allowBack,showTimer:CFG.showTimer,relay:CFG.relay};
+  return TEST_TEMPLATE(meta,qs);
+}
+
+function TEST_TEMPLATE(M,QS){
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const json=o=>JSON.stringify(o).replace(/</g,"\\u003c");
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1">
+<title>${esc(M.title)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;padding-bottom:96px}
+.bar{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#1B2540,#0E7C7B);color:#fff;
+  padding:10px 14px;display:flex;align-items:center;gap:10px}
+.bar img{height:28px;border-radius:6px;background:rgba(255,255,255,.12)}
+.bar .ti{flex:1;min-width:0}
+.bar .ti b{display:block;font-size:13.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .ti span{font-size:10.5px;opacity:.85}
+.clock{background:rgba(255,255,255,.18);border-radius:20px;padding:5px 11px;font-size:13px;font-weight:700;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.clock.low{background:#B4472F}
+.prog{height:4px;background:rgba(255,255,255,.2)}
+.prog>i{display:block;height:100%;background:#fff;width:0;transition:width .2s}
+.wrap{max-width:620px;margin:0 auto;padding:14px}
+.card{background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:16px;margin-bottom:12px;
+  box-shadow:0 1px 2px rgba(31,42,68,.04),0 6px 18px rgba(31,42,68,.05)}
+h1{font-family:Georgia,serif;font-size:21px;color:#1F2A44;margin-bottom:6px}
+p.lead{font-size:13.5px;color:#7C8598;line-height:1.6}
+label.fl{display:block;font-size:11px;font-weight:700;color:#1F2A44;text-transform:uppercase;
+  letter-spacing:.04em;margin:14px 0 5px}
+input[type=text]{width:100%;font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid #D8D3C6;border-radius:9px}
+input[type=text]:focus{outline:2px solid #0E7C7B;border-color:#0E7C7B}
+.btn{display:block;width:100%;border:none;border-radius:11px;font-family:inherit;font-weight:700;
+  font-size:15px;padding:14px;cursor:pointer;background:#0E7C7B;color:#fff}
+.btn:disabled{opacity:.45}
+.btn.sec{background:transparent;color:#1F2A44;border:1px solid #D8D3C6}
+.qhead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.qhead .n{font-family:Georgia,serif;font-size:19px;font-weight:700;color:#0E7C7B}
+.qhead .sec{font-size:10.5px;color:#9AA3B2;text-transform:uppercase;letter-spacing:.06em}
+.qhead .mk{margin-left:auto;font-size:10.5px;color:#7C8598;white-space:nowrap}
+.qtext{font-size:15.5px;line-height:1.55;color:#2B2F3A;margin-bottom:14px;white-space:pre-wrap}
+.opt{display:flex;gap:11px;align-items:flex-start;border:1.5px solid #E4E0D6;border-radius:11px;
+  padding:12px 13px;margin-bottom:9px;cursor:pointer;background:#fff}
+.opt:active{background:#FAF8F2}
+.opt .l{width:26px;height:26px;border-radius:50%;border:1.5px solid #D8D3C6;display:grid;place-items:center;
+  font-size:12.5px;font-weight:700;color:#7C8598;flex-shrink:0}
+.opt .t{font-size:14.5px;line-height:1.45;padding-top:2px}
+.opt.sel{border-color:#0E7C7B;background:#E2F0EF}
+.opt.sel .l{background:#0E7C7B;border-color:#0E7C7B;color:#fff}
+.opt.ok{border-color:#1F7A4D;background:#DEEEE4}
+.opt.ok .l{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
+.opt.no{border-color:#B4472F;background:#F6E3DD}
+.opt.no .l{background:#B4472F;border-color:#B4472F;color:#fff}
+.expl{font-size:12.5px;color:#22595a;background:#E2F0EF;border-left:3px solid #0E7C7B;
+  border-radius:8px;padding:10px 12px;margin-top:4px;line-height:1.55}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #E4E0D6;
+  padding:10px 14px;display:flex;gap:9px;align-items:center;z-index:20}
+.nav .sp{flex:1}
+.nav button{border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;
+  padding:12px 18px;cursor:pointer;background:#0E7C7B;color:#fff}
+.nav button.g{background:transparent;color:#1F2A44;border:1px solid #D8D3C6}
+.nav button:disabled{opacity:.4}
+.flagbtn{background:transparent;border:1px solid #D8D3C6;border-radius:10px;padding:12px 14px;
+  font-size:16px;cursor:pointer;line-height:1}
+.flagbtn.on{background:#FBEEDC;border-color:#C9791B}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:7px;margin-top:10px}
+.gcell{aspect-ratio:1;border:1.5px solid #E4E0D6;border-radius:9px;display:grid;place-items:center;
+  font-size:13px;font-weight:700;color:#7C8598;cursor:pointer;background:#fff}
+.gcell.done{background:#DEEEE4;border-color:#1F7A4D;color:#1F7A4D}
+.gcell.flag{background:#FBEEDC;border-color:#C9791B;color:#8A5310}
+.gcell.cur{outline:2px solid #1F2A44;outline-offset:1px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;
+  background:#F3F1EA;border:1px dashed #D8D3C6;border-radius:10px;padding:12px;line-height:1.6;user-select:all}
+.big{font-family:Georgia,serif;font-size:44px;font-weight:800;color:#0E7C7B;line-height:1}
+.muted{font-size:12px;color:#9AA3B2;line-height:1.6}
+.warn{background:#FBEEDC;border-left:3px solid #C9791B;border-radius:8px;padding:11px 13px;
+  font-size:12.5px;color:#6E4A1A;line-height:1.55}
+.hide{display:none!important}
+</style></head>
+<body>
+<div class="bar">
+  ${M.logo?`<img src="${M.logo}" alt="">`:""}
+  <div class="ti"><b>${esc(M.title)}</b><span>${esc(M.academy)}${M.subject?" · "+esc(M.subject):""}</span></div>
+  <div class="clock hide" id="clock">--:--</div>
+</div>
+<div class="prog"><i id="prog"></i></div>
+
+<div class="wrap">
+  <!-- START -->
+  <div id="start">
+    <div class="card">
+      <h1>${esc(M.title)}</h1>
+      <p class="lead">${QS.length} questions · ${M.total} marks${M.duration?` · ${M.duration} minutes`:""}${M.mode==="practice"?" · practice mode":""}</p>
+      <label class="fl">Your full name</label>
+      <input type="text" id="nm" placeholder="Type your name exactly as in the register" autocomplete="name">
+      <label class="fl">Roll number (optional)</label>
+      <input type="text" id="rl" placeholder="e.g. 12" inputmode="numeric">
+      <div style="margin-top:16px" class="muted">
+        Answer on this phone. Nothing is sent anywhere — at the end you get a short
+        code to send back to your teacher.${M.duration?" The timer starts when you tap Start.":""}
+      </div>
+      <div style="height:14px"></div>
+      <button class="btn" id="go">Start the test</button>
+    </div>
+    <div class="card" id="resume" style="display:none">
+      <div class="warn" id="resumeMsg"></div>
+      <div style="height:10px"></div>
+      <button class="btn sec" id="resumeBtn">Continue where I left off</button>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div id="test" class="hide">
+    <div class="card" id="qcard"></div>
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:#1F2A44;text-transform:uppercase;letter-spacing:.05em">Question map</div>
+      <div class="grid" id="map"></div>
+      <div class="muted" style="margin-top:9px">Green = answered · Amber = flagged for review</div>
+    </div>
+  </div>
+
+  <!-- DONE -->
+  <div id="done" class="hide">
+    <div class="card hide" id="relayCard">
+      <div style="font-size:11px;font-weight:700;color:#1F2A44;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+        Shared device</div>
+      <button class="btn" id="nextStu">Hand over to the next student</button>
+      <div style="height:8px"></div>
+      <button class="btn sec" id="allCodes">Show all codes collected (<span id="relayN">0</span>)</button>
+      <div id="relayBox" class="hide" style="margin-top:10px">
+        <div class="code" id="relayList"></div>
+        <div style="height:8px"></div>
+        <button class="btn sec" id="copyAll">Copy every code</button>
+        <div class="muted" style="margin-top:8px">Send this whole block to yourself once at the end —
+          the evaluator reads them all in one paste.</div>
+      </div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="muted" style="text-transform:uppercase;letter-spacing:.1em;font-weight:700">Submitted</div>
+      <div class="big" id="score" style="margin:10px 0 4px">✓</div>
+      <div id="scoreLab" class="muted"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:#1F2A44;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+        Send this code to your teacher</div>
+      <div class="code" id="code"></div>
+      <div style="height:10px"></div>
+      <button class="btn" id="copy">Copy code</button>
+      <div style="height:8px"></div>
+      <button class="btn sec" id="share">Share on WhatsApp</button>
+      <div style="height:8px"></div>
+      <button class="btn sec" id="dl">Download answer file</button>
+      <div class="muted" style="margin-top:10px">
+        The code contains only your name and your chosen options. Copy it exactly — if any characters
+        are missing your teacher's tool will reject it.</div>
+    </div>
+    <div id="review"></div>
+  </div>
+</div>
+
+<div class="nav hide" id="nav">
+  <button class="g" id="prev">Back</button>
+  <button class="flagbtn" id="flag" title="Flag for review">⚑</button>
+  <div class="sp"></div>
+  <button id="next">Next</button>
+</div>
+
+<script>
+${TestCodec.SOURCE}
+
+var M=${json(M)};
+var QS=${json(QS)};
+var KEY="tq_"+(M.title||"test").replace(/\\W+/g,"_");
+var RKEY=KEY+"_relay";
+var order=[],optOrder={},cur=0,ans={},flags={},startedAt=null,timer=null,ended=false;
+
+function $(id){return document.getElementById(id);}
+function rnd(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,seed){var r=rnd(seed),a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(r()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+function buildOrder(seed){
+  order=QS.map(function(_,i){return i;});
+  if(M.shuffleQ)order=shuffle(order,seed);
+  optOrder={};
+  QS.forEach(function(q,i){
+    var idx=q.o.map(function(_,k){return k;});
+    optOrder[i]=M.shuffleO?shuffle(idx,seed+i*7+1):idx;
+  });
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify({ans:ans,flags:flags,cur:cur,startedAt:startedAt,seed:seed}));}catch(e){}
+}
+function clearSave(){try{localStorage.removeItem(KEY);}catch(e){}}
+
+var seed=Math.floor(Math.random()*1e9);
+
+/* ---- start / resume ---- */
+(function relayCount(){
+  if(!M.relay)return;
+  try{var l=JSON.parse(localStorage.getItem(RKEY)||"[]");$("relayN").textContent=l.length;}catch(e){}
+})();
+(function checkResume(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw)return;
+    var st=JSON.parse(raw);
+    if(!st||!st.startedAt)return;
+    var n=Object.keys(st.ans||{}).length;
+    $("resume").style.display="block";
+    $("resumeMsg").textContent="You have an unfinished attempt with "+n+" question"+(n===1?"":"s")+" answered.";
+    $("resumeBtn").onclick=function(){
+      ans=st.ans||{};flags=st.flags||{};cur=st.cur||0;startedAt=st.startedAt;seed=st.seed||seed;
+      var nm=st.nm||"";if(nm)$("nm").value=nm;
+      begin(true);
+    };
+  }catch(e){}
+})();
+
+$("go").onclick=function(){
+  if(M.requireName&&!$("nm").value.trim()){$("nm").focus();$("nm").style.borderColor="#B4472F";return;}
+  startedAt=Date.now();begin(false);
+};
+function begin(resumed){
+  buildOrder(seed);
+  $("start").className="hide";$("test").className="";$("nav").className="nav";
+  if(M.duration&&M.showTimer){$("clock").className="clock";tick();timer=setInterval(tick,1000);}
+  draw();save();
+}
+function remaining(){
+  if(!M.duration)return null;
+  return Math.max(0,M.duration*60000-(Date.now()-startedAt));
+}
+function tick(){
+  var r=remaining();if(r==null)return;
+  var s=Math.floor(r/1000),m=Math.floor(s/60);
+  $("clock").textContent=(m<10?"0":"")+m+":"+((s%60)<10?"0":"")+(s%60);
+  if(r<=60000)$("clock").className="clock low";
+  if(r<=0){clearInterval(timer);finish(true);}
+}
+
+/* ---- question rendering ---- */
+function draw(){
+  var qi=order[cur],q=QS[qi];
+  var opts=optOrder[qi].map(function(k){return q.o[k];});
+  var chosen=ans[qi];
+  $("qcard").innerHTML=
+    '<div class="qhead"><span class="n">'+(cur+1)+'</span>'+
+    '<span class="sec">'+esc(q.s)+'</span>'+
+    '<span class="mk">+'+q.m+(q.g?" / −"+q.g:"")+'</span></div>'+
+    '<div class="qtext">'+esc(q.t)+'</div>'+
+    opts.map(function(o,ix){
+      // Label by position, never by the original letter: with options shuffled a student
+      // would otherwise see "B A D C" down the page and assume the paper was broken.
+      // data-l keeps the original letter so the answer still encodes canonically.
+      var disp="ABCDE".charAt(ix);
+      return '<div class="opt'+(chosen===o.l?" sel":"")+'" data-l="'+o.l+'">'+
+        '<span class="l">'+disp+'</span><span class="t">'+esc(o.t)+'</span></div>';
+    }).join("");
+  Array.prototype.forEach.call($("qcard").querySelectorAll(".opt"),function(el){
+    el.onclick=function(){
+      var L=el.getAttribute("data-l");
+      if(ans[qi]===L)delete ans[qi];else ans[qi]=L;
+      save();draw();
+    };
+  });
+  $("flag").className="flagbtn"+(flags[qi]?" on":"");
+  $("prev").disabled=(cur===0)||!M.allowBack;
+  $("next").textContent=(cur===order.length-1)?"Finish":"Next";
+  $("prog").style.width=(Object.keys(ans).length/QS.length*100)+"%";
+  drawMap();
+  window.scrollTo(0,0);
+}
+function drawMap(){
+  $("map").innerHTML=order.map(function(qi,i){
+    var c="gcell"+(ans[qi]?" done":"")+(flags[qi]?" flag":"")+(i===cur?" cur":"");
+    return '<div class="'+c+'" data-i="'+i+'">'+(i+1)+'</div>';
+  }).join("");
+  Array.prototype.forEach.call($("map").querySelectorAll(".gcell"),function(el){
+    el.onclick=function(){
+      var i=+el.getAttribute("data-i");
+      if(!M.allowBack&&i<cur)return;
+      cur=i;draw();save();
+    };
+  });
+}
+$("prev").onclick=function(){if(cur>0){cur--;draw();save();}};
+$("next").onclick=function(){
+  if(cur<order.length-1){cur++;draw();save();}
+  else{
+    var un=QS.length-Object.keys(ans).length;
+    if(un>0&&!confirm(un+" question"+(un===1?" is":"s are")+" unanswered. Submit anyway?"))return;
+    finish(false);
+  }
+};
+$("flag").onclick=function(){var qi=order[cur];if(flags[qi])delete flags[qi];else flags[qi]=1;draw();save();};
+
+/* ---- submit ---- */
+function finish(auto){
+  if(ended)return;ended=true;
+  if(timer)clearInterval(timer);
+  // Canonical order and canonical option letters, whatever the student saw.
+  var letters=QS.map(function(_,i){return ans[i]||"-";}).join("");
+  var name=($("nm").value||"").trim();
+  var roll=($("rl").value||"").trim();
+  var label=name+(roll?" ("+roll+")":"");
+  var code=tcEncode(label,letters);
+  $("test").className="hide";$("nav").className="nav hide";$("done").className="";
+  $("clock").className="clock hide";
+  $("code").textContent=code;
+
+  if(M.mode==="practice"){
+    var got=0,max=0,right=0;
+    QS.forEach(function(q,i){
+      max+=q.m;
+      if(!q.k)return;
+      if(ans[i]===q.k){got+=q.m;right++;}
+      else if(ans[i])got-=q.g||0;
+    });
+    $("score").textContent=Math.max(0,got)+" / "+max;
+    $("scoreLab").textContent=right+" of "+QS.length+" correct"+(auto?" · time ran out":"");
+    $("review").innerHTML='<div class="card"><div style="font-size:11px;font-weight:700;color:#1F2A44;'+
+      'text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Review</div>'+
+      QS.map(function(q,i){
+        var mine=ans[i];
+        return '<div style="margin-bottom:16px"><div class="qhead"><span class="n">'+(i+1)+'</span>'+
+          '<span class="sec">'+esc(q.s)+'</span></div><div class="qtext">'+esc(q.t)+'</div>'+
+          q.o.map(function(o){
+            var cls=o.l===q.k?" ok":(mine===o.l?" no":"");
+            return '<div class="opt'+cls+'"><span class="l">'+o.l+'</span><span class="t">'+esc(o.t)+'</span></div>';
+          }).join("")+
+          (q.e?'<div class="expl">'+esc(q.e)+'</div>':'')+'</div>';
+      }).join("")+'</div>';
+  }else{
+    $("score").textContent="✓";
+    $("scoreLab").textContent=(auto?"Time ran out — your answers were saved.":"Your answers are saved.")+
+      " Send the code below to your teacher.";
+  }
+  clearSave();
+  if(M.relay){
+    // A shared tablet means the teacher collects codes on the device rather than each
+    // student messaging one. Stored separately from the in-progress autosave so a
+    // half-finished attempt can never overwrite a finished one.
+    try{
+      var list=JSON.parse(localStorage.getItem(RKEY)||"[]");
+      list.push({n:label,c:code,at:Date.now()});
+      localStorage.setItem(RKEY,JSON.stringify(list));
+      $("relayN").textContent=list.length;
+    }catch(e){}
+    $("relayCard").className="card";
+    $("nextStu").onclick=function(){
+      ans={};flags={};cur=0;ended=false;startedAt=null;
+      seed=Math.floor(Math.random()*1e9);
+      $("nm").value="";$("rl").value="";
+      $("done").className="hide";$("start").className="";$("resume").style.display="none";
+      $("relayBox").className="hide";
+      window.scrollTo(0,0);
+    };
+    $("allCodes").onclick=function(){
+      var list=[];try{list=JSON.parse(localStorage.getItem(RKEY)||"[]");}catch(e){}
+      $("relayList").textContent=list.map(function(x){return x.c;}).join("\\n")||"Nothing collected yet.";
+      $("relayBox").className=$("relayBox").className==="hide"?"":"hide";
+    };
+    $("copyAll").onclick=function(){
+      var t=$("relayList").textContent;
+      if(navigator.clipboard&&navigator.clipboard.writeText)
+        navigator.clipboard.writeText(t).then(function(){$("copyAll").textContent="Copied ✓";});
+    };
+  }
+  $("copy").onclick=function(){
+    var t=$("code").textContent;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){$("copy").textContent="Copied ✓";},sel);
+    }else sel();
+    function sel(){var r=document.createRange();r.selectNodeContents($("code"));
+      var s=window.getSelection();s.removeAllRanges();s.addRange(r);$("copy").textContent="Select all & copy";}
+  };
+  $("share").onclick=function(){
+    var msg=M.title+" — "+label+"\\n"+$("code").textContent;
+    window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  };
+  $("dl").onclick=function(){
+    var blob=new Blob([$("code").textContent+"\\n"],{type:"text/plain"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download=(label||"answers").replace(/\\W+/g,"_")+"_answers.txt";
+    document.body.appendChild(a);a.click();a.remove();
+  };
+  window.scrollTo(0,0);
+}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+window.addEventListener("beforeunload",function(e){
+  if(!ended&&startedAt){e.preventDefault();e.returnValue="";}
+});
+<\/script>
+</body></html>`;
+}
+
+/* ---------------- generator UI ---------------- */
+function download(name,text,mime){
+  const blob=new Blob([text],{type:mime||"text/html;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function render(){
+  const o=O();
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-tb">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Students answer on their own phone</div><h2>Test Builder</h2></div>
+        <div class="of-filters">
+          <button class="btn btn-ghost" id="bKey">Download answer key</button>
+          <button class="btn btn-primary" id="bTest">Download test file</button>
+          <button class="btn btn-ghost" id="bShare">Share test</button>
+        </div>
+      </div>
+      <div class="tb-layout">
+        <div class="panel tb-side no-print">
+          <h3>Test settings</h3>
+          <p class="sub">The file you hand out is one .html — no app, no login, no internet.</p>
+          <label>Test name</label><input type="text" id="cTitle" value="${o.esc(CFG.title)}">
+          <label>Subject / batch (optional)</label><input type="text" id="cSubject" value="${o.esc(CFG.subject)}">
+          <label>Duration in minutes (0 = untimed)</label>
+          <input type="number" id="cDur" min="0" max="360" value="${CFG.duration}">
+          <label>Mode</label>
+          <div class="mode-row">
+            <div class="mode${CFG.mode==="exam"?" on":""}" data-mode="exam">
+              <b>Exam</b><span>No answers in the file. You evaluate the codes.</span></div>
+            <div class="mode${CFG.mode==="practice"?" on":""}" data-mode="practice">
+              <b>Practice</b><span>Instant score and solutions for the student.</span></div>
+          </div>
+          ${CFG.mode==="practice"?`<div class="warnbox" style="margin-top:10px">
+            <b>Practice mode puts the correct answers inside the file.</b> A student who opens it in a
+            text editor can read them. Use exam mode for anything that counts.</div>`:""}
+          <label>Options</label>
+          ${[["shuffleQuestions","Shuffle question order","Each student sees a different order."],
+             ["shuffleOptions","Shuffle options within a question","A/B/C/D positions vary per student."],
+             ["allowBack","Allow going back","Students can revisit earlier questions."],
+             ["requireName","Require a name","Stops unnamed submissions you can't match."],
+             ["showTimer","Show the countdown","Hide it if the clock makes students anxious."],
+             ["relay","Shared device (relay mode)","One tablet or PC, students take turns. Codes collect on the device."]]
+            .map(([k,t,h])=>`<label class="tb-check">
+              <input type="checkbox" data-cfg="${k}" ${CFG[k]?"checked":""}>
+              <span><b>${t}</b><span>${h}</span></span></label>`).join("")}
+          <div class="warnbox">
+            Shuffling changes only what the student sees. Answers are always recorded against the
+            original question and option letters, so evaluation is unaffected.
+          </div>
+          ${D.warnings.length?`<div class="warnbox"><b>${D.warnings.length} question${D.warnings.length>1?"s":""} need attention</b>
+            <ul>${D.warnings.slice(0,5).map(w=>`<li>${o.esc(w)}</li>`).join("")}
+            ${D.warnings.length>5?`<li>…and ${D.warnings.length-5} more</li>`:""}</ul></div>`:""}
+        </div>
+        <div class="tb-stage">
+          <div class="phone"><iframe id="tbPreview" title="Test preview"></iframe></div>
+          <div style="font-size:11.5px;color:var(--mut);text-align:center">
+            Live preview · exactly what the student opens</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h3>Question bank</h3>
+        <p class="sub">${D.questions.length} questions · ${D.totalMarks} marks · ${D.sections.join(" · ")}</p>
+        <table class="qtable">
+          <thead><tr><th>#</th><th>Section</th><th>Question</th><th>Options</th><th>Key</th><th>Marks</th></tr></thead>
+          <tbody>${D.questions.map(q=>`<tr>
+            <td>${q.no}</td><td>${o.esc(q.section)}</td>
+            <td style="max-width:380px">${o.esc(q.text.slice(0,110))}${q.text.length>110?"…":""}</td>
+            <td>${q.options.length}</td>
+            <td class="${q.correct?"k":"bad"}">${q.correct||"missing"}</td>
+            <td>+${q.marks}${q.negative?` / −${q.negative}`:""}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  paintPreview();
+  const bind=(id,k,num)=>{const el=document.getElementById(id);
+    if(el)el.addEventListener("input",e=>{CFG[k]=num?Number(e.target.value):e.target.value;paintPreview();});};
+  bind("cTitle","title");bind("cSubject","subject");bind("cDur","duration",true);
+  MOUNT.querySelectorAll("[data-cfg]").forEach(cb=>cb.addEventListener("change",e=>{
+    CFG[e.target.dataset.cfg]=e.target.checked;paintPreview();}));
+  MOUNT.querySelectorAll("[data-mode]").forEach(el=>el.addEventListener("click",()=>{
+    CFG.mode=el.dataset.mode;render();}));
+  document.getElementById("bTest").addEventListener("click",()=>
+    download(o.slugify(CFG.title)+"_test.html",buildTest()));
+  document.getElementById("bKey").addEventListener("click",downloadKey);
+  document.getElementById("bShare").addEventListener("click",async e=>{
+    const html=buildTest();
+    const file=new File([html],o.slugify(CFG.title)+"_test.html",{type:"text/html"});
+    const text=`${CFG.title} — ${o.branding.name}. Open the attached file on your phone. It works without internet. Send back the code you get at the end.`;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:CFG.title,text});return;}
+      catch(err){if(err&&err.name==="AbortError")return;}
+    }
+    download(file.name,html);
+    window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank","noopener");
+  });
+}
+// The key never travels with the test; it goes to whoever evaluates.
+function downloadKey(){
+  const o=O();
+  const rows=[["Q No","Section","Correct","Marks","Negative"]];
+  D.questions.forEach(q=>rows.push([q.no,q.section,q.correct||"",q.marks,q.negative]));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Key");
+  XLSX.writeFile(wb,o.slugify(CFG.title)+"_key.xlsx");
+}
+function paintPreview(){
+  const f=document.getElementById("tbPreview");
+  if(f)f.srcdoc=buildTest();
+}
+
+OFFICE.boot({
+  title:"Test Builder",
+  kicker:"Online tests",
+  headline:"Let students take the test on their own phone",
+  blurb:"Upload your questions and get one self-contained test file. Students answer offline, then send back a short code you can evaluate in seconds.",
+  noteLeft:"One sheet: Questions. Question text, the options, and the correct one. Marks and negative marking are optional.",
+  manualHint:"One row per question: the question, its options, and which one is correct.",
+  templateHref:"../../assets/templates/office/Questions_Template.xlsx",
+  cacheKey:"tool-testbuilder",
+  sampleSheets:SAMPLE_SHEETS,
+  ledgerSheets:["Questions"],
+  pill:d=>`${d.questions.length} questions · ${d.totalMarks} marks`,
+  parse,
+  render:async(data,mount)=>{
+    D=data;MOUNT=mount;
+    if(!LOGO)LOGO=await tryInlineLogo();
+    render();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enter Marks</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.steps{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.stp{flex:1;min-width:180px;background:var(--card);border:1px solid var(--line);border-radius:11px;
+  padding:12px 14px;box-shadow:var(--shadow);opacity:.55}
+.stp.on{opacity:1;border-color:var(--teal)}
+.stp.done{opacity:1}
+.stp .n{width:22px;height:22px;border-radius:50%;background:var(--line);color:var(--mut);
+  display:grid;place-items:center;font-weight:800;font-size:11px;margin-bottom:7px}
+.stp.on .n{background:var(--teal);color:#fff}
+.stp.done .n{background:var(--b5s);color:var(--b5)}
+.stp b{display:block;font-size:13px;color:var(--navy)}
+.stp span{font-size:11.5px;color:var(--mut);line-height:1.45}
+.subj-row{display:grid;grid-template-columns:1fr 90px 1fr 34px;gap:9px;align-items:center;margin-bottom:8px}
+.subj-row input{width:100%}
+.subj-row .x{border:none;background:none;color:var(--mut2);cursor:pointer;font-size:14px;padding:6px}
+.subj-row .x:hover{color:var(--b1)}
+.subj-head{display:grid;grid-template-columns:1fr 90px 1fr 34px;gap:9px;font-size:10px;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:700;margin-bottom:5px}
+.mk-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.mk-tbl th{position:sticky;top:0;background:#F3F1EA;z-index:2;font-size:10px;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--mut);font-weight:700;padding:8px 9px;text-align:left;border-bottom:1px solid var(--line2)}
+.mk-tbl th.c{text-align:center}
+.mk-tbl td{padding:0;border-bottom:1px solid var(--line)}
+.mk-tbl td.nm{padding:8px 9px;font-weight:600;color:var(--navy);white-space:nowrap}
+.mk-tbl input{width:100%;border:none;background:transparent;font-family:inherit;font-size:14px;
+  text-align:center;padding:9px 4px;color:var(--ink);font-variant-numeric:tabular-nums}
+.mk-tbl input:focus{outline:2px solid var(--teal);background:var(--teal-soft);border-radius:5px}
+.mk-tbl input.bad{background:var(--b1s);color:var(--b1);font-weight:700}
+.mk-tbl input.abs{background:var(--amber-soft);color:var(--amber);font-weight:700}
+.mk-tbl tr:nth-child(even) td{background:#FCFBF7}
+.mk-wrap{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.mk-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:12px;font-size:12.5px;color:var(--mut)}
+.pillstat{background:#F3F1EA;border-radius:20px;padding:5px 11px;font-weight:600;color:var(--navy)}
+.hintbar{background:var(--teal-soft);border-left:3px solid var(--teal);border-radius:8px;
+  padding:9px 12px;font-size:12px;color:#22595a;line-height:1.55;margin-bottom:12px}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Students":[
+ ["Roll No","Student Name","Class / Batch","Parent / Guardian Name","Parent Phone"],
+ [1,"Aarav Shah","9th A","Mr. R. Shah","98765 43210"],
+ [2,"Diya Kulkarni","9th A","Mrs. S. Kulkarni","98220 11223"],
+ [3,"Kabir Nair","9th A","Mr. V. Nair","99700 55443"],
+ [4,"Ishita Mehra","9th A","Mrs. P. Mehra","97650 88110"],
+ [5,"Rohan Bhosale","9th A","Mr. D. Bhosale","90280 33221"]],
+"Marks":[
+ ["ACADEMY","Sample Academy",null,null,null,null,null],
+ ["BATCH","9th A",null,"YEAR","2025-26",null,null],
+ [null,null,null,null,null,null,null],
+ [null,"TEST →","Unit Test 1",null,null,null,null],
+ [null,"DATE →","2025-07-10",null,null,null,null],
+ [null,"TYPE →","Unit Test",null,null,null,null],
+ [null,"TOPICS COVERED →","Tenses","Grammar","Fractions","Living World",null],
+ [null,"MAX MARKS →",25,25,25,25,null],
+ ["Roll No","Student Name","English","Hindi","Maths","Science",null],
+ [1,"Aarav Shah",19,17,21,20,null],
+ [2,"Diya Kulkarni",16,18,14,17,null],
+ [3,"Kabir Nair",21,20,23,22,null],
+ [4,"Ishita Mehra",23,22,24,23,null],
+ [5,"Rohan Bhosale",12,14,11,13,null]]};
+
+/* =================================================================
+   The workbook's Marks sheet is a grid of column blocks with meta rows
+   above the header. Teachers should never have to understand that, so
+   this tool reads the existing shape, asks plain questions, and writes
+   the block back in exactly the layout every dashboard already parses.
+   ================================================================= */
+function parse(sheets){
+  const O=OFFICE;
+  const aoa=O.findSheet(sheets,"Marks")||O.findSheet(sheets,"Evaluation");
+  if(!aoa)throw new Error("This workbook has no 'Marks' sheet. Start from a master workbook, or use the Test Builder if you meant an online test.");
+  const hr=findHeaderRow(aoa);
+  if(hr<0)throw new Error("Could not find the 'Student Name' header row in the Marks sheet.");
+  const meta=findMetaRows(aoa,hr);
+  const cName=nameCol(aoa,hr);
+  const students=[];
+  for(let r=hr+1;r<aoa.length;r++){
+    const nm=O.norm((aoa[r]||[])[cName]);
+    if(!nm)continue;
+    students.push({row:r,name:nm,roll:O.toNum((aoa[r]||[])[0])});
+  }
+  // seed from the Students sheet when the Marks sheet has no rows yet
+  const studAoa=O.findSheet(sheets,"Students");
+  if(!students.length&&studAoa){
+    O.readTable(studAoa,{roll:["Roll No","Roll"],name:["Student Name","Name"]})
+      .forEach((s,i)=>{const nm=O.norm(s.name);if(nm)students.push({row:hr+1+i,name:nm,roll:O.toNum(s.roll),isNew:true});});
+  }
+  if(!students.length)throw new Error("No students found. Add them to the Students sheet first, or use Student Master.");
+  const existing=readExistingBlocks(aoa,hr,meta);
+  return{aoa,hr,meta,cName,students,existing,
+    subjects:existing.length?existing[existing.length-1].subjects.map(s=>({name:s.name,max:s.max,topic:""})):
+      [{name:"English",max:25,topic:""},{name:"Maths",max:25,topic:""}]};
+}
+function findHeaderRow(aoa){
+  for(let i=0;i<Math.min(aoa.length,30);i++){
+    const row=(aoa[i]||[]).map(OFFICE.keyName);
+    if(row.some(c=>["student name","name of student","name"].includes(c)))return i;
+  }
+  return -1;
+}
+function nameCol(aoa,hr){
+  const row=(aoa[hr]||[]).map(OFFICE.keyName);
+  for(let i=0;i<row.length;i++)if(["student name","name of student","name"].includes(row[i]))return i;
+  return 1;
+}
+// Meta rows are found by their own label, not a fixed offset, so a workbook that
+// happens to carry DIFFICULTY or omits TOPICS still works.
+function findMetaRows(aoa,hr){
+  const out={test:-1,date:-1,type:-1,topics:-1,max:-1,difficulty:-1};
+  for(let i=hr-1;i>=Math.max(0,hr-10);i--){
+    const row=aoa[i]||[];let label="";
+    for(let c=0;c<Math.min(4,row.length);c++){const k=OFFICE.keyName(row[c]);if(k){label=k;break;}}
+    if(!label)continue;
+    if(out.max<0&&label.includes("max"))out.max=i;
+    else if(out.topics<0&&label.includes("topic"))out.topics=i;
+    else if(out.difficulty<0&&(label.includes("difficult")||label.includes("level")))out.difficulty=i;
+    else if(out.type<0&&label.includes("type"))out.type=i;
+    else if(out.date<0&&label.includes("date"))out.date=i;
+    else if(out.test<0&&(label.includes("test")||label.includes("exam")||label.includes("semester")||label.includes("eval")))out.test=i;
+  }
+  return out;
+}
+function readExistingBlocks(aoa,hr,meta){
+  const O=OFFICE,header=aoa[hr]||[],blocks=[];
+  const at=r=>r>=0?(aoa[r]||[]):[];
+  const testRow=at(meta.test),maxRow=at(meta.max);
+  let c=nameCol(aoa,hr)+1;
+  while(c<header.length){
+    if(O.keyName(header[c])===""){c++;continue;}
+    const cols=[];let cc=c;
+    while(cc<header.length){
+      const hk=O.keyName(header[cc]);
+      if(hk===""){break;}
+      if(hk==="total"||hk==="grand total"||hk==="overall"){cc++;break;}
+      cols.push(cc);cc++;
+    }
+    if(cols.length){
+      blocks.push({start:cols[0],end:cc-1,
+        name:O.norm(testRow[cols[0]])||("Test "+(blocks.length+1)),
+        subjects:cols.map(i=>({name:O.norm(header[i])||("Sub"+i),max:O.toNum(maxRow[i])||25}))});
+      c=cc;
+    }else c++;
+  }
+  return blocks;
+}
+
+let D=null,MOUNT=null,STEP=1;
+let T={name:"",date:new Date().toISOString().slice(0,10),type:"Unit Test"};
+let MARKS={};   // "studentIdx:subjIdx" -> value or "A"
+const O=()=>OFFICE;
+
+function lastCol(){
+  let last=0;
+  D.aoa.forEach(r=>{(r||[]).forEach((v,i)=>{if(O().norm(v)!=="")last=Math.max(last,i);});});
+  return last;
+}
+
+/* ---------- write the block ---------- */
+function buildUpdatedSheets(){
+  const O2=O(),sheets=JSON.parse(JSON.stringify(OFFICE.sheets));
+  const name=Object.keys(sheets).find(n=>O2.keyName(n)==="marks")||
+             Object.keys(sheets).find(n=>O2.keyName(n)==="evaluation");
+  const aoa=sheets[name];
+  const hr=D.hr,meta=D.meta,cName=D.cName;
+  const start=lastCol()+2;   // one blank column separates blocks
+  const pad=(r,upto)=>{while(r.length<upto)r.push(null);};
+
+  const ensure=i=>{while(aoa.length<=i)aoa.push([]);return aoa[i];};
+  // meta values sit on the block's first column only; the parsers carry them across
+  const put=(rowIdx,col,val)=>{if(rowIdx<0)return;const row=ensure(rowIdx);pad(row,col);row[col]=val;};
+  put(meta.test,start,T.name);
+  put(meta.date,start,T.date);
+  put(meta.type,start,T.type);
+  D.subjects.forEach((s,j)=>{
+    put(meta.topics,start+j,s.topic||null);
+    put(meta.max,start+j,s.max);
+    const h=ensure(hr);pad(h,start+j);h[start+j]=s.name;
+  });
+  D.students.forEach((st,si)=>{
+    const row=ensure(st.row);
+    pad(row,start);
+    if(st.isNew){row[0]=st.roll!=null?st.roll:si+1;row[cName]=st.name;}
+    D.subjects.forEach((s,j)=>{
+      pad(row,start+j);
+      const v=MARKS[si+":"+j];
+      row[start+j]=(v===undefined||v==="")?null:v;
+    });
+  });
+  return{sheets,name};
+}
+function downloadWorkbook(){
+  const{sheets}=buildUpdatedSheets();
+  const wb=XLSX.utils.book_new();
+  Object.keys(sheets).forEach(n=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sheets[n]),n.slice(0,31)));
+  XLSX.writeFile(wb,O().slugify((T.name||"marks"))+"_updated.xlsx");
+}
+
+/* ---------- steps ---------- */
+function stepsHTML(){
+  const s=[[1,"Test details","Name it, date it, list the subjects"],
+           [2,"Enter marks","One row per student"],
+           [3,"Save","Download the updated workbook"]];
+  return `<div class="steps no-print">${s.map(([n,t,h])=>
+    `<div class="stp ${STEP===n?"on":STEP>n?"done":""}"><div class="n">${STEP>n?"✓":n}</div>
+      <b>${t}</b><span>${h}</span></div>`).join("")}</div>`;
+}
+function render(){
+  const o=O();
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-me">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">No column blocks to copy</div><h2>Enter Marks</h2></div>
+        <div class="of-filters">
+          ${STEP>1?`<button class="btn btn-ghost" id="bBack">Back</button>`:""}
+          ${STEP<3?`<button class="btn btn-primary" id="bNext">${STEP===1?"Enter marks →":"Review →"}</button>`
+                  :`<button class="btn btn-primary" id="bSave">Download updated workbook</button>`}
+        </div>
+      </div>
+      ${stepsHTML()}
+      <div id="stepBody"></div>
+    </div>`;
+  document.getElementById("stepBody").innerHTML=
+    STEP===1?step1HTML():STEP===2?step2HTML():step3HTML();
+  if(STEP===1)wire1();else if(STEP===2)wire2();
+  const bk=document.getElementById("bBack");if(bk)bk.addEventListener("click",()=>{STEP--;render();});
+  const nx=document.getElementById("bNext");if(nx)nx.addEventListener("click",next);
+  const sv=document.getElementById("bSave");if(sv)sv.addEventListener("click",downloadWorkbook);
+}
+function next(){
+  if(STEP===1){
+    if(!T.name.trim()){alert("Give the test a name — it appears on every report.");return;}
+    const bad=D.subjects.filter(s=>!s.name.trim()||!(s.max>0));
+    if(!D.subjects.length||bad.length){alert("Each subject needs a name and a max mark above zero.");return;}
+  }
+  STEP++;render();
+}
+
+function step1HTML(){
+  const o=O();
+  const prev=D.existing.length?D.existing[D.existing.length-1]:null;
+  return `<div class="panel" style="max-width:760px">
+    <h3>What test is this?</h3>
+    <p class="sub">${prev?`Subjects are pre-filled from your last test (<b>${o.esc(prev.name)}</b>) — adjust if they changed.`
+      :"Add the subjects examined and what each was out of."}</p>
+    <div class="grid g2" style="gap:14px;margin-bottom:16px">
+      <div><label class="flab" style="display:block;margin-bottom:4px">Test name</label>
+        <input type="text" id="tName" value="${o.esc(T.name)}" placeholder="e.g. Unit Test 2" style="width:100%"></div>
+      <div><label class="flab" style="display:block;margin-bottom:4px">Date</label>
+        <input type="date" id="tDate" value="${o.esc(T.date)}" style="width:100%"></div>
+    </div>
+    <div style="max-width:280px;margin-bottom:18px">
+      <label class="flab" style="display:block;margin-bottom:4px">Type</label>
+      <input type="text" id="tType" value="${o.esc(T.type)}" placeholder="e.g. Unit Test / Term Exam" style="width:100%">
+    </div>
+    <div class="subj-head"><span>Subject</span><span>Out of</span><span>Topic covered (optional)</span><span></span></div>
+    <div id="subjList">${D.subjects.map((s,i)=>`
+      <div class="subj-row" data-i="${i}">
+        <input type="text" data-f="name" value="${o.esc(s.name)}" placeholder="Subject">
+        <input type="number" data-f="max" value="${s.max}" min="1">
+        <input type="text" data-f="topic" value="${o.esc(s.topic)}" placeholder="e.g. Fractions">
+        ${D.subjects.length>1?`<button class="x" data-del="${i}" title="Remove">✕</button>`:"<span></span>"}
+      </div>`).join("")}</div>
+    <button class="btn btn-ghost" id="addSubj" style="margin-top:6px">+ Add subject</button>
+    <p class="sub" style="margin:14px 0 0">Filling <b>Topic covered</b> is what powers the study plans and topic
+      analysis elsewhere — worth the extra few seconds.</p>
+  </div>`;
+}
+function wire1(){
+  const bind=(id,k)=>{const el=document.getElementById(id);
+    if(el)el.addEventListener("input",e=>{T[k]=e.target.value;});};
+  bind("tName","name");bind("tDate","date");bind("tType","type");
+  document.querySelectorAll("#subjList [data-f]").forEach(el=>el.addEventListener("input",e=>{
+    const i=+e.target.closest(".subj-row").dataset.i,f=e.target.dataset.f;
+    D.subjects[i][f]=f==="max"?Number(e.target.value):e.target.value;
+  }));
+  document.querySelectorAll("#subjList [data-del]").forEach(b=>b.addEventListener("click",()=>{
+    D.subjects.splice(+b.dataset.del,1);render();}));
+  document.getElementById("addSubj").addEventListener("click",()=>{
+    D.subjects.push({name:"",max:25,topic:""});render();});
+}
+
+function step2HTML(){
+  const o=O();
+  return `<div class="panel">
+    <h3>${o.esc(T.name)} · ${o.esc(o.fmtDate(T.date))}</h3>
+    <p class="sub">Type a mark and press <b>Enter</b> to drop to the next student, or <b>Tab</b> to move across.
+      Type <b>A</b> for absent. Blank means not taken.</p>
+    <div class="hintbar">Anything above the max, or not a number, is highlighted immediately — you'll never
+      discover it on a printed report.</div>
+    <div class="mk-wrap"><table class="mk-tbl">
+      <thead><tr><th style="min-width:170px">Student</th>
+        ${D.subjects.map(s=>`<th class="c">${o.esc(s.name)}<div style="font-weight:600;color:var(--mut2);font-size:9px">out of ${s.max}</div></th>`).join("")}
+        <th class="c">Total</th></tr></thead>
+      <tbody>${D.students.map((st,si)=>`<tr>
+        <td class="nm">${st.roll!=null?`<span style="color:var(--mut2);font-weight:600">${st.roll}</span> `:""}${o.esc(st.name)}</td>
+        ${D.subjects.map((s,j)=>`<td><input type="text" inputmode="numeric" data-si="${si}" data-j="${j}"
+          value="${MARKS[si+":"+j]!==undefined?o.esc(String(MARKS[si+":"+j])):""}"></td>`).join("")}
+        <td class="c" data-tot="${si}" style="font-weight:700;color:var(--navy)">—</td></tr>`).join("")}
+      </tbody></table></div>
+    <div class="mk-foot">
+      <span class="pillstat" id="statFilled">0 of ${D.students.length*D.subjects.length} filled</span>
+      <span class="pillstat" id="statAvg">Average —</span>
+      <span id="statBad" style="color:var(--b1);font-weight:600"></span>
+    </div>
+  </div>`;
+}
+function wire2(){
+  const inputs=[...document.querySelectorAll(".mk-tbl input")];
+  const nSub=D.subjects.length;
+  const val=el=>{
+    const si=+el.dataset.si,j=+el.dataset.j;
+    const raw=el.value.trim().toUpperCase();
+    el.classList.remove("bad","abs");
+    if(raw===""){delete MARKS[si+":"+j];return;}
+    if(raw==="A"||raw==="AB"){MARKS[si+":"+j]="A";el.classList.add("abs");el.value="A";return;}
+    const n=Number(raw);
+    if(isNaN(n)||n<0||n>D.subjects[j].max){el.classList.add("bad");MARKS[si+":"+j]=raw;return;}
+    MARKS[si+":"+j]=n;
+  };
+  const stats=()=>{
+    let filled=0,bad=0,sum=0,cnt=0;
+    D.students.forEach((st,si)=>{
+      let tot=0,any=false;
+      D.subjects.forEach((s,j)=>{
+        const v=MARKS[si+":"+j];
+        if(v===undefined)return;
+        filled++;
+        if(v==="A"){any=true;return;}
+        if(typeof v!=="number"){bad++;return;}
+        tot+=v;any=true;sum+=v/s.max*100;cnt++;
+      });
+      const cell=document.querySelector(`[data-tot="${si}"]`);
+      if(cell)cell.textContent=any?tot:"—";
+    });
+    document.getElementById("statFilled").textContent=
+      `${filled} of ${D.students.length*nSub} filled`;
+    document.getElementById("statAvg").textContent=
+      cnt?`Average ${(sum/cnt).toFixed(0)}%`:"Average —";
+    document.getElementById("statBad").textContent=
+      bad?`${bad} value${bad>1?"s":""} out of range — fix before saving`:"";
+  };
+  inputs.forEach((el,idx)=>{
+    el.addEventListener("input",()=>{val(el);stats();});
+    el.addEventListener("focus",()=>el.select());
+    el.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();
+        const nxt=inputs[idx+nSub]||inputs[(idx%nSub)+nSub<inputs.length?idx+nSub:(idx%nSub)+1];
+        if(nxt)nxt.focus();}
+      else if(e.key==="ArrowDown"){e.preventDefault();const n=inputs[idx+nSub];if(n)n.focus();}
+      else if(e.key==="ArrowUp"){e.preventDefault();const n=inputs[idx-nSub];if(n)n.focus();}
+    });
+    val(el);
+  });
+  stats();
+  if(inputs[0])inputs[0].focus();
+}
+
+function step3HTML(){
+  const o=O();
+  let filled=0,bad=0;
+  D.students.forEach((st,si)=>D.subjects.forEach((s,j)=>{
+    const v=MARKS[si+":"+j];
+    if(v===undefined)return;filled++;
+    if(v!=="A"&&typeof v!=="number")bad++;
+  }));
+  const rows=D.students.map((st,si)=>{
+    let tot=0,any=false,miss=0;
+    D.subjects.forEach((s,j)=>{const v=MARKS[si+":"+j];
+      if(v===undefined){miss++;return;}
+      if(v==="A"){any=true;return;}
+      if(typeof v==="number"){tot+=v;any=true;}});
+    return{st,tot:any?tot:null,miss};
+  });
+  const maxTot=D.subjects.reduce((a,s)=>a+s.max,0);
+  return `<div class="panel" style="max-width:820px">
+    <h3>Ready to save</h3>
+    <p class="sub">This adds <b>${o.esc(T.name)}</b> to the Marks sheet as a new block of columns and leaves
+      every other sheet untouched. Upload the downloaded file to your dashboard as usual.</p>
+    ${bad?`<div class="hintbar" style="background:var(--b1s);border-left-color:var(--b1);color:#7A3323">
+      <b>${bad} value${bad>1?"s are":" is"} not a valid mark.</b> Go back and fix them — they will be saved as typed
+      and your dashboard will flag them.</div>`:""}
+    <table class="mk-tbl" style="margin-top:6px">
+      <thead><tr><th>Student</th><th class="c">Total</th><th class="c">Out of</th><th>Not entered</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td class="nm">${o.esc(r.st.name)}</td>
+        <td class="c" style="font-weight:700">${r.tot==null?"—":r.tot}</td>
+        <td class="c" style="color:var(--mut)">${maxTot}</td>
+        <td style="padding:8px 9px;color:${r.miss?"var(--amber)":"var(--mut2)"};font-size:12px">
+          ${r.miss?`${r.miss} subject${r.miss>1?"s":""} blank`:"complete"}</td></tr>`).join("")}
+      </tbody></table>
+    <div class="mk-foot"><span class="pillstat">${filled} of ${D.students.length*D.subjects.length} entered</span></div>
+    <p class="sub" style="margin-top:14px">Cell colours and column widths are not preserved when the workbook is
+      rewritten — the data is. Your dashboard only ever reads the data.</p>
+  </div>`;
+}
+
+OFFICE.boot({
+  title:"Enter Marks",
+  kicker:"Simple input",
+  headline:"Add a test without touching a column block",
+  blurb:"Upload your class workbook, answer three questions about the test, type the marks in one list, and download the updated file. The block layout is written for you.",
+  noteLeft:"Any workbook with a Marks sheet — usually your class master workbook.",
+  manualHint:"Students and any existing marks. You'll add the new test in the next step.",
+  templateHref:"../../assets/templates/master/TESA_Master_Secondary.xlsx",
+  cacheKey:"tool-marksentry",
+  sampleSheets:SAMPLE_SHEETS,
+  pill:d=>`${d.students.length} students · ${d.existing.length} test${d.existing.length===1?"":"s"} so far`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;STEP=1;MARKS={};
+    T={name:"",date:new Date().toISOString().slice(0,10),type:"Unit Test"};render();}
+});
+</script>
+</body>
+</html>

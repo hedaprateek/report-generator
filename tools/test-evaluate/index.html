@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Evaluator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="../../assets/js/data-grid.js"></script>
+<script src="../../assets/js/student-master.js"></script>
+<script src="../../assets/js/test-codec.js"></script>
+<script src="../../assets/js/office-common.js"></script>
+<style>
+.ev-drop{border:2px dashed var(--line2);border-radius:12px;padding:16px;background:#FCFBF7}
+.ev-drop textarea{width:100%;min-height:120px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12.5px;line-height:1.7;border:1px solid var(--line2);border-radius:9px;padding:11px;resize:vertical}
+.ev-row{display:flex;gap:12px;align-items:flex-start;padding:11px 4px;border-bottom:1px solid var(--line)}
+.ev-row:last-child{border-bottom:none}
+.ev-rank{width:30px;text-align:center;font-weight:800;color:var(--mut);font-family:Georgia,serif;flex-shrink:0;padding-top:2px}
+.ev-main{flex:1;min-width:0}
+.ev-name{font-weight:700;color:var(--navy);font-size:14px}
+.ev-meta{font-size:11.5px;color:var(--mut);margin-top:2px}
+.ev-score{text-align:right;flex-shrink:0;min-width:96px}
+.ev-score .v{font-family:Georgia,serif;font-size:21px;font-weight:700;line-height:1}
+.ev-score .l{font-size:10.5px;color:var(--mut);margin-top:2px}
+.ev-bad{background:#FDF1EC;border:1px solid #E8B49A;border-left:3px solid var(--b1);border-radius:9px;
+  padding:10px 13px;font-size:12px;color:#7A3323;margin-bottom:8px;line-height:1.5}
+.qa-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.qa-tbl th{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+  text-align:left;padding:7px 8px;border-bottom:2px solid var(--line2)}
+.qa-tbl td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.qa-bar{height:7px;border-radius:4px;background:var(--line);overflow:hidden;min-width:80px}
+.qa-bar>i{display:block;height:100%;border-radius:4px}
+.dist{display:flex;gap:3px;font-size:10px;color:var(--mut)}
+.dist span{padding:1px 5px;border-radius:4px;background:#F3F1EA}
+.dist span.key{background:var(--b5s);color:var(--b5);font-weight:700}
+.dist span.trap{background:var(--b1s);color:var(--b1);font-weight:700}
+</style>
+</head>
+<body>
+<script>
+const SAMPLE_SHEETS={
+"Questions":[
+ ["Q No","Section","Question","Option A","Option B","Option C","Option D","Correct","Marks","Negative"],
+ [1,"Physics","A body starts from rest and accelerates at 2 m/s². Distance in 5 s?","10 m","25 m","50 m","100 m","B",2,0.5],
+ [2,"Physics","Newton's third law states:","F = ma","Action and reaction are equal and opposite","Inertia resists motion","Momentum is conserved","B",2,0.5],
+ [3,"Physics","Slope of a distance–time graph gives:","Acceleration","Speed","Displacement","Force","B",2,0.5],
+ [4,"Chemistry","Molecules in 2 moles of water?","6.022 × 10²³","1.2044 × 10²⁴","3.011 × 10²³","2 × 10²³","B",2,0.5],
+ [5,"Chemistry","An ionic bond forms by:","Sharing electrons","Transfer of electrons","Orbital overlap","Metallic attraction","B",2,0.5],
+ [6,"Chemistry","Molar mass of CO₂:","28 g/mol","44 g/mol","32 g/mol","12 g/mol","B",2,0.5],
+ [7,"Maths","Roots of x² − 5x + 6 = 0:","2 and 3","1 and 6","−2 and −3","2 and −3","A",2,0.5],
+ [8,"Maths","sin 30° =","1","1/2","√3/2","0","B",2,0.5],
+ [9,"Maths","Discriminant of ax² + bx + c:","b² − 4ac","b² + 4ac","2a/b","−b/2a","A",2,0.5],
+ [10,"Maths","cos 0° =","0","1","−1","undefined","B",2,0.5]]};
+
+// Sample codes are produced from the real encoder, so the demo exercises the same
+// path a student's phone would — never a hand-written string that might not round-trip.
+function demoCodes(qs){
+  const key=qs.map(q=>q.correct||"-");
+  const mk=(name,f)=>TestCodec.encode(name,key.map((k,i)=>f(k,i)).join(""));
+  const wrongOf=k=>k==="A"?"C":"A";
+  return [
+    mk("Aarav Shah (1)",k=>k),
+    mk("Diya Kulkarni (2)",(k,i)=>i%4===0?wrongOf(k):k),
+    mk("Kabir Nair (3)",(k,i)=>i%2===0?k:wrongOf(k)),
+    mk("Rohan Bhosale (5)",(k,i)=>i%3===0?"-":(i%5===0?wrongOf(k):k))
+  ].join("\n");
+}
+
+function parse(sheets){
+  const q=OFFICE.readQuestions(sheets);
+  if(!q)throw new Error("This workbook has no readable 'Questions' sheet — the evaluator needs the questions and their correct answers.");
+  if(!q.questions.some(x=>x.correct))throw new Error("No correct answers found in the Questions sheet. Fill the Correct column before evaluating.");
+  return q;
+}
+
+let D=null,MOUNT=null,SUBS=[],REJECTS=[],RAW="",ROSTER=[];
+const O=()=>OFFICE;
+
+/* Chasing the last few submissions is the real work of an online test, so the
+   evaluator answers "who is missing" rather than only "who scored what".
+   Students type their own name, so matching is fuzzy: a roll number in brackets,
+   a missing surname or different capitalisation should still count as submitted. */
+function nameKeyOf(s){
+  return O().keyName(String(s||"").replace(/\(.*?\)/g,"").replace(/[^A-Za-z\s]/g,"")).trim();
+}
+function matchRoster(){
+  if(!ROSTER.length)return null;
+  const subKeys=SUBS.map(s=>({s,k:nameKeyOf(s.name),roll:(String(s.name).match(/\((\d+)\)/)||[])[1]}));
+  const missing=[],matched=new Set();
+  ROSTER.forEach(r=>{
+    const rk=nameKeyOf(r.name);
+    const hit=subKeys.find(x=>{
+      if(x.k===rk)return true;
+      if(r.roll!=null&&x.roll&&Number(x.roll)===Number(r.roll))return true;
+      // first name + same roll, or one name being a prefix of the other
+      return rk&&x.k&&(rk.startsWith(x.k)||x.k.startsWith(rk));
+    });
+    if(hit)matched.add(hit.s);else missing.push(r);
+  });
+  const unknown=SUBS.filter(s=>!matched.has(s));
+  return{missing,unknown,done:ROSTER.length-missing.length,total:ROSTER.length};
+}
+async function loadRosterFromMaster(){
+  if(!window.SPDRoster)return;
+  const{students}=await SPDRoster.load();
+  ROSTER=students.map(s=>({name:s.name,roll:s.roll!=null&&s.roll!==""?Number(s.roll):null,batch:s.batch}));
+  render();
+}
+function loadRosterFromSheets(sheets){
+  const O2=O(),aoa=O2.findSheet(sheets,"Students");
+  if(!aoa)return false;
+  ROSTER=O2.readTable(aoa,{roll:["Roll No","Roll"],name:["Student Name","Name"],
+    batch:["Class / Batch","Class","Batch"]})
+    .map(r=>({name:O2.norm(r.name),roll:O2.toNum(r.roll),batch:O2.norm(r.batch)}))
+    .filter(r=>r.name);
+  return ROSTER.length>0;
+}
+
+function ingest(text){
+  RAW=text;
+  const lines=String(text||"").split(/[\r\n]+/).map(l=>l.trim()).filter(Boolean);
+  const seen={};SUBS=[];REJECTS=[];
+  lines.forEach(line=>{
+    if(!/TQ1~/.test(line))return;
+    const r=TestCodec.decode(line);
+    if(!r.ok){REJECTS.push({line:line.slice(0,70),reason:r.reason});return;}
+    const key=O().keyName(r.name);
+    // a resend supersedes the earlier attempt rather than creating a duplicate row
+    if(seen[key]!==undefined){SUBS[seen[key]]=score(r);return;}
+    seen[key]=SUBS.length;SUBS.push(score(r));
+  });
+  // count mismatch is worth flagging: the student may have sat a different paper
+  SUBS.forEach(s=>{
+    if(s.given.length!==D.questions.length)
+      s.mismatch=`${s.given.length} answers for ${D.questions.length} questions`;
+  });
+  render();
+}
+function score(dec){
+  const qs=D.questions;
+  const given=dec.answers;
+  let marks=0,right=0,wrong=0,blank=0,max=0;
+  const perSection={},detail=[];
+  qs.forEach((q,i)=>{
+    max+=q.marks;
+    const sec=perSection[q.section]||(perSection[q.section]={marks:0,max:0,right:0,wrong:0,blank:0});
+    sec.max+=q.marks;
+    const a=given[i]||null;
+    let state;
+    if(!q.correct)state="nokey";
+    else if(!a){state="blank";blank++;sec.blank++;}
+    else if(a===q.correct){state="right";right++;sec.right++;marks+=q.marks;sec.marks+=q.marks;}
+    else{state="wrong";wrong++;sec.wrong++;marks-=q.negative;sec.marks-=q.negative;}
+    detail.push({no:q.no,section:q.section,given:a,correct:q.correct,state});
+  });
+  return{name:dec.name,letters:dec.letters,given,marks:Math.round(marks*100)/100,max,
+    pct:max>0?Math.max(0,marks)/max*100:null,right,wrong,blank,perSection,detail};
+}
+
+/* per-question analysis — the thing a teacher can actually act on */
+function questionStats(){
+  return D.questions.map((q,i)=>{
+    const counts={};let attempted=0,correct=0;
+    SUBS.forEach(s=>{
+      const a=s.given[i]||null;
+      if(!a){counts["-"]=(counts["-"]||0)+1;return;}
+      attempted++;counts[a]=(counts[a]||0)+1;
+      if(a===q.correct)correct++;
+    });
+    const topWrong=Object.keys(counts).filter(k=>k!=="-"&&k!==q.correct)
+      .sort((a,b)=>counts[b]-counts[a])[0]||null;
+    return{q,i,counts,attempted,correct,
+      pct:SUBS.length?correct/SUBS.length*100:0,topWrong};
+  }).sort((a,b)=>a.pct-b.pct);
+}
+
+function render(){
+  const o=O();
+  const ranked=[...SUBS].sort((a,b)=>b.marks-a.marks);
+  ranked.forEach((s,i)=>s.rank=i+1);
+  const avg=SUBS.length?o.mean(SUBS.map(s=>s.marks)):null;
+  const qstats=questionStats();
+  const weakest=qstats.slice(0,5);
+
+  MOUNT.innerHTML=`
+    <div class="of-view" id="v-ev">
+      <div class="of-head no-print">
+        <div><div class="of-eyebrow">Codes in, marks out</div><h2>Test Evaluator</h2></div>
+        <div class="of-filters">
+          <button class="btn btn-ghost" id="bDemo">Paste sample codes</button>
+          <button class="btn btn-ghost" id="bPrint">Print / Save as PDF</button>
+          <button class="btn btn-primary" id="bExport"${SUBS.length?"":" disabled"}>Export marks to Excel</button>
+        </div>
+      </div>
+      ${o.printHead("Test Results",o.esc(D.sections.join(" · ")))}
+
+      <div class="panel no-print">
+        <h3>Paste the codes your students sent</h3>
+        <p class="sub">One per line. Paste the whole WhatsApp conversation if you like — anything that
+          isn't a code is ignored. A resent code replaces the student's earlier attempt.</p>
+        <div class="ev-drop">
+          <textarea id="codes" placeholder="TQ1~Aarav Shah (1)~BBBBBBABAB~1a2b&#10;TQ1~Diya Kulkarni (2)~CBBABBABAB~9f3c">${o.esc(RAW)}</textarea>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary" id="bRead">Read codes</button>
+            <input type="file" id="fAns" accept=".txt,.csv" multiple class="hidden">
+            <button class="btn btn-ghost" id="bFiles">Add answer files</button>
+            <span style="font-size:11.5px;color:var(--mut)">${SUBS.length} accepted${REJECTS.length?` · ${REJECTS.length} rejected`:""}</span>
+          </div>
+        </div>
+      </div>
+
+      ${REJECTS.length?`<div class="panel no-print">
+        <h3 style="color:var(--b1)">${REJECTS.length} code${REJECTS.length>1?"s":""} could not be read</h3>
+        <p class="sub">These are shown rather than silently dropped — a student whose code was cut off
+          needs to resend it, and you need to know who.</p>
+        ${REJECTS.map(r=>`<div class="ev-bad"><b>${o.esc(r.reason)}</b><br>
+          <span style="font-family:ui-monospace,monospace;font-size:11px">${o.esc(r.line)}…</span></div>`).join("")}
+      </div>`:""}
+
+      ${(()=>{
+        const m=matchRoster();
+        if(!ROSTER.length)return `<div class="panel no-print" style="border-left:3px solid var(--teal)">
+          <h3>Who hasn't submitted?</h3>
+          <p class="sub" style="margin-bottom:10px">Load your class list and the evaluator will tell you exactly
+            who is still missing, so you chase four names instead of re-reading forty.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost" id="bRosterMaster">Use Student Master</button>
+            <input type="file" id="fRoster" accept=".xlsx,.xls" class="hidden">
+            <button class="btn btn-ghost" id="bRosterFile">Load a class workbook</button>
+          </div></div>`;
+        if(!m)return "";
+        return `<div class="panel no-print" style="border-left:3px solid ${m.missing.length?"var(--amber)":"var(--b5)"}">
+          <h3>${m.done} of ${m.total} students have submitted</h3>
+          ${m.missing.length?`<p class="sub" style="margin-bottom:8px">Still waiting on ${m.missing.length}:</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${m.missing.map(s=>
+              `<span class="chip" style="background:var(--amber-soft);color:var(--amber)">${o.esc(s.name)}${s.roll!=null?` · ${s.roll}`:""}</span>`).join("")}</div>`
+            :`<p class="sub" style="margin:0;color:var(--b5)">Everyone on the list is in. 🎉</p>`}
+          ${m.unknown.length?`<p class="sub" style="margin:12px 0 6px">Submitted but not on the class list —
+            check for a typo in the name they entered:</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${m.unknown.map(s=>
+              `<span class="chip" style="background:var(--b1s);color:var(--b1)">${o.esc(s.name)}</span>`).join("")}</div>`:""}
+          <button class="btn btn-ghost" id="bRosterClear" style="margin-top:12px;padding:6px 11px;font-size:12px">Use a different list</button>
+        </div>`;
+      })()}
+
+      ${SUBS.length?`
+      <div class="kpis">
+        <div class="kpi"><div class="k">Submissions</div><div class="v">${SUBS.length}</div><div class="s">read successfully</div></div>
+        <div class="kpi"><div class="k">Average</div><div class="v">${avg==null?"—":avg.toFixed(1)}</div><div class="s">of ${D.totalMarks} marks</div></div>
+        <div class="kpi"><div class="k">Highest</div><div class="v" style="color:var(--b5)">${ranked[0].marks}</div><div class="s">${o.esc(ranked[0].name)}</div></div>
+        <div class="kpi"><div class="k">Questions</div><div class="v">${D.questions.length}</div><div class="s">${D.sections.length} section${D.sections.length>1?"s":""}</div></div>
+      </div>
+
+      <div class="grid g2" style="margin-bottom:16px">
+        <div class="panel">
+          <h3>Results</h3>
+          <p class="sub">Ranked by marks. Negative marking is applied where you set it.</p>
+          ${ranked.map(s=>`<div class="ev-row">
+            <div class="ev-rank">${s.rank}</div>
+            <div class="ev-main">
+              <div class="ev-name">${o.esc(s.name)}</div>
+              <div class="ev-meta">${s.right} correct · ${s.wrong} wrong · ${s.blank} blank
+                ${Object.keys(s.perSection).length>1?" · "+Object.keys(s.perSection).map(k=>
+                  `${o.esc(k)} ${s.perSection[k].marks}`).join(" · "):""}</div>
+              ${s.mismatch?`<div class="ev-meta" style="color:var(--b1)">⚠ ${o.esc(s.mismatch)} — check they sat this paper</div>`:""}
+            </div>
+            <div class="ev-score"><div class="v" style="color:${s.pct>=60?"var(--b5)":s.pct>=40?"var(--amber)":"var(--b1)"}">${s.marks}</div>
+              <div class="l">of ${s.max}${s.pct!=null?` · ${s.pct.toFixed(0)}%`:""}</div></div>
+          </div>`).join("")}
+        </div>
+        <div class="panel">
+          <h3>Questions the class struggled with</h3>
+          <p class="sub">Weakest first. The trap is the wrong option most students chose.</p>
+          ${weakest.map(x=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
+            <div style="display:flex;gap:9px;align-items:center">
+              <b style="color:var(--navy);font-size:13px;min-width:26px">Q${x.q.no}</b>
+              <div class="qa-bar" style="flex:1"><i style="width:${x.pct}%;background:${x.pct>=60?"var(--b5)":x.pct>=35?"var(--amber)":"var(--b1)"}"></i></div>
+              <b style="font-size:12.5px;min-width:38px;text-align:right">${x.pct.toFixed(0)}%</b>
+            </div>
+            <div style="font-size:11.5px;color:var(--mut);margin:4px 0 5px">${o.esc(x.q.section)}${x.q.topic?" · "+o.esc(x.q.topic):""} — ${o.esc(x.q.text.slice(0,90))}${x.q.text.length>90?"…":""}</div>
+            <div class="dist">${["A","B","C","D","E","-"].filter(L=>x.counts[L]).map(L=>
+              `<span class="${L===x.q.correct?"key":(L===x.topWrong?"trap":"")}">${L==="-"?"blank":L} ${x.counts[L]}</span>`).join("")}</div>
+          </div>`).join("")}
+          ${qstats.length>5?`<p class="sub" style="margin:10px 0 0">Showing the 5 weakest of ${qstats.length}. The full breakdown is in the Excel export.</p>`:""}
+        </div>
+      </div>`:`<div class="panel"><div class="empty">Paste some codes above to see results.</div></div>`}
+    </div>`;
+
+  document.getElementById("bRead").addEventListener("click",()=>ingest(document.getElementById("codes").value));
+  document.getElementById("bDemo").addEventListener("click",()=>{
+    document.getElementById("codes").value=demoCodes(D.questions);
+    ingest(document.getElementById("codes").value);
+  });
+  document.getElementById("bFiles").addEventListener("click",()=>document.getElementById("fAns").click());
+  document.getElementById("fAns").addEventListener("change",async e=>{
+    const files=[...e.target.files];e.target.value="";
+    const texts=await Promise.all(files.map(f=>f.text()));
+    const box=document.getElementById("codes");
+    box.value=(box.value?box.value+"\n":"")+texts.join("\n");
+    ingest(box.value);
+  });
+  document.getElementById("bPrint").addEventListener("click",()=>o.printView("v-ev"));
+  const ex=document.getElementById("bExport");
+  if(ex&&!ex.disabled)ex.addEventListener("click",exportMarks);
+
+  const bm=document.getElementById("bRosterMaster");
+  if(bm)bm.addEventListener("click",loadRosterFromMaster);
+  const bf=document.getElementById("bRosterFile");
+  if(bf)bf.addEventListener("click",()=>document.getElementById("fRoster").click());
+  const fr=document.getElementById("fRoster");
+  if(fr)fr.addEventListener("change",e=>{
+    const f=e.target.files[0];e.target.value="";if(!f)return;
+    const rd=new FileReader();
+    rd.onload=ev=>{
+      try{
+        if(loadRosterFromSheets(o.sheetsFromBytes(ev.target.result)))render();
+        else alert("No Students sheet found in that file.");
+      }catch(err){alert("Could not read that file: "+err.message);}
+    };
+    rd.readAsArrayBuffer(f);
+  });
+  const bc=document.getElementById("bRosterClear");
+  if(bc)bc.addEventListener("click",()=>{ROSTER=[];render();});
+}
+
+// Same block layout the segment dashboards parse, so results go straight in.
+function exportMarks(){
+  const o=O();
+  const sections=D.sections;
+  const rows=[];
+  rows.push(["ACADEMY",o.branding.name]);
+  rows.push(["BATCH","",null,"YEAR",""]);
+  rows.push([]);
+  rows.push([null,"TEST →","Online Test"]);
+  rows.push([null,"DATE →",o.fmtDate(o.today())]);
+  rows.push([null,"TYPE →","Online"]);
+  const topicRow=[null,"TOPICS COVERED →"];
+  const maxRow=[null,"MAX MARKS →"];
+  sections.forEach(sn=>{
+    const qs=D.questions.filter(q=>q.section===sn);
+    maxRow.push(qs.reduce((a,q)=>a+q.marks,0));
+    topicRow.push([...new Set(qs.map(q=>q.topic).filter(Boolean))].join(", "));
+  });
+  maxRow.push(D.totalMarks);topicRow.push("");
+  rows.push(topicRow);rows.push(maxRow);
+  rows.push(["Roll No","Student Name",...sections,"Total"]);
+  const ranked=[...SUBS].sort((a,b)=>b.marks-a.marks);
+  ranked.forEach((s,i)=>{
+    const line=[i+1,s.name];
+    sections.forEach(sn=>line.push(s.perSection[sn]?Math.max(0,s.perSection[sn].marks):0));
+    line.push(Math.max(0,s.marks));
+    rows.push(line);
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Marks");
+
+  const ans=[["Student","Q No","Section","Marked","Correct","Result"]];
+  SUBS.forEach(s=>s.detail.forEach(d=>ans.push([s.name,d.no,d.section,d.given||"",d.correct||"",d.state])));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ans),"Answers");
+
+  const qa=[["Q No","Section","Topic","Correct","% class correct","Most-chosen wrong","Attempted","Blank"]];
+  questionStats().forEach(x=>qa.push([x.q.no,x.q.section,x.q.topic,x.q.correct,
+    +x.pct.toFixed(1),x.topWrong||"",x.attempted,x.counts["-"]||0]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(qa),"Question Analysis");
+
+  XLSX.writeFile(wb,"Online_Test_results.xlsx");
+}
+
+OFFICE.boot({
+  title:"Test Evaluator",
+  kicker:"Online tests",
+  headline:"Turn the codes students send back into marks",
+  blurb:"Load the same question workbook you built the test from, paste the codes your students sent, and get ranked results, per-question analysis and a marks file your dashboard can read.",
+  noteLeft:"The same Questions sheet used by the Test Builder — this is where the correct answers live.",
+  manualHint:"One row per question, including the Correct column.",
+  templateHref:"../../assets/templates/office/Questions_Template.xlsx",
+  cacheKey:"tool-testeval",
+  sampleSheets:SAMPLE_SHEETS,
+  ledgerSheets:["Questions"],
+  pill:d=>`${d.questions.length} questions · ${d.totalMarks} marks`,
+  parse,
+  render:(data,mount)=>{D=data;MOUNT=mount;SUBS=[];REJECTS=[];RAW="";render();}
+});
+</script>
+</body>
+</html>

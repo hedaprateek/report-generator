@@ -421,6 +421,53 @@ function readAttendance(sheets){
   return Object.keys(byName).length?{byName}:null;
 }
 
+// A question bank. Correct answers live only here, in the teacher's workbook — they are
+// never written into a student's exam file, because anything shipped to a device can be read.
+function readQuestions(sheets){
+  const aoa=findSheet(sheets,"questions");
+  if(!aoa)return null;
+  const rows=readTable(aoa,{
+    no:["Q No","No","Question No","Sr. No.","#"],
+    section:["Section","Subject","Topic Group","Part"],
+    topic:["Topic","Chapter"],
+    text:["Question","Question Text","Q"],
+    a:["Option A","A"],b:["Option B","B"],c:["Option C","C"],
+    d:["Option D","D"],e:["Option E","E"],
+    correct:["Correct","Answer","Correct Option","Key"],
+    marks:["Marks","Mark","Points"],
+    negative:["Negative","Negative Marks","Penalty"],
+    explain:["Explanation","Solution","Why"]
+  }).map((r,i)=>{
+    const opts=[];
+    [["A",r.a],["B",r.b],["C",r.c],["D",r.d],["E",r.e]].forEach(([L,v])=>{
+      const t=norm(v);if(t!=="")opts.push({letter:L,text:t});
+    });
+    const correct=norm(r.correct).toUpperCase().replace(/[^A-E]/g,"").slice(0,1);
+    return{
+      idx:i,
+      no:toNum(r.no)!=null?toNum(r.no):i+1,
+      section:norm(r.section)||"General",
+      topic:norm(r.topic),
+      text:norm(r.text),
+      options:opts,
+      correct:correct||null,
+      marks:toNum(r.marks)!=null?toNum(r.marks):1,
+      negative:toNum(r.negative)!=null?Math.abs(toNum(r.negative)):0,
+      explain:norm(r.explain)
+    };
+  }).filter(q=>q.text&&q.options.length>=2);
+  if(!rows.length)return null;
+  const warnings=[];
+  rows.forEach(q=>{
+    if(!q.correct)warnings.push(`Q${q.no}: no correct answer set — it will be shown but cannot be scored.`);
+    else if(!q.options.some(o=>o.letter===q.correct))
+      warnings.push(`Q${q.no}: the correct answer is "${q.correct}" but that option is empty.`);
+  });
+  return{questions:rows,warnings,
+    sections:[...new Set(rows.map(q=>q.section))],
+    totalMarks:rows.reduce((a,q)=>a+q.marks,0)};
+}
+
 // A dated observation log, one row per note. Richer than the single Notes column on the
 // roster because it keeps history — "what did we tell this parent in July" is a real question.
 function readNotes(sheets){
@@ -767,7 +814,7 @@ window.OFFICE={
   parseDate,fmtDate,today,MONTHS,
   money,moneyInWords,
   findSheet,readTable,sheetsFromBytes,
-  readAcademic,readAttendance,readFees,readNotes,mean,clamp,
+  readAcademic,readAttendance,readFees,readNotes,readQuestions,mean,clamp,
   printView,sharePDF,
   printHead(docTitle,meta){
     return `<div class="of-print-head"><img src="${esc(BRANDING.logoEmblem)}" alt="">
