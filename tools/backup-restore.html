@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup &amp; Restore</title>
+<script src="../assets/js/backup.js"></script>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
+  --b1:#B4472F; --b1s:#F6E3DD; --b5:#1F7A4D; --b5s:#DEEEE4;
+  --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;font-variant-numeric:tabular-nums;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none !important}
+
+.top{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#1B2540,#243257);color:#fff;
+  display:flex;align-items:center;gap:14px;padding:0 20px;height:60px;box-shadow:0 2px 14px rgba(31,42,68,.14)}
+.top img{height:36px;border-radius:8px;background:rgba(255,255,255,.06)}
+.brand{display:flex;flex-direction:column;line-height:1.1}
+.brand b{font-family:Georgia,serif;font-size:15.5px}
+.brand span{font-size:10.5px;color:#AEB9CC;letter-spacing:.05em;margin-top:2px}
+.mini{margin-left:auto;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;
+  padding:8px 12px;font-size:12.5px;font-weight:600;text-decoration:none}
+.mini:hover{background:rgba(255,255,255,.18)}
+
+.wrap{max-width:900px;margin:0 auto;padding:26px 20px 70px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600}
+h2{font-family:Georgia,serif;font-weight:600;font-size:24px;color:var(--navy);margin:3px 0 6px}
+.lead{font-size:13.5px;color:var(--mut);line-height:1.65;margin:0 0 22px;max-width:70ch}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px 22px;
+  box-shadow:var(--shadow);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:15px;color:var(--navy);font-weight:700}
+.card .sub{margin:0 0 16px;font-size:12.5px;color:var(--mut);line-height:1.6}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:12px;margin-bottom:16px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:13px 14px;background:#FCFBF7}
+.stat .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.stat .v{font-family:Georgia,serif;font-size:25px;color:var(--navy);line-height:1;margin-top:6px}
+.stat .s{font-size:11.5px;color:var(--mut);margin-top:4px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;font-weight:600;
+  font-size:14px;padding:12px 20px;text-decoration:none}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--line2)}
+.btn-ghost:hover{background:#F0EEE7}
+.btn-danger{background:var(--b1);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+#drop{border:2px dashed var(--line2);border-radius:12px;padding:28px;text-align:center;
+  background:#FCFBF7;cursor:pointer}
+#drop.drag{border-color:var(--teal);background:var(--teal-soft)}
+#drop b{display:block;font-size:15px;color:var(--navy);margin-bottom:3px}
+#drop span{font-size:12.5px;color:var(--mut)}
+
+.note{border-radius:10px;padding:13px 15px;font-size:12.5px;line-height:1.6;margin-top:14px}
+.note.warn{background:var(--amber-soft);border:1px solid #EBD3A8;border-left:3px solid var(--amber);color:#6E4A1A}
+.note.good{background:var(--b5s);border:1px solid #B9DCC8;border-left:3px solid var(--b5);color:#14512F}
+.note.bad{background:var(--b1s);border:1px solid #E8B49A;border-left:3px solid var(--b1);color:#7A3323}
+
+.list{margin:12px 0 0;padding:0;list-style:none;font-size:12.5px}
+.list li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+.list li:last-child{border-bottom:none}
+.list .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .dt{color:var(--mut);font-size:11.5px;white-space:nowrap}
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:#F3F1EA;color:var(--mut)}
+</style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
+</head>
+<body>
+<div class="top">
+  <img id="logo" alt="">
+  <div class="brand"><b id="brandName">Academy</b><span>Backup &amp; Restore</span></div>
+  <a class="mini" href="../index.html">⌂ Home</a>
+</div>
+
+<h1 class="sr-only">Backup and restore everything stored on this device</h1>
+
+<div class="wrap">
+  <div class="eyebrow">Keep it safe</div>
+  <h2>Backup &amp; Restore</h2>
+  <p class="lead">Nothing in this suite is uploaded anywhere — which is what keeps your students' data private,
+    but also means this browser is the only place it exists. One file brings all of it with you: to a new laptop,
+    to a hosted address, or back from a wiped machine.</p>
+
+  <!-- ---------- what's here ---------- -->
+  <div class="card">
+    <h3>On this device right now</h3>
+    <p class="sub">Everything the tools have saved in this browser.</p>
+    <div class="stat-grid" id="stats"></div>
+    <div id="wbList"></div>
+    <div id="lastNote"></div>
+  </div>
+
+  <!-- ---------- backup ---------- -->
+  <div class="card">
+    <h3>1 · Make a backup</h3>
+    <p class="sub">Downloads a single file. Keep it wherever you already keep important files —
+      Google Drive, a pen drive, or email it to yourself. It is ordinary text, so it will still open in years to come.</p>
+    <div class="row">
+      <button class="btn btn-primary" id="bDownload">⬇ Download backup file</button>
+      <span id="dlMsg" style="font-size:12.5px;color:var(--mut)"></span>
+    </div>
+    <div class="note warn">
+      <b>This file contains real student data</b> — names, marks, parent phone numbers and any photos you added.
+      Treat it exactly as you would a printed mark sheet. It is not password-protected, so don't leave it
+      in a shared folder.
+    </div>
+  </div>
+
+  <!-- ---------- restore ---------- -->
+  <div class="card">
+    <h3>2 · Restore from a backup</h3>
+    <p class="sub">Drop a backup file here. You'll see what's inside before anything is changed.</p>
+    <div id="drop">
+      <b>Drop your backup file here</b>
+      <span>or click to choose — the .json file you downloaded</span>
+      <input id="file" type="file" accept=".json,application/json" class="hidden">
+    </div>
+    <div id="preview"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- branding ---------------- */
+const DEF={name:"The Extra Step Academy",logoEmblem:"../assets/images/tesa-emblem.png"};
+let BRAND=DEF;
+try{const s=JSON.parse(localStorage.getItem("spdBrandingOverrides_v1")||"{}")||{};
+  BRAND={name:s.name||DEF.name,logoEmblem:s.logoEmblem||DEF.logoEmblem};}catch(e){}
+document.getElementById("brandName").textContent=BRAND.name;
+document.getElementById("logo").src=BRAND.logoEmblem;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtSize=b=>b<1024?b+" B":b<1048576?(b/1024).toFixed(0)+" KB":(b/1048576).toFixed(1)+" MB";
+const fmtDate=t=>t?new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"—";
+
+let PENDING=null;   // a parsed backup awaiting confirmation
+
+/* ---------------- what's on this device ---------------- */
+async function paintLocal(){
+  const snap=await SPDBackup.snapshot();
+  const s=SPDBackup.summarize(snap);
+  $("stats").innerHTML=[
+    ["Students",s.students,"in Student Master"],
+    ["Workbooks",s.workbooks,s.bytes?fmtSize(s.bytes):"cached uploads"],
+    ["Photos",s.photos,"added by hand"],
+    ["Branding",s.branding?"Set":"Default","logo & labels"]
+  ].map(([k,v,sub])=>`<div class="stat"><div class="k">${esc(k)}</div>
+      <div class="v">${esc(String(v))}</div><div class="s">${esc(sub)}</div></div>`).join("");
+
+  $("wbList").innerHTML=s.workbooks
+    ?`<ul class="list">${s.workbookNames.map(w=>`<li>
+        <span class="tag">${esc(w.key)}</span>
+        <span class="nm">${esc(w.filename)}</span>
+        <span class="dt">${esc(fmtDate(w.savedAt))}</span></li>`).join("")}</ul>`
+    :`<div class="note warn" style="margin-top:0">Nothing is cached on this device yet.
+        Upload a workbook in any tool and it will appear here.</div>`;
+
+  const days=SPDBackup.daysSinceBackup();
+  $("lastNote").innerHTML =
+    days===null
+      ? `<div class="note warn"><b>You have never made a backup.</b>
+           If this browser's data is cleared today, everything above is gone permanently.</div>`
+      : days>=30
+        ? `<div class="note warn">Last backup was <b>${days} days ago</b>. Worth making a fresh one.</div>`
+        : `<div class="note good">Last backup: <b>${days===0?"today":days+" day"+(days===1?"":"s")+" ago"}</b>.</div>`;
+}
+
+/* ---------------- download ---------------- */
+$("bDownload").addEventListener("click",async()=>{
+  const btn=$("bDownload");btn.disabled=true;$("dlMsg").textContent="Collecting…";
+  try{
+    const s=await SPDBackup.download(BRAND.name);
+    $("dlMsg").textContent=`Saved — ${s.students} students, ${s.workbooks} workbook${s.workbooks===1?"":"s"}.`;
+    await paintLocal();
+  }catch(e){
+    $("dlMsg").textContent="Could not build the backup: "+e.message;
+  }
+  btn.disabled=false;
+});
+
+/* ---------------- restore ---------------- */
+const drop=$("drop"),fileInput=$("file");
+drop.addEventListener("click",()=>fileInput.click());
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag");});
+drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));
+drop.addEventListener("drop",e=>{
+  e.preventDefault();drop.classList.remove("drag");
+  if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change",e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+
+async function handleFile(file){
+  $("preview").innerHTML=`<div class="note">Reading ${esc(file.name)}…</div>`;
+  let snap;
+  try{snap=await SPDBackup.readFile(file);}
+  catch(e){$("preview").innerHTML=`<div class="note bad">${esc(e.message)}</div>`;return;}
+  const err=SPDBackup.validate(snap);
+  if(err){$("preview").innerHTML=`<div class="note bad">${esc(err)}</div>`;PENDING=null;return;}
+
+  PENDING=snap;
+  const s=SPDBackup.summarize(snap);
+  const cur=SPDBackup.summarize(await SPDBackup.snapshot());
+  // Say plainly what will be lost, because a restore is not undoable.
+  const risky=cur.students>0||cur.workbooks>0;
+  $("preview").innerHTML=`
+    <div class="note good" style="margin-top:16px">
+      <b>This backup is readable.</b> Made ${esc(fmtDate(Date.parse(snap.createdAt)))}${
+        snap.origin?` on ${esc(snap.origin)}`:""}.
+    </div>
+    <div class="stat-grid" style="margin-top:14px">
+      ${[["Students",s.students],["Workbooks",s.workbooks],["Photos",s.photos],
+         ["Branding",s.branding?"Set":"—"]]
+        .map(([k,v])=>`<div class="stat"><div class="k">${esc(k)}</div>
+          <div class="v">${esc(String(v))}</div></div>`).join("")}
+    </div>
+    ${s.meet?`<div style="font-size:12.5px;color:var(--mut);margin-top:10px">Also includes the sports meet “${esc(s.meet)}”.</div>`:""}
+    ${risky?`<div class="note warn" style="margin-top:14px">
+        <b>This device already has data</b> — ${cur.students} student${cur.students===1?"":"s"} and
+        ${cur.workbooks} workbook${cur.workbooks===1?"":"s"}. Replacing will delete what is here now.
+        There is no undo, so make a backup of this device first if you are unsure.
+      </div>`:""}
+    <div class="row" style="margin-top:16px">
+      <button class="btn btn-danger" id="bReplace">Replace everything on this device</button>
+      <button class="btn btn-ghost" id="bMerge">Merge into what's here</button>
+      <button class="btn btn-ghost" id="bCancel">Cancel</button>
+    </div>
+    <div style="font-size:12px;color:var(--mut);margin-top:9px;line-height:1.6">
+      <b>Replace</b> makes this device match the file exactly. <b>Merge</b> adds the file's students and
+      workbooks alongside what is already here, and the file wins where both have the same entry.
+    </div>
+    <div id="restoreMsg"></div>`;
+
+  $("bCancel").addEventListener("click",()=>{PENDING=null;$("preview").innerHTML="";fileInput.value="";});
+  $("bReplace").addEventListener("click",()=>doRestore(true));
+  $("bMerge").addEventListener("click",()=>doRestore(false));
+}
+
+async function doRestore(replace){
+  if(!PENDING)return;
+  const s=SPDBackup.summarize(PENDING);
+  const msg=replace
+    ? `Replace everything on this device with this backup?\n\n`+
+      `After this the device will have ${s.students} students and ${s.workbooks} workbooks.\n`+
+      `Anything currently here that is not in the file will be deleted. This cannot be undone.`
+    : `Merge this backup into this device?\n\nWhere both have the same student or workbook, the file wins.`;
+  if(!confirm(msg))return;
+
+  const box=$("restoreMsg");
+  box.innerHTML=`<div class="note">Restoring…</div>`;
+  try{
+    const done=await SPDBackup.restore(PENDING,{replace});
+    box.innerHTML=`<div class="note good"><b>Restored.</b>
+      ${done.roster?"Roster, ":""}${done.workbooks} workbook${done.workbooks===1?"":"s"},
+      ${done.photos} photo${done.photos===1?"":"s"} and ${done.local} setting${done.local===1?"":"s"} written.
+      Open any tool and your data will be there.</div>`;
+    PENDING=null;fileInput.value="";
+    await paintLocal();
+  }catch(e){
+    box.innerHTML=`<div class="note bad">Restore failed: ${esc(e.message)}<br>
+      Nothing further was written. Your existing data is unchanged.</div>`;
+  }
+}
+
+paintLocal();
+</script>
+</body>
+</html>

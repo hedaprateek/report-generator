@@ -98,10 +98,23 @@ a{color:inherit;text-decoration:none}
 .card.prog{min-height:150px}
 .card.prog .ic{background:#F1EEE4}
 
+/* backup nudge */
+.nudge{display:flex;align-items:center;gap:13px;background:var(--amber-soft);border:1px solid #EBD3A8;
+  border-left:4px solid var(--amber);border-radius:11px;padding:13px 16px;margin:-18px 0 30px}
+.nudge.hidden{display:none}
+.nudge-ic{font-size:17px;line-height:1}
+.nudge b{display:block;font-size:13.5px;color:#6E4A1A}
+.nudge span{font-size:12.5px;color:#7A5622;line-height:1.55}
+.nudge-go{margin-left:auto;white-space:nowrap;font-size:12.5px;font-weight:700;color:#6E4A1A;
+  background:rgba(255,255,255,.6);border:1px solid #EBD3A8;border-radius:8px;padding:8px 13px}
+.nudge-go:hover{background:#fff}
+@media(max-width:620px){.nudge{flex-wrap:wrap}.nudge-go{margin-left:0}}
+
 .foot{text-align:center;margin-top:10px;font-size:11.5px;color:var(--mut2);line-height:1.7}
 </style>
 <link rel="stylesheet" href="assets/css/a11y.css">
 <script src="assets/js/a11y.js" defer></script>
+<script src="assets/js/backup.js"></script>
 </head>
 <body>
 
@@ -136,11 +149,23 @@ a{color:inherit;text-decoration:none}
         <span class="ic">✍️</span>
         <span><b>Enter Marks</b><span>Add a test in three steps</span></span>
       </a>
-      <a class="roster" href="tools/student-master.html">
+      <a class="roster" href="tools/student-master.html" style="margin-bottom:9px">
         <span class="ic">👥</span>
         <span><b>Student Master</b><span>Add a student mid-year in one place</span></span>
       </a>
+      <a class="roster" id="backupLink" href="tools/backup-restore.html">
+        <span class="ic">🛟</span>
+        <span><b>Backup &amp; Restore</b><span id="backupSub">Save everything to one file</span></span>
+      </a>
     </div>
+  </div>
+
+  <!-- Everything lives in this browser, so an academy that has never backed up is one
+       cleared cache away from losing the year. Say so where it will be seen. -->
+  <div id="backupNudge" class="nudge hidden">
+    <span class="nudge-ic">⚠</span>
+    <div><b id="nudgeTitle"></b><span id="nudgeText"></span></div>
+    <a class="nudge-go" href="tools/backup-restore.html">Back up now →</a>
   </div>
 
   <!-- ---------- programs ---------- -->
@@ -344,6 +369,31 @@ try{
     if(saved.logoFull)document.getElementById("hubLogo").src=saved.logoFull;
   }
 }catch(e){/* ignore — falls back to the default TESA logo */}
+
+/* Backup nudge. Only speaks up when there is something to lose: a fresh install
+   with no roster and no workbooks gets no warning, because nagging someone who
+   has nothing at stake just teaches them to ignore the banner. */
+(function(){
+  if(!window.SPDBackup)return;
+  SPDBackup.quickStatus().then(function(st){
+    var sub=document.getElementById("backupSub");
+    var days=st.lastBackup?Math.floor((Date.now()-st.lastBackup)/86400000):null;
+    if(sub)sub.textContent = days===null
+      ? "Save everything to one file"
+      : "Last backup "+(days===0?"today":days+" day"+(days===1?"":"s")+" ago");
+    if(!st.hasData)return;
+    var show=null;
+    if(days===null)show=["You have no backup yet",
+      st.students+" student"+(st.students===1?"":"s")+" and "+st.workbooks+
+      " workbook"+(st.workbooks===1?"":"s")+" live only in this browser. Clearing its data would lose them."];
+    else if(days>=30)show=["Your last backup is "+days+" days old",
+      "Anything added since then exists only in this browser."];
+    if(!show)return;
+    document.getElementById("nudgeTitle").textContent=show[0];
+    document.getElementById("nudgeText").textContent=show[1];
+    document.getElementById("backupNudge").classList.remove("hidden");
+  }).catch(function(){/* storage unavailable — no nudge is better than a broken one */});
+})();
 </script>
 </body>
 </html>

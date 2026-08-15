@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Progress</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+body{margin:0;background:#F5F3EE;color:#2B2F3A;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.msg{max-width:460px;margin:16vh auto;padding:26px 24px;background:#fff;border:1px solid #E4E0D6;
+  border-radius:14px;box-shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);text-align:center}
+.msg img{height:56px;border-radius:11px;margin-bottom:14px}
+.msg h1{font-family:Georgia,serif;font-size:20px;color:#1F2A44;margin:0 0 8px;font-weight:600}
+.msg p{font-size:13.5px;color:#556074;line-height:1.65;margin:0}
+.spin{width:26px;height:26px;border:3px solid #E4E0D6;border-top-color:#0E7C7B;border-radius:50%;
+  margin:0 auto 14px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+<div class="msg" id="box">
+  <div class="spin"></div>
+  <h1>Opening the report…</h1>
+  <p>This takes a moment on a slow connection.</p>
+</div>
+
+<script src="assets/js/parent-report.js"></script>
+<script src="assets/js/parent-link.js"></script>
+<script>
+/* The whole report travels inside the part of the address after '#'. Browsers
+   never send that to the web server, so opening this page tells the host
+   nothing about the child — it only ever serves this empty shell. */
+(function(){
+  var box=document.getElementById("box");
+  function fail(title,detail){
+    box.innerHTML='<h1>'+title+'</h1><p>'+detail+'</p>';
+  }
+  var frag=location.hash||"";
+  if(!frag||frag.length<4){
+    fail("Nothing to show",
+      "This address is missing the report itself. Please open the full link exactly as it was sent to you — "+
+      "chat apps sometimes cut long links in half.");
+    return;
+  }
+  ParentLink.decode(frag).then(function(data){
+    // The link deliberately carries no logo, so the site supplies its own.
+    if(!data.logo)data.logo="assets/images/tesa-emblem.png";
+    var html=ParentReport.render(data);
+    document.open();document.write(html);document.close();
+  }).catch(function(e){
+    fail("Could not open this report",(e&&e.message)||"The link may be damaged.");
+  });
+})();
+</script>
+</body>
+</html>
