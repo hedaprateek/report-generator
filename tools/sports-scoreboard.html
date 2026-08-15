@@ -1,0 +1,1464 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sports Day</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/live-relay.js"></script>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
+  --b1:#B4472F; --b1s:#F6E3DD; --b5:#1F7A4D; --b5s:#DEEEE4; --gold:#C9A227;
+  --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;font-variant-numeric:tabular-nums;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line2);
+  border-radius:9px;background:var(--card);color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--teal-soft);border-color:var(--teal)}
+.hidden{display:none !important}
+.top{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#1B2540,#243257);color:#fff;
+  display:flex;align-items:center;gap:14px;padding:0 20px;height:60px;box-shadow:0 2px 14px rgba(31,42,68,.14)}
+.top img{height:36px;border-radius:8px;background:rgba(255,255,255,.06)}
+.brand{display:flex;flex-direction:column;line-height:1.1}
+.brand b{font-family:Georgia,serif;font-size:15.5px}
+.brand span{font-size:10.5px;color:#AEB9CC;letter-spacing:.05em;margin-top:2px}
+.tabs{display:flex;gap:2px;height:100%;margin-left:8px}
+.tab{background:none;border:none;color:#B9C4D6;font-weight:600;font-size:13.5px;padding:0 15px;
+  height:100%;border-bottom:3px solid transparent}
+.tab:hover{color:#fff}.tab.on{color:#fff;border-bottom-color:var(--teal)}
+.tr{margin-left:auto;display:flex;gap:9px;align-items:center}
+.mini{background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;padding:8px 12px;
+  font-size:12.5px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.mini:hover{background:rgba(255,255,255,.18)}
+.dot{width:8px;height:8px;border-radius:50%;background:#7C8598}
+.dot.on{background:#31c48d;box-shadow:0 0 0 3px rgba(49,196,141,.25)}
+.dot.wait{background:var(--amber)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+.btn{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:9px;font-weight:600;
+  font-size:14px;padding:11px 17px;text-decoration:none}
+.btn-primary{background:var(--teal);color:#fff}.btn-primary:hover{filter:brightness(1.07)}
+.btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--line2)}
+.btn-ghost:hover{background:#F0EEE7}
+.btn-danger{background:transparent;color:var(--b1);border:1px solid #E8B49A}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+  box-shadow:var(--shadow);margin-bottom:16px}
+.panel h3{margin:0 0 3px;font-size:14.5px;color:var(--navy);font-weight:700}
+.panel .sub{font-size:12px;color:var(--mut);margin:0 0 14px;line-height:1.55}
+h2{font-family:Georgia,serif;font-weight:600;font-size:23px;color:var(--navy);margin:2px 0 4px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+/* houses */
+.house-row{display:grid;grid-template-columns:26px 1fr 90px 34px;gap:9px;align-items:center;margin-bottom:8px}
+.swatch{width:26px;height:26px;border-radius:7px;border:1px solid var(--line2);padding:0;cursor:pointer}
+.x{border:none;background:none;color:var(--mut2);font-size:14px;cursor:pointer;padding:5px}
+.x:hover{color:var(--b1)}
+
+/* events */
+.ev{display:flex;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--line);
+  border-radius:10px;margin-bottom:8px;background:var(--card)}
+.ev.done{background:#FAF9F5}
+.ev .nm{flex:1;min-width:0}
+.ev .nm b{display:block;font-size:14px;color:var(--navy)}
+.ev .nm span{font-size:11.5px;color:var(--mut)}
+.pill{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.p-up{background:#F3F1EA;color:var(--mut)}
+.p-done{background:var(--b5s);color:#155F3B}   /* darkened from --b5: 4.42:1 failed AA on the soft green */
+
+/* results entry */
+.res-row{display:grid;grid-template-columns:38px 1fr 150px 110px 34px;gap:9px;align-items:center;margin-bottom:8px}
+.res-row.solo,.res-head.solo{grid-template-columns:38px 1fr 130px 34px}
+.place{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;
+  font-family:Georgia,serif;font-size:14px;color:#fff}
+.res-head{display:grid;grid-template-columns:38px 1fr 150px 110px 34px;gap:9px;font-size:10px;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:700;margin-bottom:6px}
+
+/* mode picker */
+.modepick{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:620px){.modepick{grid-template-columns:1fr}}
+.modeopt{border:1px solid var(--line2);border-radius:10px;padding:11px 13px;cursor:pointer;
+  display:block;background:#FCFBF7}
+.modeopt.on{border-color:var(--teal);background:var(--teal-soft);box-shadow:0 0 0 1px var(--teal)}
+.modeopt input{margin-right:7px;accent-color:var(--teal)}
+.modeopt b{font-size:13.5px;color:var(--navy)}
+.modeopt span{display:block;font-size:11.5px;color:var(--mut);margin-top:3px;line-height:1.5}
+
+/* event library */
+.libgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+@media(max-width:620px){.libgrid{grid-template-columns:1fr}}
+.libitem{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);
+  padding:7px 9px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:#FCFBF7}
+.libitem:hover{border-color:var(--teal);background:var(--teal-soft)}
+.libitem input{width:15px;height:15px;accent-color:var(--teal);margin:0}
+
+/* sub-tabs */
+.segbar{display:flex;gap:4px;background:#EDEAE2;border-radius:10px;padding:4px;margin-bottom:14px}
+.seg{flex:1;background:none;border:none;border-radius:7px;padding:9px 12px;font-size:13px;
+  font-weight:600;color:var(--mut);display:flex;align-items:center;justify-content:center;gap:7px}
+.seg.on{background:var(--card);color:var(--navy);box-shadow:var(--shadow)}
+.ld{width:7px;height:7px;border-radius:50%;background:#E5484D;display:inline-block;
+  animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.p-live{background:#FBE4E5;color:#B4272C}
+
+/* match scorer */
+.mhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.mhead b{font-size:14.5px;color:var(--navy)}
+.clock{font-family:Georgia,serif;font-size:19px;font-weight:800;color:var(--navy);
+  background:#F3F1EA;border-radius:8px;padding:3px 11px}
+.tinybtn{padding:7px 11px;font-size:12px}
+.mgrid{display:grid;grid-template-columns:1fr 34px 1fr;gap:10px;align-items:start}
+.mvs{text-align:center;color:var(--mut2);font-size:13px;padding-top:34px;font-style:italic}
+.mside{border:1px solid var(--line);border-radius:11px;padding:13px 12px;background:#FCFBF7}
+.mname{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px;color:var(--navy);
+  margin-bottom:4px;min-height:19px}
+.mname .chip{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.mscore{font-family:Georgia,serif;font-size:42px;font-weight:800;color:var(--navy);line-height:1}
+.mwk{font-size:24px;color:var(--mut)}
+.msets{font-size:11.5px;color:var(--mut);margin-top:5px;display:flex;align-items:center;gap:5px}
+.msets b{color:var(--navy);font-size:14px}
+.tiny{width:22px;height:22px;border-radius:6px;border:1px solid var(--line2);background:var(--card);
+  color:var(--navy);font-weight:700;line-height:1;padding:0}
+.mbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.inc{flex:1;min-width:46px;background:var(--teal);color:#fff;border:none;border-radius:8px;
+  padding:12px 6px;font-size:14px;font-weight:700}
+.inc:hover{filter:brightness(1.08)}
+.inc.neg{background:#EDEAE2;color:var(--mut)}
+.inc.wk{background:var(--b1);flex-basis:100%}
+@media(max-width:560px){.mgrid{grid-template-columns:1fr}.mvs{padding:0;font-size:12px}}
+
+/* standings */
+.stand{display:flex;align-items:center;gap:12px;padding:12px 6px;border-bottom:1px solid var(--line)}
+.stand:last-child{border-bottom:none}
+.stand .pos{width:28px;font-family:Georgia,serif;font-weight:800;font-size:17px;color:var(--mut);text-align:center}
+.stand .chip{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.stand .hn{flex:1;font-weight:700;color:var(--navy);font-size:15px}
+.stand .bar{height:9px;border-radius:5px;background:var(--line);overflow:hidden;width:190px}
+.stand .bar>i{display:block;height:100%;border-radius:5px}
+.stand .pts{width:58px;text-align:right;font-weight:800;font-size:17px;color:var(--navy);font-family:Georgia,serif}
+
+/* final results sheet */
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:26px 30px 30px;box-shadow:var(--shadow)}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+  border-bottom:2px solid var(--navy);padding-bottom:13px;margin-bottom:20px}
+.sheet-head b{font-family:Georgia,serif;font-size:20px;color:var(--navy);display:block}
+.sheet-head span{font-size:12px;color:var(--mut)}
+.sheet-tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;
+  color:var(--teal);background:var(--teal-soft);border-radius:20px;padding:5px 12px;white-space:nowrap}
+.champ{text-align:center;padding:20px 16px;background:linear-gradient(150deg,#FDF6E3,#FBEEDC);
+  border:1px solid #EBD3A8;border-radius:12px;margin-bottom:20px}
+.champ-lab{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:700}
+.champ-nm{font-family:Georgia,serif;font-size:31px;font-weight:700;color:var(--navy);margin:5px 0 3px}
+.champ-sub{font-size:12.5px;color:#6E4A1A}
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;margin-bottom:22px}
+.pod{text-align:center}
+.pod-medal{font-size:23px}
+.pod-nm{font-size:13px;font-weight:700;color:var(--navy);margin:2px 0}
+.pod-pts{font-family:Georgia,serif;font-size:17px;font-weight:800;color:var(--navy)}
+.pod-block{border-radius:9px 9px 0 0;margin-top:7px;color:#fff;font-family:Georgia,serif;
+  font-weight:800;font-size:19px;display:grid;place-items:center}
+.pod.p1 .pod-block{background:var(--gold);height:74px}
+.pod.p2 .pod-block{background:#9AA0A6;height:54px}
+.pod.p3 .pod-block{background:#B0763C;height:40px}
+.sheet-lab{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);
+  font-weight:700;margin:22px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.rtab{width:100%;border-collapse:collapse;font-size:13px}
+.rtab th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--mut);font-weight:700;padding:7px 9px;border-bottom:1px solid var(--line2)}
+.rtab td{padding:8px 9px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:middle}
+.rtab tbody tr:last-child td{border-bottom:none}
+.rtab .rk{width:34px;color:var(--mut);font-family:Georgia,serif;font-weight:700}
+.rtab .c{text-align:center}
+.rtab .b{font-weight:800;color:var(--navy);font-family:Georgia,serif;font-size:15px}
+.rtab .chip{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px}
+.rtab .mk{color:var(--mut);font-size:11.5px}
+.sheet-foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);
+  font-size:11px;color:var(--mut2);text-align:center}
+@media print{
+  .top,.no-print{display:none !important}
+  body{background:#fff}
+  .wrap{padding:0;max-width:none}
+  .sheet{border:none;box-shadow:none;padding:0;border-radius:0}
+  .rtab{font-size:11px}
+  .rtab tr{break-inside:avoid}
+  .sheet-lab{break-after:avoid}
+}
+
+/* scoreboard (TV) */
+#board{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#141C2F,#0E7C7B);
+  color:#fff;display:none;flex-direction:column;padding:2.2vh 2.4vw;overflow:hidden}
+#board.on{display:flex}
+.bd-head{display:flex;align-items:center;gap:1.4vw;flex-shrink:0}
+.bd-head img{height:6.2vh;border-radius:.8vh;background:rgba(255,255,255,.1)}
+.bd-title{font-family:Georgia,serif;font-size:3.6vh;font-weight:700;line-height:1.1}
+.bd-sub{font-size:1.7vh;opacity:.8;margin-top:.3vh}
+.bd-live{margin-left:auto;display:flex;align-items:center;gap:.8vw;font-size:1.7vh;
+  background:rgba(255,255,255,.14);padding:.8vh 1.4vw;border-radius:3vh}
+/* final board: podium takes the whole screen, live panels stand down */
+.bd-final{display:none}
+#board.final .bd-body,#board.final .bd-hero{display:none}
+#board.final .bd-final{display:flex;flex:1;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;min-height:0}
+.fw-lab{font-size:2vh;letter-spacing:.2em;text-transform:uppercase;opacity:.75;font-weight:700}
+.fw-nm{font-family:Georgia,serif;font-size:9vh;font-weight:700;line-height:1.05;margin:.8vh 0}
+.fw-sub{font-size:2.3vh;opacity:.85;margin-bottom:4vh}
+.fw-pod{display:grid;grid-template-columns:repeat(3,minmax(0,20vw));gap:2vw;align-items:end}
+.fw-p{display:flex;flex-direction:column;align-items:center}
+.fw-med{font-size:4vh}
+.fw-pn{font-size:2.6vh;font-weight:700;margin:.5vh 0;max-width:20vw;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.fw-pp{font-family:Georgia,serif;font-size:3.4vh;font-weight:800}
+.fw-bl{width:100%;border-radius:1vh 1vh 0 0;margin-top:1vh;display:grid;place-items:center;
+  font-family:Georgia,serif;font-weight:800;font-size:3vh;color:#fff}
+.fw-p.p1 .fw-bl{background:#C9A227;height:17vh}
+.fw-p.p2 .fw-bl{background:#9AA0A6;height:12vh}
+.fw-p.p3 .fw-bl{background:#B0763C;height:8.5vh}
+.fw-rest{display:flex;flex-wrap:wrap;justify-content:center;gap:1.4vw;margin-top:3.5vh;
+  font-size:1.9vh;opacity:.8}
+.fw-rest b{opacity:.6;margin-right:.3vw}
+.bd-hero{display:none}
+.bd-hero.on{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1.6vw;margin-top:1.8vh;flex-shrink:0}
+.hero-m{background:rgba(255,255,255,.14);border-radius:1.6vh;padding:1.8vh 2vw;
+  box-shadow:0 0 0 .25vh rgba(229,72,77,.5)}
+.hero-top{display:flex;align-items:center;gap:1.1vw;font-size:1.7vh;margin-bottom:1.2vh}
+.hero-top b{font-size:1.9vh}
+.hero-live{color:#FF6B6E;font-weight:800;letter-spacing:.08em;animation:pulse 1.6s infinite}
+.hero-per{opacity:.75;margin-left:auto}
+.hero-clock{font-family:Georgia,serif;font-weight:800;font-size:2.3vh;
+  background:rgba(0,0,0,.22);border-radius:.7vh;padding:.2vh 1vw}
+.hero-row{display:flex;align-items:center;gap:1.2vw}
+.hero-side{flex:1;display:flex;align-items:center;gap:.9vw;min-width:0}
+.hero-side.r{justify-content:flex-end}
+.hero-chip{width:1.3vh;height:3.2vh;border-radius:.4vh;flex-shrink:0;
+  box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+.hero-nm{font-size:2.5vh;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero-sc{font-family:Georgia,serif;font-size:6vh;font-weight:800;line-height:1}
+.hw{font-size:3vh;opacity:.75}
+.hs{font-size:2.2vh;opacity:.75;margin-left:.4vw}
+.hero-v{font-size:3.4vh;opacity:.5}
+.hero-note{margin-top:1vh;font-size:1.6vh;opacity:.85;font-style:italic}
+.bd-body{flex:1;display:grid;grid-template-columns:1.45fr 1fr;gap:2.2vw;margin-top:2.2vh;min-height:0}
+.bd-card{background:rgba(255,255,255,.09);border-radius:1.6vh;padding:2vh 1.8vw;display:flex;
+  flex-direction:column;min-height:0}
+.bd-lab{font-size:1.5vh;letter-spacing:.16em;text-transform:uppercase;opacity:.75;font-weight:700;margin-bottom:1.4vh}
+.bd-stand{display:flex;align-items:center;gap:1.2vw;padding:1.35vh 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.bd-stand:last-child{border-bottom:none}
+.bd-pos{width:4.4vh;font-family:Georgia,serif;font-weight:800;font-size:3vh;opacity:.65;text-align:center}
+/* houses may be any colour, including near-black; the ring keeps a dark
+   swatch readable against the dark board instead of disappearing into it */
+.bd-chip{width:1.5vh;height:3.4vh;border-radius:.5vh;flex-shrink:0;
+  box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+.bd-hn{flex:1;font-size:2.9vh;font-weight:700}
+.bd-pts{font-family:Georgia,serif;font-size:4vh;font-weight:800}
+.bd-feed{flex:1;overflow:hidden}
+.bd-ev{padding:1.15vh 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.bd-ev b{font-size:1.9vh;display:block}
+.bd-ev span{font-size:1.6vh;opacity:.82}
+/* bottom-left, well clear of the live badge in the top right */
+.bd-close{position:fixed;bottom:1.6vh;left:1.6vw;z-index:210;background:rgba(255,255,255,.12);
+  color:#fff;border:none;border-radius:2vh;padding:1vh 1.6vw;font-size:1.5vh;font-weight:700;opacity:.55}
+.bd-close:hover{opacity:1}
+.bd-empty{opacity:.6;font-size:1.9vh}
+
+/* live */
+.live-box{background:#FCFBF7;border:1px dashed var(--line2);border-radius:10px;padding:14px 16px}
+.link{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all;
+  background:#F3F1EA;border-radius:8px;padding:10px 12px;user-select:all}
+.warn{background:var(--amber-soft);border:1px solid #EBD3A8;border-left:3px solid var(--amber);
+  border-radius:9px;padding:11px 13px;font-size:12px;color:#6E4A1A;line-height:1.6}
+.empty{color:var(--mut);font-size:13px;padding:22px;text-align:center}
+</style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
+</head>
+<body>
+<div class="top">
+  <img id="logo" alt="">
+  <div class="brand"><b id="brandName">Academy</b><span>Sports Day</span></div>
+  <div class="tabs">
+    <button class="tab on" data-v="score">Score</button>
+    <button class="tab" data-v="results">Final results</button>
+    <button class="tab" data-v="setup">Setup</button>
+    <button class="tab" data-v="live">Share live</button>
+  </div>
+  <div class="tr">
+    <span class="mini" id="liveStat"><span class="dot" id="liveDot"></span><span id="liveTxt">Not live</span></span>
+    <button class="mini" id="showBoard">📺 Scoreboard</button>
+    <a class="mini" href="../index.html">⌂ Home</a>
+  </div>
+</div>
+<h1 class="sr-only">Sports day scoreboard and live results</h1>
+<div class="wrap" id="mount"></div>
+
+<div id="board">
+  <button class="bd-close" id="bdClose">Exit ✕</button>
+  <div class="bd-head">
+    <img id="bdLogo" alt="">
+    <div><div class="bd-title" id="bdTitle"></div><div class="bd-sub" id="bdSub"></div></div>
+    <div class="bd-live" id="bdLive"><span class="dot" id="bdDot"></span><span id="bdLiveTxt">On the ground</span></div>
+  </div>
+  <div class="bd-final" id="bdFinal"></div>
+  <div class="bd-hero" id="bdHero"></div>
+  <div class="bd-body">
+    <div class="bd-card"><div class="bd-lab" id="bdLab">House standings</div>
+      <div id="bdStand" style="flex:1"></div></div>
+    <div class="bd-card"><div class="bd-lab">Latest results</div><div class="bd-feed" id="bdFeed"></div></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- branding ---------------- */
+const DEF={name:"The Extra Step Academy",logoEmblem:"../assets/images/tesa-emblem.png"};
+let BRAND=DEF;
+try{const s=JSON.parse(localStorage.getItem("spdBrandingOverrides_v1")||"{}")||{};
+  BRAND={name:s.name||DEF.name,logoEmblem:s.logoEmblem||DEF.logoEmblem};}catch(e){}
+document.getElementById("brandName").textContent=BRAND.name;
+document.getElementById("logo").src=BRAND.logoEmblem;
+document.getElementById("bdLogo").src=BRAND.logoEmblem;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* =================================================================
+   MEET STATE
+   A sports day runs for hours on a borrowed laptop at a field. Every
+   change is written to localStorage immediately, because the one thing
+   that must never happen is losing three hours of results to a stray
+   refresh or a flat battery.
+   ================================================================= */
+const KEY="tesaMeet_v1";
+
+/* -----------------------------------------------------------------
+   Two shapes of sport, and only two.
+
+   A MEET sport (athletics, swimming, cross-country) is a list of events;
+   each finishes with a 1st/2nd/3rd and awards points by position. Swimming
+   is not a different engine from athletics — it is the same engine with a
+   different event list, which is why both live in one library below.
+
+   A MATCH sport (cricket, football, kabaddi…) is two sides, a running
+   score and a clock. That genuinely needs its own model, so it has one.
+
+   Both feed the same house standings, the same scoreboard, the same link.
+   ----------------------------------------------------------------- */
+const LIBRARY={
+  athletics:{label:"Athletics — track",icon:"🏃",events:[
+    ["50 m Sprint","sec"],["100 m Sprint","sec"],["200 m Sprint","sec"],["400 m","sec"],
+    ["800 m","sec"],["1500 m","sec"],["100 m Hurdles","sec"],
+    ["4 × 100 m Relay","sec",true],["4 × 400 m Relay","sec",true]]},
+  field:{label:"Athletics — field",icon:"🥏",events:[
+    ["Long Jump","m"],["High Jump","m"],["Triple Jump","m"],
+    ["Shot Put","m"],["Discus Throw","m"],["Javelin Throw","m"]]},
+  swimming:{label:"Swimming",icon:"🏊",events:[
+    ["25 m Freestyle","sec"],["50 m Freestyle","sec"],["100 m Freestyle","sec"],
+    ["50 m Backstroke","sec"],["50 m Breaststroke","sec"],["50 m Butterfly","sec"],
+    ["100 m Individual Medley","sec"],
+    ["4 × 50 m Freestyle Relay","sec",true],["4 × 50 m Medley Relay","sec",true]]},
+  crosscountry:{label:"Cross country",icon:"⛰️",events:[
+    ["2 km Run","sec"],["3 km Run","sec"],["5 km Run","sec"]]},
+  funrace:{label:"Fun races",icon:"🥄",events:[
+    ["Sack Race","sec"],["Three-legged Race","sec"],["Lemon & Spoon","sec"],
+    ["Tug of War",""],["Musical Chairs",""]]}
+};
+
+// inc = the scoring buttons a scorer actually presses for that sport
+const MATCH_SPORTS={
+  cricket:{label:"Cricket",icon:"🏏",inc:[1,2,3,4,6],wickets:true,unit:"runs",
+    periods:["1st innings","2nd innings"]},
+  football:{label:"Football",icon:"⚽",inc:[1],unit:"goals",clock:true,
+    periods:["1st half","2nd half","Extra time"]},
+  kabaddi:{label:"Kabaddi",icon:"🤼",inc:[1,2,3],unit:"points",clock:true,
+    periods:["1st half","2nd half"]},
+  basketball:{label:"Basketball",icon:"🏀",inc:[1,2,3],unit:"points",clock:true,
+    periods:["Q1","Q2","Q3","Q4"]},
+  volleyball:{label:"Volleyball",icon:"🏐",inc:[1],unit:"points",sets:true,
+    periods:["Set 1","Set 2","Set 3","Set 4","Set 5"]},
+  badminton:{label:"Badminton",icon:"🏸",inc:[1],unit:"points",sets:true,
+    periods:["Game 1","Game 2","Game 3"]},
+  throwball:{label:"Throwball",icon:"🤾",inc:[1],unit:"points",sets:true,
+    periods:["Set 1","Set 2","Set 3"]},
+  tabletennis:{label:"Table tennis",icon:"🏓",inc:[1],unit:"points",sets:true,
+    periods:["Game 1","Game 2","Game 3","Game 4","Game 5"]},
+  chess:{label:"Chess",icon:"♟️",inc:[1],unit:"points",periods:["Round"]}
+};
+
+const DEFAULT_MEET={
+  name:"Annual Sports Day",
+  date:new Date().toISOString().slice(0,10),
+  // "house"      — inter-house shield, points pool into four teams
+  // "individual" — open meet or swim gala, every athlete scores for themselves
+  //                and the prize at the end is a champion, not a shield
+  mode:"house",
+  points:{1:5,2:3,3:1,win:5,draw:2},
+  houses:[{name:"Ruby",color:"#B4472F"},{name:"Emerald",color:"#1F7A4D"},
+          {name:"Sapphire",color:"#1F2A44"},{name:"Topaz",color:"#C9791B"}],
+  events:[
+    {id:"e1",name:"100 m Sprint",cat:"U14 Boys",unit:"sec",results:[]},
+    {id:"e2",name:"100 m Sprint",cat:"U14 Girls",unit:"sec",results:[]},
+    {id:"e3",name:"Long Jump",cat:"U16 Boys",unit:"m",results:[]},
+    {id:"e4",name:"50 m Freestyle",cat:"U14 Boys",unit:"sec",results:[]},
+    {id:"e5",name:"4 × 100 m Relay",cat:"Open",unit:"sec",relay:true,results:[]}
+  ],
+  matches:[],
+  topic:null
+};
+let MEET=load(),VIEW="score",TAB="events",CUR=null,MCUR=null,RELAY=null,LIVE="off";
+let LIBSEL="athletics",LIBCAT="",BOARD="live";
+
+function load(){
+  try{const raw=localStorage.getItem(KEY);
+    if(raw){const m=JSON.parse(raw);
+      if(m&&m.houses&&m.events){
+        // migrate meets saved before match sports existed
+        if(!m.matches)m.matches=[];
+        if(m.points.win==null){m.points.win=5;m.points.draw=2;}
+        if(!m.mode)m.mode="house";
+        return m;
+      }}
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_MEET));
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(MEET));}catch(e){}
+  publish();
+}
+function uid(){return "e"+Math.random().toString(36).slice(2,8);}
+
+/* ---------------- points engine ---------------- */
+// A relay is a team event, so it is worth double by convention. Everything else
+// scores strictly by finishing position from the configured table.
+function pointsFor(place,relay){
+  const base=MEET.points[place]||0;
+  return relay?base*2:base;
+}
+// A finished match pays the winning house; a tie splits the draw value both ways.
+function matchOutcome(m){
+  if(m.status!=="done")return null;
+  const as=Number(m.a.score)||0,bs=Number(m.b.score)||0;
+  const av=m.sets?(Number(m.a.sets)||0):as, bv=m.sets?(Number(m.b.sets)||0):bs;
+  if(av===bv)return{tie:true};
+  return{win:av>bv?"a":"b"};
+}
+const isIndiv=()=>MEET.mode==="individual";
+const houseColor=n=>(MEET.houses.find(h=>h.name===n)||{}).color||"#556074";
+
+/* One leaderboard function for both modes. In house mode the competitor is the
+   house; in individual mode it is the athlete's own name, and houses are not
+   consulted at all — so a meet can be run without ever setting one up.
+   Ties break on points, then golds, then silvers, then bronzes: the standard
+   way a meet is decided when two competitors finish level. */
+function standings(opts){
+  opts=opts||{};
+  const ind=isIndiv(),t={};
+  const ensure=(key,color)=>{
+    key=(key||"").trim();if(!key)return null;
+    if(!t[key])t[key]={name:key,color:color||(ind?"#0E7C7B":houseColor(key)),
+      pts:0,golds:0,silvers:0,bronzes:0,results:0};
+    return t[key];
+  };
+  // In house mode every house appears from the start, even on zero, so the
+  // board looks like a competition rather than a list that fills up.
+  if(!ind)MEET.houses.forEach(h=>ensure(h.name,h.color));
+
+  MEET.events.forEach(ev=>{
+    if(opts.cat&&ev.cat!==opts.cat)return;
+    ev.results.forEach(r=>{
+      const e=ensure(ind?r.name:r.house);if(!e)return;
+      e.pts+=pointsFor(r.place,ev.relay);e.results++;
+      if(r.place===1)e.golds++;else if(r.place===2)e.silvers++;else if(r.place===3)e.bronzes++;
+    });
+  });
+
+  if(!opts.cat)(MEET.matches||[]).forEach(m=>{
+    const o=matchOutcome(m);if(!o)return;
+    const add=(side,p,gold)=>{
+      const e=ensure(ind?m[side].name:m[side].house);if(!e)return;
+      e.pts+=p;e.results++;if(gold)e.golds++;};
+    if(o.tie){add("a",MEET.points.draw||0);add("b",MEET.points.draw||0);}
+    else{add(o.win,MEET.points.win||0,true);add(o.win==="a"?"b":"a",0);}
+  });
+
+  return Object.values(t).sort((a,b)=>
+    b.pts-a.pts||b.golds-a.golds||b.silvers-a.silvers||b.bronzes-a.bronzes||a.name.localeCompare(b.name));
+}
+
+// Every category that actually has a result, so the meet can crown a champion
+// per age group as well as overall.
+function categories(){
+  const seen=[];
+  MEET.events.forEach(ev=>{
+    if(!ev.results.length)return;
+    const c=(ev.cat||"").trim();
+    if(c&&seen.indexOf(c)<0)seen.push(c);
+  });
+  return seen;
+}
+
+/* ---------------- match clock ----------------
+   The elapsed value is computed here and sent as a number, not as a start
+   timestamp — a parent's phone clock is not in sync with the scorer's laptop,
+   and sending a timestamp would show a match running minutes fast or slow. */
+function elapsedOf(m){
+  return (m.clockAccum||0)+(m.clockRunning&&m.clockStart?Date.now()-m.clockStart:0);
+}
+function mmss(ms){
+  const s=Math.max(0,Math.floor(ms/1000));
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+}
+const liveMatches=()=>(MEET.matches||[]).filter(m=>m.status==="live");
+// "Latest" means latest *recorded*, not last in the setup list — events on a
+// real sports day finish out of order, and a correction to an early heat should
+// resurface at the top rather than stay buried where it was scheduled.
+function recentResults(n){
+  return MEET.events.filter(ev=>ev.results.length)
+    .sort((a,b)=>(b.at||0)-(a.at||0))
+    .slice(0,n||6)
+    .map(ev=>({ev,winner:ev.results.find(r=>r.place===1)||ev.results[0]}));
+}
+const doneCount=()=>MEET.events.filter(e=>e.results.length).length;
+
+/* ---------------- live relay ---------------- */
+function meetPayload(){
+  const hc={};MEET.houses.forEach(h=>hc[h.name]=h.color);
+  return{v:2,name:MEET.name,date:MEET.date,academy:BRAND.name,ind:isIndiv(),
+    standings:standings().filter(s=>!isIndiv()||s.results>0).slice(0,isIndiv()?12:99)
+      .map(s=>({n:s.name,c:s.color,p:s.pts,g:s.golds})),
+    recent:recentResults(8).map(x=>({e:x.ev.name,c:x.ev.cat,
+      w:x.winner?x.winner.name:"",h:x.winner?x.winner.house:"",m:x.winner?x.winner.mark:""})),
+    live:liveMatches().map(m=>{
+      const sp=MATCH_SPORTS[m.sport]||{};
+      // Only cricket has wickets. Sending 0 for everything else made a football
+      // match read "0/0" on the parent's phone.
+      const wk=s=>sp.wickets?(s.wkts||0):null;
+      // no house colour to show when the competitors are two named players
+      const cc=s=>isIndiv()?null:(hc[s.house]||"#556074");
+      return{s:sp.label||m.sport,i:sp.icon||"",
+        an:m.a.name,ah:m.a.house,ac:cc(m.a),as:m.a.score||0,aw:wk(m.a),ax:m.a.sets||0,
+        bn:m.b.name,bh:m.b.house,bc:cc(m.b),bs:m.b.score||0,bw:wk(m.b),bx:m.b.sets||0,
+        p:m.period||"",ov:sp.wickets?(m.overs||""):"",note:m.note||"",
+        el:sp.clock?elapsedOf(m):null,r:!!m.clockRunning,sets:!!m.sets};}),
+    recentMatches:(MEET.matches||[]).filter(m=>m.status==="done")
+      .sort((x,y)=>(y.at||0)-(x.at||0)).slice(0,4).map(m=>({
+        s:(MATCH_SPORTS[m.sport]||{}).label||m.sport,
+        an:m.a.name,as:m.sets?m.a.sets:m.a.score,bn:m.b.name,bs:m.sets?m.b.sets:m.b.score})),
+    done:doneCount(),total:MEET.events.length,at:Date.now()};
+}
+function publish(){if(RELAY&&LIVE==="on")RELAY.publish(meetPayload());}
+function setLive(state){
+  LIVE=state;
+  const on=state==="on";
+  $("liveDot").className="dot"+(on?" on":state==="connecting"?" wait":"");
+  $("liveTxt").textContent=on?"Live":state==="connecting"?"Connecting…":"Not live";
+  $("bdDot").className="dot"+(on?" on":"");
+  $("bdLiveTxt").textContent=on?"LIVE":"On the ground";
+  if(VIEW==="live")render();
+}
+
+/* A socket that is still "open" is not proof anyone is receiving. On a phone
+   that has wandered off the wifi, sends pile up unsent while the connection
+   looks perfectly healthy — so the badge would keep saying Live while parents
+   saw nothing. Watch the unsent queue and say so instead of lying.
+   Scoring is unaffected either way: results are saved locally first, and the
+   current standings are republished the moment the connection comes back. */
+let STALL=0;
+setInterval(function(){
+  if(LIVE!=="on"||!RELAY)return;
+  const stuck=RELAY.pending()>0||(navigator.onLine===false);
+  STALL=stuck?STALL+1:0;
+  const bad=STALL>=2;                       // ~6s of not getting through
+  $("liveDot").className="dot"+(bad?" wait":" on");
+  $("liveTxt").textContent=bad?"Not reaching":"Live";
+  $("bdDot").className="dot"+(bad?"":" on");
+  $("bdLiveTxt").textContent=bad?"RECONNECTING":"LIVE";
+  const n=$("liveNote");
+  if(n)n.textContent=bad
+    ?"Not getting through right now — results are safe on this device and will be sent when the connection returns."
+    :"";
+},3000);
+function goLive(){
+  if(!MEET.topic){MEET.topic=LiveRelay.newTopic("tesa/sports");save();}
+  setLive("connecting");
+  RELAY=LiveRelay.connect({
+    topic:MEET.topic,subscribe:false,
+    onStatus:s=>{
+      if(s==="connected"){setLive("on");publish();}
+      else if(s==="offline"||s==="error")setLive("connecting");
+      else setLive("connecting");
+    }
+  });
+}
+function stopLive(){if(RELAY){RELAY.close();RELAY=null;}setLive("off");}
+
+/* ---------------- views ---------------- */
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===VIEW));
+  $("mount").innerHTML=VIEW==="score"?scoreHTML():VIEW==="setup"?setupHTML()
+    :VIEW==="results"?resultsHTML():liveHTML();
+  if(VIEW==="score")wireScore();
+  else if(VIEW==="setup")wireSetup();
+  else if(VIEW==="results")wireResults();
+  else wireLive();
+  if($("board").classList.contains("on"))paintBoard();
+}
+
+/* ----- SCORE ----- */
+function scoreHTML(){
+  const st=standings();
+  const max=Math.max(1,...st.map(s=>s.pts));
+  const ev=CUR?MEET.events.find(e=>e.id===CUR):null;
+  const mt=MCUR?(MEET.matches||[]).find(m=>m.id===MCUR):null;
+  const nLive=liveMatches().length;
+  return `
+    <div class="head">
+      <div><div class="eyebrow">${esc(MEET.date)}</div><h2>${esc(MEET.name)}</h2>
+        <div style="font-size:12.5px;color:var(--mut)">${doneCount()} of ${MEET.events.length} events completed${
+          (MEET.matches||[]).length?` · ${(MEET.matches||[]).length} match${(MEET.matches||[]).length>1?"es":""}`:""}</div></div>
+      <div class="row">
+        <button class="btn btn-ghost" id="bBoard2">Open scoreboard</button>
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="segbar">
+          <button class="seg ${TAB==="events"?"on":""}" data-tab="events">Events &amp; races</button>
+          <button class="seg ${TAB==="matches"?"on":""}" data-tab="matches">Matches${nLive?` <i class="ld"></i>`:""}</button>
+        </div>
+        ${TAB==="events"?`
+        <div class="panel">
+          <h3>${ev?"Enter results":"Pick an event"}</h3>
+          <p class="sub">${ev?"Positions are awarded points automatically. Leave a place blank if nobody finished it."
+            :"Tap an event to enter its results. Completed events can be reopened and corrected."}</p>
+          ${ev?entryHTML(ev):MEET.events.map(e=>`
+            <div class="ev ${e.results.length?"done":""}">
+              <div class="nm"><b>${esc(e.name)}</b><span>${esc(e.cat)}${e.relay?" · relay (double points)":""}</span></div>
+              <span class="pill ${e.results.length?"p-done":"p-up"}">${e.results.length?e.results.length+" placed":"not run"}</span>
+              <button class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px" data-open="${e.id}">
+                ${e.results.length?"Edit":"Enter"}</button>
+            </div>`).join("")||`<div class="empty">No events yet — add them under Setup.</div>`}
+        </div>`:`
+        <div class="panel">
+          <h3>${mt?"Scoring":"Matches"}</h3>
+          <p class="sub">${mt?"Tap the buttons as it happens. The scoreboard and anyone watching update immediately."
+            :"Head-to-head games. Start one to score it live."}</p>
+          ${mt?matchScorerHTML(mt):(MEET.matches||[]).map(m=>{
+            const sp=MATCH_SPORTS[m.sport]||{};
+            const sc=m.sets?`${m.a.sets||0} – ${m.b.sets||0}`:`${m.a.score||0} – ${m.b.score||0}`;
+            return `<div class="ev ${m.status==="done"?"done":""}">
+              <div class="nm"><b>${sp.icon||""} ${esc(m.a.name)} v ${esc(m.b.name)}</b>
+                <span>${esc(sp.label||m.sport)}${m.status==="done"?" · full time":m.status==="live"?" · in play":""}</span></div>
+              <span style="font-weight:800;font-family:Georgia,serif;font-size:15px;color:var(--navy)">${sc}</span>
+              <span class="pill ${m.status==="live"?"p-live":m.status==="done"?"p-done":"p-up"}">${
+                m.status==="live"?"LIVE":m.status==="done"?"done":"not started"}</span>
+              <button class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px" data-mopen="${m.id}">Score</button>
+            </div>`;}).join("")||`<div class="empty">No matches yet — add one under Setup.</div>`}
+        </div>`}
+      </div>
+      <div>
+        <div class="panel">
+          <h3>${isIndiv()?"Leaderboard":"House standings"}</h3>
+          <p class="sub">Live totals. ${MEET.points[1]}/${MEET.points[2]}/${MEET.points[3]} for first, second and third; relays count double${
+            (MEET.matches||[]).length?`; a match win ${MEET.points.win}, a draw ${MEET.points.draw} each`:""}.</p>
+          ${(isIndiv()?st.filter(s=>s.results>0).slice(0,10):st).map((s,i)=>`<div class="stand">
+            <div class="pos">${i+1}</div>
+            ${isIndiv()?"":`<span class="chip" style="background:${esc(s.color)}"></span>`}
+            <div class="hn">${esc(s.name)}</div>
+            <div class="bar"><i style="width:${s.pts/max*100}%;background:${esc(s.color)}"></i></div>
+            <div class="pts">${s.pts}</div></div>`).join("")
+            ||`<div class="empty">No results yet — the leaderboard fills in as events finish.</div>`}
+          ${isIndiv()&&st.filter(s=>s.results>0).length>10
+            ?`<div style="font-size:11.5px;color:var(--mut);text-align:center;padding-top:9px">
+                Top 10 shown · full table under Final results</div>`:""}
+        </div>
+        <div class="panel">
+          <h3>Latest results</h3>
+          ${recentResults(6).map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)">
+            <b style="font-size:13px;color:var(--navy)">${esc(x.ev.name)}</b>
+            <span style="font-size:11.5px;color:var(--mut)"> · ${esc(x.ev.cat)}</span>
+            <div style="font-size:12.5px;color:var(--mut);margin-top:2px">
+              🥇 ${esc(x.winner.name||"—")}${x.winner.house?` · ${esc(x.winner.house)}`:""}${x.winner.mark?` · ${esc(x.winner.mark)}`:""}</div>
+          </div>`).join("")||`<div class="empty">Nothing recorded yet.</div>`}
+        </div>
+      </div>
+    </div>`;
+}
+function entryHTML(ev){
+  const rows=[1,2,3].map(place=>{
+    const r=ev.results.find(x=>x.place===place)||{name:"",house:"",mark:""};
+    const medal=["#C9A227","#9AA0A6","#B0763C"][place-1];
+    return `<div class="res-row${isIndiv()?" solo":""}" data-place="${place}">
+      <div class="place" style="background:${medal}">${place}</div>
+      <input type="text" data-f="name" placeholder="Athlete name" value="${esc(r.name)}" list="athletes">
+      ${isIndiv()?"":`<select data-f="house">
+        <option value="">House…</option>
+        ${MEET.houses.map(h=>`<option value="${esc(h.name)}"${r.house===h.name?" selected":""}>${esc(h.name)}</option>`).join("")}
+      </select>`}
+      <input type="text" data-f="mark" placeholder="${ev.unit==="sec"?"12.4 s":"4.20 m"}" value="${esc(r.mark)}">
+      <button class="x" data-clear="${place}" title="Clear">✕</button>
+    </div>`;}).join("");
+  return `
+    <div style="margin-bottom:12px">
+      <b style="font-size:16px;color:var(--navy)">${esc(ev.name)}</b>
+      <span style="font-size:12.5px;color:var(--mut)"> · ${esc(ev.cat)}${ev.relay?" · relay":""}</span>
+    </div>
+    <datalist id="athletes">${(window.__ATHLETES||[]).map(a=>`<option value="${esc(a)}">`).join("")}</datalist>
+    <div class="res-head${isIndiv()?" solo":""}"><span>Pos</span><span>Athlete</span>${
+      isIndiv()?"":"<span>House</span>"}<span>Time / distance</span><span></span></div>
+    ${rows}
+    <div class="row" style="margin-top:14px">
+      <button class="btn btn-primary" id="bSaveRes">Save results</button>
+      <button class="btn btn-ghost" id="bCancel">Back to events</button>
+      <span style="font-size:12px;color:var(--mut)">Points awarded on save</span>
+    </div>`;
+}
+/* The scorer is standing at the touchline holding a phone in one hand. Every
+   control here is a big tap target, and the score is never typed. */
+function matchScorerHTML(m){
+  const sp=MATCH_SPORTS[m.sport]||{inc:[1]};
+  const side=(k,label)=>{
+    const s=m[k],col=(MEET.houses.find(h=>h.name===s.house)||{}).color||"#556074";
+    return `<div class="mside">
+      <div class="mname">${isIndiv()?"":`<span class="chip" style="background:${esc(col)}"></span>`}${esc(s.name)}</div>
+      <div class="mscore">${s.score||0}${sp.wickets?`<span class="mwk">/${s.wkts||0}</span>`:""}</div>
+      ${sp.sets?`<div class="msets">sets <b>${s.sets||0}</b>
+        <button class="tiny" data-set="${k}:1">+</button><button class="tiny" data-set="${k}:-1">−</button></div>`:""}
+      <div class="mbtns">
+        ${sp.inc.map(n=>`<button class="inc" data-inc="${k}:${n}">+${n}</button>`).join("")}
+        <button class="inc neg" data-inc="${k}:-1">−1</button>
+        ${sp.wickets?`<button class="inc wk" data-wk="${k}">Wicket</button>`:""}
+      </div></div>`;
+  };
+  const el=sp.clock?elapsedOf(m):null;
+  return `
+    <div class="mhead">
+      <span class="pill ${m.status==="live"?"p-live":m.status==="done"?"p-done":"p-up"}">${
+        m.status==="live"?"LIVE":m.status==="done"?"FULL TIME":"NOT STARTED"}</span>
+      <b>${sp.icon||""} ${esc(sp.label||m.sport)}</b>
+      ${el!=null?`<span class="clock" id="mClock">${mmss(el)}</span>
+        <button class="btn btn-ghost tinybtn" id="bClock">${m.clockRunning?"Pause":"Start"} clock</button>`:""}
+    </div>
+    <div class="mgrid">${side("a")}<div class="mvs">v</div>${side("b")}</div>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <select id="mPeriod" style="width:150px">
+        ${(sp.periods||["Period"]).map(p=>`<option${m.period===p?" selected":""}>${esc(p)}</option>`).join("")}
+      </select>
+      ${m.sport==="cricket"?`<input type="text" id="mOvers" placeholder="Overs, e.g. 12.3" value="${esc(m.overs||"")}" style="width:130px">`:""}
+      <input type="text" id="mNote" placeholder="Note shown to watchers (optional)" value="${esc(m.note||"")}" style="flex:1;min-width:150px">
+    </div>
+    <div class="row" style="margin-top:14px">
+      ${m.status!=="live"?`<button class="btn btn-primary" id="mStart">${m.status==="done"?"Reopen match":"Start match"}</button>`:""}
+      ${m.status==="live"?`<button class="btn btn-primary" id="mEnd">End match</button>`:""}
+      <button class="btn btn-ghost" id="mBack">Back to matches</button>
+      <button class="btn btn-danger" id="mReset" style="margin-left:auto">Reset score</button>
+    </div>
+    ${m.status==="done"?`<div style="margin-top:12px;font-size:12.5px;color:var(--mut)">${resultLine(m)}</div>`:""}`;
+}
+function resultLine(m){
+  const o=matchOutcome(m);if(!o)return "";
+  if(o.tie)return `Drawn — ${MEET.points.draw} points each.`;
+  const w=m[o.win];
+  return isIndiv()
+    ? `${esc(w.name)} won — ${MEET.points.win} points.`
+    : `${esc(w.name)} won — ${MEET.points.win} points to ${esc(w.house||"their house")}.`;
+}
+function wireMatch(){
+  const m=(MEET.matches||[]).find(x=>x.id===MCUR);if(!m)return;
+  const sp=MATCH_SPORTS[m.sport]||{};
+  const bump=()=>{m.at=Date.now();save();render();};
+  document.querySelectorAll("[data-inc]").forEach(b=>b.addEventListener("click",()=>{
+    const[k,n]=b.dataset.inc.split(":");
+    m[k].score=Math.max(0,(Number(m[k].score)||0)+Number(n));bump();}));
+  document.querySelectorAll("[data-wk]").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.wk;m[k].wkts=Math.min(10,(Number(m[k].wkts)||0)+1);bump();}));
+  document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>{
+    const[k,n]=b.dataset.set.split(":");
+    m[k].sets=Math.max(0,(Number(m[k].sets)||0)+Number(n));bump();}));
+  const cl=$("bClock");
+  if(cl)cl.addEventListener("click",()=>{
+    if(m.clockRunning){m.clockAccum=elapsedOf(m);m.clockRunning=false;m.clockStart=0;}
+    else{m.clockStart=Date.now();m.clockRunning=true;}
+    save();render();});
+  const per=$("mPeriod");if(per)per.addEventListener("change",e=>{m.period=e.target.value;save();});
+  const ov=$("mOvers");if(ov)ov.addEventListener("input",e=>{m.overs=e.target.value;save();});
+  const nt=$("mNote");if(nt)nt.addEventListener("input",e=>{m.note=e.target.value;save();});
+  const st=$("mStart");
+  if(st)st.addEventListener("click",()=>{m.status="live";m.at=Date.now();save();render();});
+  const en=$("mEnd");
+  if(en)en.addEventListener("click",()=>{
+    if(m.clockRunning){m.clockAccum=elapsedOf(m);m.clockRunning=false;m.clockStart=0;}
+    m.status="done";m.at=Date.now();save();render();});
+  const bk=$("mBack");if(bk)bk.addEventListener("click",()=>{MCUR=null;render();});
+  const rs=$("mReset");
+  if(rs)rs.addEventListener("click",()=>{
+    if(!confirm("Set this match back to 0 – 0?"))return;
+    m.a.score=0;m.b.score=0;m.a.wkts=0;m.b.wkts=0;m.a.sets=0;m.b.sets=0;
+    m.clockAccum=0;m.clockStart=0;m.clockRunning=false;m.status="upcoming";save();render();});
+}
+
+function wireScore(){
+  const b=$("bBoard2");if(b)b.addEventListener("click",openBoard);
+  document.querySelectorAll("[data-tab]").forEach(el=>el.addEventListener("click",()=>{
+    TAB=el.dataset.tab;CUR=null;MCUR=null;render();}));
+  document.querySelectorAll("[data-mopen]").forEach(el=>el.addEventListener("click",()=>{
+    MCUR=el.dataset.mopen;render();}));
+  if(MCUR)wireMatch();
+  document.querySelectorAll("[data-open]").forEach(el=>el.addEventListener("click",()=>{
+    CUR=el.dataset.open;render();}));
+  const sv=$("bSaveRes");
+  if(sv)sv.addEventListener("click",()=>{
+    const ev=MEET.events.find(e=>e.id===CUR);
+    const out=[];
+    document.querySelectorAll(".res-row").forEach(row=>{
+      const place=Number(row.dataset.place);
+      const g=f=>{const el=row.querySelector(`[data-f="${f}"]`);return el?el.value.trim():"";};
+      const name=g("name");
+      if(!name)return;
+      out.push({place,name,house:g("house"),mark:g("mark")});
+    });
+    ev.results=out;
+    ev.at=out.length?Date.now():0;
+    CUR=null;save();render();
+  });
+  const cn=$("bCancel");if(cn)cn.addEventListener("click",()=>{CUR=null;render();});
+  document.querySelectorAll("[data-clear]").forEach(el=>el.addEventListener("click",()=>{
+    const row=el.closest(".res-row");
+    row.querySelectorAll("input").forEach(i=>i.value="");
+    row.querySelector("select").value="";
+  }));
+}
+
+/* ----- SETUP ----- */
+function setupHTML(){
+  return `
+    <div class="head"><div><div class="eyebrow">Before the day</div><h2>Meet setup</h2></div></div>
+    <div class="grid2">
+      <div>
+        <div class="panel">
+          <h3>The meet</h3>
+          <p class="sub">Shown on the scoreboard and in anything you share.</p>
+          <div style="display:grid;gap:10px">
+            <input type="text" id="mName" value="${esc(MEET.name)}" placeholder="Meet name">
+            <input type="date" id="mDate" value="${esc(MEET.date)}">
+          </div>
+          <h3 style="margin-top:18px">Who competes for points?</h3>
+          <p class="sub">Switching does not lose anything — results keep their athlete names and houses either way.</p>
+          <div class="modepick">
+            <label class="modeopt ${MEET.mode==="house"?"on":""}">
+              <input type="radio" name="mode" value="house" ${MEET.mode==="house"?"checked":""}>
+              <b>Houses</b><span>Points pool into teams. One shield at the end.</span></label>
+            <label class="modeopt ${MEET.mode==="individual"?"on":""}">
+              <input type="radio" name="mode" value="individual" ${MEET.mode==="individual"?"checked":""}>
+              <b>Individuals</b><span>Every athlete scores for themselves. Crowns a champion.</span></label>
+          </div>
+          <h3 style="margin-top:18px">Points per position</h3>
+          <p class="sub">Relays automatically count double.</p>
+          <div class="row">
+            ${[1,2,3].map(p=>`<label style="font-size:12px;color:var(--mut)">${["1st","2nd","3rd"][p-1]}
+              <input type="number" id="p${p}" value="${MEET.points[p]}" min="0" style="width:70px;margin-left:6px"></label>`).join("")}
+          </div>
+          <div class="row" style="margin-top:9px">
+            <label style="font-size:12px;color:var(--mut)">Match win
+              <input type="number" id="pwin" value="${MEET.points.win}" min="0" style="width:70px;margin-left:6px"></label>
+            <label style="font-size:12px;color:var(--mut)">Draw
+              <input type="number" id="pdraw" value="${MEET.points.draw}" min="0" style="width:70px;margin-left:6px"></label>
+          </div>
+        </div>
+        <div class="panel"${isIndiv()?' style="opacity:.55"':""}>
+          <h3>Houses${isIndiv()?" <span style='font-weight:600;color:var(--mut);font-size:12px'>— not in use</span>":""}</h3>
+          <p class="sub">${isIndiv()
+            ?"This meet is scored individually, so houses award no points. They're kept here in case you switch back."
+            :"The colours are used on the scoreboard."}</p>
+          <div id="houses">${MEET.houses.map((h,i)=>`
+            <div class="house-row" data-i="${i}">
+              <input class="swatch" type="color" value="${esc(h.color)}" data-f="color">
+              <input type="text" value="${esc(h.name)}" data-f="name" placeholder="House name">
+              <span style="font-size:12px;color:var(--mut)">${standings().find(s=>s.name===h.name)?.pts||0} pts</span>
+              <button class="x" data-delh="${i}">✕</button>
+            </div>`).join("")}</div>
+          <button class="btn btn-ghost" id="addHouse">+ Add house</button>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h3>Add from the library</h3>
+          <p class="sub">Pick a sport and an age group, tick what you're running, and they're added at once.
+            Swimming and athletics score identically — placings earn house points either way.</p>
+          <div class="row" style="margin-bottom:11px">
+            <select id="libSport" style="flex:1;min-width:150px">
+              ${Object.keys(LIBRARY).map(k=>`<option value="${k}"${LIBSEL===k?" selected":""}>${LIBRARY[k].icon} ${esc(LIBRARY[k].label)}</option>`).join("")}
+            </select>
+            <input type="text" id="libCat" placeholder="Category, e.g. U14 Boys" value="${esc(LIBCAT)}" style="flex:1;min-width:150px">
+          </div>
+          <div class="libgrid">
+            ${LIBRARY[LIBSEL].events.map((e,i)=>`<label class="libitem">
+              <input type="checkbox" data-lib="${i}"> <span>${esc(e[0])}${e[2]?" ·relay":""}</span></label>`).join("")}
+          </div>
+          <div class="row" style="margin-top:11px">
+            <button class="btn btn-primary" id="libAdd">Add selected</button>
+            <button class="btn btn-ghost" id="libAll">Select all</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Matches</h3>
+          <p class="sub">Head-to-head games. A win is worth ${MEET.points.win} points, a draw ${MEET.points.draw} to each.</p>
+          <div class="row" style="margin-bottom:10px">
+            <select id="mkSport" style="flex:1;min-width:140px">
+              ${Object.keys(MATCH_SPORTS).map(k=>`<option value="${k}">${MATCH_SPORTS[k].icon} ${esc(MATCH_SPORTS[k].label)}</option>`).join("")}
+            </select>
+            ${isIndiv()
+              ?`<input type="text" id="mkA" placeholder="Player" list="athletes" style="flex:1;min-width:110px">
+                <span style="color:var(--mut);font-size:12px">v</span>
+                <input type="text" id="mkB" placeholder="Player" list="athletes" style="flex:1;min-width:110px">
+                <datalist id="athletes">${(window.__ATHLETES||[]).map(a=>`<option value="${esc(a)}">`).join("")}</datalist>`
+              :`<select id="mkA" style="flex:1;min-width:110px">${MEET.houses.map(h=>`<option>${esc(h.name)}</option>`).join("")}</select>
+                <span style="color:var(--mut);font-size:12px">v</span>
+                <select id="mkB" style="flex:1;min-width:110px">${MEET.houses.map((h,i)=>`<option${i===1?" selected":""}>${esc(h.name)}</option>`).join("")}</select>`}
+            <button class="btn btn-ghost" id="mkAdd">+ Add</button>
+          </div>
+          ${(MEET.matches||[]).map((m,i)=>{
+            const sp=MATCH_SPORTS[m.sport]||{};
+            return `<div class="ev" style="padding:9px 11px">
+              <div class="nm"><b style="font-size:13px">${sp.icon||""} ${esc(m.a.name)} v ${esc(m.b.name)}</b>
+                <span>${esc(sp.label||m.sport)}</span></div>
+              <button class="x" data-delm="${i}">✕</button></div>`;}).join("")||
+            `<div class="empty" style="padding:12px">No matches added.</div>`}
+        </div>
+        <div class="panel">
+          <h3>Events</h3>
+          <p class="sub">Add every race and field event by hand, or edit what the library added.</p>
+          <div id="events">${MEET.events.map((e,i)=>`
+            <div class="ev" data-ei="${i}">
+              <div class="nm" style="display:grid;gap:6px">
+                <input type="text" value="${esc(e.name)}" data-f="name" placeholder="Event, e.g. 100 m Sprint">
+                <div class="row">
+                  <input type="text" value="${esc(e.cat)}" data-f="cat" placeholder="Category" style="flex:1;min-width:110px">
+                  <select data-f="unit" style="width:96px">
+                    <option value="sec"${e.unit==="sec"?" selected":""}>seconds</option>
+                    <option value="m"${e.unit==="m"?" selected":""}>metres</option>
+                    <option value=""${!e.unit?" selected":""}>none</option>
+                  </select>
+                  <label style="font-size:11.5px;color:var(--mut);display:flex;align-items:center;gap:5px">
+                    <input type="checkbox" data-f="relay" ${e.relay?"checked":""} style="width:15px;height:15px;accent-color:var(--teal)"> relay</label>
+                </div>
+              </div>
+              <button class="x" data-dele="${i}">✕</button>
+            </div>`).join("")}</div>
+          <button class="btn btn-ghost" id="addEvent">+ Add event</button>
+        </div>
+        <div class="panel">
+          <h3>Athlete names</h3>
+          <p class="sub">Pull names from Student Master so entering results is a pick, not a spell.</p>
+          <div class="row">
+            <button class="btn btn-ghost" id="loadAth">Load from Student Master</button>
+            <span style="font-size:12px;color:var(--mut)" id="athCount">${(window.__ATHLETES||[]).length} names loaded</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3 style="color:var(--b1)">Danger zone</h3>
+          <p class="sub">Clears every result and starts a fresh meet on this device.</p>
+          <button class="btn btn-danger" id="reset">Reset the whole meet</button>
+        </div>
+      </div>
+    </div>`;
+}
+function wireSetup(){
+  const bind=(id,fn)=>{const el=$(id);if(el)el.addEventListener("change",e=>{fn(e.target.value);save();render();});};
+  bind("mName",v=>MEET.name=v);bind("mDate",v=>MEET.date=v);
+  [1,2,3].forEach(p=>{const el=$("p"+p);
+    if(el)el.addEventListener("change",e=>{MEET.points[p]=Number(e.target.value)||0;save();render();});});
+  ["win","draw"].forEach(k=>{const el=$("p"+k);
+    if(el)el.addEventListener("change",e=>{MEET.points[k]=Number(e.target.value)||0;save();render();});});
+  document.querySelectorAll("input[name=mode]").forEach(r=>r.addEventListener("change",e=>{
+    MEET.mode=e.target.value;save();render();}));
+
+  // --- event library ---
+  const ls=$("libSport");
+  if(ls)ls.addEventListener("change",e=>{LIBSEL=e.target.value;render();});
+  const lc=$("libCat");
+  if(lc)lc.addEventListener("input",e=>{LIBCAT=e.target.value;});
+  const la=$("libAll");
+  if(la)la.addEventListener("click",()=>{
+    const boxes=[...document.querySelectorAll("[data-lib]")];
+    const allOn=boxes.every(b=>b.checked);
+    boxes.forEach(b=>b.checked=!allOn);});
+  const lad=$("libAdd");
+  if(lad)lad.addEventListener("click",()=>{
+    const picked=[...document.querySelectorAll("[data-lib]")].filter(b=>b.checked).map(b=>+b.dataset.lib);
+    if(!picked.length){alert("Tick at least one event first.");return;}
+    const cat=($("libCat").value||"").trim()||"Open";
+    let added=0;
+    picked.forEach(i=>{
+      const[nm,unit,relay]=LIBRARY[LIBSEL].events[i];
+      // don't quietly create a duplicate if the same event+category is already there
+      if(MEET.events.some(e=>e.name===nm&&e.cat===cat))return;
+      MEET.events.push({id:uid(),name:nm,cat,unit:unit||"",relay:!!relay,results:[]});added++;
+    });
+    LIBCAT=cat;save();render();
+    if(added<picked.length)alert(`Added ${added}. ${picked.length-added} were already in the list for ${cat}.`);
+  });
+
+  // --- matches ---
+  const mk=$("mkAdd");
+  if(mk)mk.addEventListener("click",()=>{
+    const sport=$("mkSport").value;
+    const a=($("mkA").value||"").trim(),b=($("mkB").value||"").trim();
+    if(!a||!b){alert(isIndiv()?"Enter both players.":"Pick both houses.");return;}
+    if(a===b){alert(isIndiv()?"Enter two different players.":"Pick two different houses.");return;}
+    const sp=MATCH_SPORTS[sport];
+    MEET.matches=MEET.matches||[];
+    // In individual mode the side has a player name and no house; in house mode
+    // the name and the house are the same thing.
+    const side=n=>({name:n,house:isIndiv()?"":n,score:0,wkts:0,sets:0});
+    MEET.matches.push({id:uid(),sport,status:"upcoming",period:(sp.periods||[""])[0],
+      sets:!!sp.sets,note:"",overs:"",clockAccum:0,clockStart:0,clockRunning:false,at:0,
+      a:side(a),b:side(b)});
+    save();render();});
+  document.querySelectorAll("[data-delm]").forEach(b=>b.addEventListener("click",()=>{
+    const i=+b.dataset.delm;
+    if(MEET.matches[i].status!=="upcoming"&&!confirm("That match has been scored. Delete it anyway?"))return;
+    MEET.matches.splice(i,1);save();render();}));
+  document.querySelectorAll("#houses [data-f]").forEach(el=>el.addEventListener("change",e=>{
+    const i=+e.target.closest(".house-row").dataset.i;
+    MEET.houses[i][e.target.dataset.f]=e.target.value;save();render();}));
+  document.querySelectorAll("[data-delh]").forEach(b=>b.addEventListener("click",()=>{
+    MEET.houses.splice(+b.dataset.delh,1);save();render();}));
+  $("addHouse").addEventListener("click",()=>{
+    MEET.houses.push({name:"House "+(MEET.houses.length+1),color:"#556074"});save();render();});
+  document.querySelectorAll("#events [data-f]").forEach(el=>el.addEventListener("change",e=>{
+    const i=+e.target.closest(".ev").dataset.ei,f=e.target.dataset.f;
+    MEET.events[i][f]=f==="relay"?e.target.checked:e.target.value;save();render();}));
+  document.querySelectorAll("[data-dele]").forEach(b=>b.addEventListener("click",()=>{
+    const i=+b.dataset.dele;
+    if(MEET.events[i].results.length&&!confirm("That event has results. Delete it anyway?"))return;
+    MEET.events.splice(i,1);save();render();}));
+  $("addEvent").addEventListener("click",()=>{
+    MEET.events.push({id:uid(),name:"",cat:"",unit:"sec",results:[]});save();render();});
+  $("loadAth").addEventListener("click",async()=>{
+    if(!window.SPDRoster)return;
+    const{students}=await SPDRoster.load();
+    window.__ATHLETES=students.map(s=>s.name).filter(Boolean);
+    $("athCount").textContent=window.__ATHLETES.length+" names loaded";
+  });
+  $("reset").addEventListener("click",()=>{
+    if(!confirm("Delete every event and result on this device? This cannot be undone."))return;
+    MEET=JSON.parse(JSON.stringify(DEFAULT_MEET));CUR=null;save();render();});
+}
+
+/* ----- FINAL RESULTS -----
+   The board that goes up at the end and gets printed for the notice wall. */
+function resultsHTML(){
+  const ind=isIndiv();
+  const st=standings();
+  const scored=st.filter(s=>s.results>0);
+  const champ=scored[0];
+  const cats=categories();
+  const medalRow=s=>`<tr>
+    <td class="rk">${scored.indexOf(s)+1}</td>
+    <td>${ind?"":`<span class="chip" style="background:${esc(s.color)}"></span>`}${esc(s.name)}</td>
+    <td class="c">${s.golds||"—"}</td><td class="c">${s.silvers||"—"}</td><td class="c">${s.bronzes||"—"}</td>
+    <td class="c b">${s.pts}</td></tr>`;
+  return `
+    <div class="head no-print">
+      <div><div class="eyebrow">${esc(MEET.date)}</div><h2>Final results</h2>
+        <div style="font-size:12.5px;color:var(--mut)">${
+          ind?"Individual championship":"Inter-house championship"} · ${doneCount()} of ${MEET.events.length} events completed</div></div>
+      <div class="row">
+        <button class="btn btn-ghost" id="rPrint">Print / save PDF</button>
+        <button class="btn btn-primary" id="rBoard">Show on big screen</button>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <div><b>${esc(MEET.name)}</b><span>${esc(BRAND.name)} · ${esc(MEET.date)}</span></div>
+        <div class="sheet-tag">${ind?"Individual championship":"Inter-house championship"}</div>
+      </div>
+
+      ${!scored.length?`<div class="empty">No results recorded yet — the final board fills in as events finish.</div>`:`
+      <div class="champ">
+        <div class="champ-lab">${ind?"Champion of the meet":"Champion house"}</div>
+        <div class="champ-nm">${ind?"🏆 ":""}${esc(champ.name)}</div>
+        <div class="champ-sub">${champ.pts} points · ${champ.golds} first place${champ.golds===1?"":"s"}${
+          champ.silvers?` · ${champ.silvers} second`:""}${champ.bronzes?` · ${champ.bronzes} third`:""}</div>
+      </div>
+
+      ${scored.length>1?`<div class="podium">
+        ${[1,0,2].filter(i=>scored[i]).map(i=>`
+          <div class="pod p${i+1}">
+            <div class="pod-medal">${["🥇","🥈","🥉"][i]}</div>
+            <div class="pod-nm">${esc(scored[i].name)}</div>
+            <div class="pod-pts">${scored[i].pts}</div>
+            <div class="pod-block">${i+1}</div>
+          </div>`).join("")}
+      </div>`:""}
+
+      <div class="sheet-lab">${ind?"Full standings":"House standings"}</div>
+      <table class="rtab">
+        <thead><tr><th class="rk">#</th><th>${ind?"Athlete":"House"}</th>
+          <th class="c">🥇</th><th class="c">🥈</th><th class="c">🥉</th><th class="c">Points</th></tr></thead>
+        <tbody>${scored.map(medalRow).join("")}</tbody>
+      </table>
+
+      ${ind&&cats.length?`
+        <div class="sheet-lab">Champion by category</div>
+        <table class="rtab">
+          <thead><tr><th>Category</th><th>Champion</th><th class="c">🥇</th><th class="c">Points</th></tr></thead>
+          <tbody>${cats.map(c=>{
+            const cs=standings({cat:c}).filter(s=>s.results>0)[0];
+            return cs?`<tr><td>${esc(c)}</td><td><b>${esc(cs.name)}</b></td>
+              <td class="c">${cs.golds||"—"}</td><td class="c b">${cs.pts}</td></tr>`:"";}).join("")}</tbody>
+        </table>`:""}
+
+      <div class="sheet-lab">Event results</div>
+      <table class="rtab">
+        <thead><tr><th>Event</th><th>Category</th><th>🥇 First</th><th>🥈 Second</th><th>🥉 Third</th></tr></thead>
+        <tbody>${MEET.events.filter(e=>e.results.length).map(e=>{
+          const at=n=>{const r=e.results.find(x=>x.place===n);
+            return r?esc(r.name)+(r.mark?` <span class="mk">${esc(r.mark)}</span>`:""):"—";};
+          return `<tr><td><b>${esc(e.name)}</b></td><td>${esc(e.cat||"")}</td>
+            <td>${at(1)}</td><td>${at(2)}</td><td>${at(3)}</td></tr>`;}).join("")
+          ||`<tr><td colspan="5" style="color:var(--mut)">No events completed.</td></tr>`}</tbody>
+      </table>
+
+      ${(MEET.matches||[]).filter(m=>m.status==="done").length?`
+        <div class="sheet-lab">Match results</div>
+        <table class="rtab">
+          <thead><tr><th>Sport</th><th>Match</th><th class="c">Score</th><th>Result</th></tr></thead>
+          <tbody>${(MEET.matches||[]).filter(m=>m.status==="done").map(m=>{
+            const sp=MATCH_SPORTS[m.sport]||{},o=matchOutcome(m);
+            const sc=m.sets?`${m.a.sets||0} – ${m.b.sets||0}`:`${m.a.score||0} – ${m.b.score||0}`;
+            return `<tr><td>${sp.icon||""} ${esc(sp.label||m.sport)}</td>
+              <td>${esc(m.a.name)} v ${esc(m.b.name)}</td><td class="c b">${sc}</td>
+              <td>${o&&o.tie?"Drawn":o?esc(m[o.win].name)+" won":""}</td></tr>`;}).join("")}</tbody>
+        </table>`:""}
+
+      <div class="sheet-foot">Compiled by ${esc(BRAND.name)} · ${esc(MEET.date)}</div>`}
+    </div>`;
+}
+function wireResults(){
+  const p=$("rPrint");if(p)p.addEventListener("click",()=>window.print());
+  const b=$("rBoard");if(b)b.addEventListener("click",()=>{BOARD="final";openBoard();});
+}
+
+/* ----- LIVE ----- */
+function liveHTML(){
+  const on=LIVE==="on";
+  const viewerNote=location.protocol==="file:";
+  return `
+    <div class="head"><div><div class="eyebrow">For parents who aren't at the ground</div>
+      <h2>Share live scores</h2></div></div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Broadcast</h3>
+        <p class="sub">While this is on, every result you save is pushed to anyone watching, in about a second.
+          The scoreboard on your screen works whether this is on or not.</p>
+        <div class="row" style="margin-bottom:12px">
+          ${on?`<button class="btn btn-danger" id="bStop">Stop broadcasting</button>`
+              :`<button class="btn btn-primary" id="bGo">Go live</button>`}
+          <span style="font-size:12.5px;color:${on?"var(--b5)":"var(--mut)"};font-weight:600">
+            ${on?"● Live now":LIVE==="connecting"?"Connecting…":"Not broadcasting"}</span>
+        </div>
+        <div id="liveNote" style="font-size:12px;color:var(--amber);font-weight:600;margin-bottom:10px"></div>
+        ${MEET.topic?`<div class="live-box">
+          <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Channel</div>
+          <div class="link">${esc(MEET.topic)}</div>
+          <div style="font-size:11.5px;color:var(--mut);margin-top:8px">Anyone with the viewer file below follows this channel.</div>
+        </div>`:""}
+        <div class="warn" style="margin-top:14px">
+          <b>This is a public broadcast.</b> It goes over a free shared relay, so anyone holding the viewer
+          file can watch — and in principle send to the same channel. That's fine for house names and scores;
+          don't put anything else in the meet name. Nothing else in this suite ever leaves your device.
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Send parents the scoreboard</h3>
+        <p class="sub">Download this one file and share it on WhatsApp. It opens on any phone and updates by
+          itself while you score — no app, no login, nothing to install.</p>
+        <div class="row">
+          <button class="btn btn-primary" id="bViewer">Download viewer file</button>
+          <button class="btn btn-ghost" id="bShareViewer">Share on WhatsApp</button>
+        </div>
+        ${viewerNote?`<div class="warn" style="margin-top:14px">
+          The viewer file needs internet on the parent's phone to receive updates — it's the one part of this
+          suite that does. The file itself carries no data; it only listens to the channel above.
+        </div>`:""}
+        <h3 style="margin-top:18px">On the ground</h3>
+        <p class="sub" style="margin:0">Put the scoreboard on a TV or projector with the
+          <b>📺 Scoreboard</b> button. It works with no internet at all.</p>
+      </div>
+    </div>`;
+}
+function wireLive(){
+  const g=$("bGo");if(g)g.addEventListener("click",()=>{goLive();render();});
+  const s=$("bStop");if(s)s.addEventListener("click",()=>{stopLive();render();});
+  const v=$("bViewer");if(v)v.addEventListener("click",()=>downloadViewer());
+  const sh=$("bShareViewer");
+  if(sh)sh.addEventListener("click",async()=>{
+    const html=viewerHTML();
+    const file=new File([html],"Live_Scoreboard.html",{type:"text/html"});
+    const text=`${MEET.name} — live scores from ${BRAND.name}. Open the attached file on your phone to follow along.`;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:MEET.name,text});return;}
+      catch(e){if(e&&e.name==="AbortError")return;}
+    }
+    downloadViewer();
+    window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank","noopener");
+  });
+}
+function downloadViewer(){
+  const blob=new Blob([viewerHTML()],{type:"text/html;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=(MEET.name||"Live_Scoreboard").replace(/\W+/g,"_")+"_live.html";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+/* =================================================================
+   THE PARENT'S VIEWER
+   Self-contained: the relay client is inlined from the same source the
+   console uses, so the two can never disagree about the wire format.
+   ================================================================= */
+function viewerHTML(){
+  if(!MEET.topic){MEET.topic=LiveRelay.newTopic("tesa/sports");save();}
+  const seed=JSON.stringify(meetPayload()).replace(/</g,"\\u003c");
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(MEET.name)} — Live</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#141C2F;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;min-height:100vh;padding-bottom:30px}
+.hero{background:linear-gradient(160deg,#1B2540,#0E7C7B);padding:22px 16px 24px;text-align:center}
+.hero h1{font-family:Georgia,serif;font-size:23px;font-weight:700;line-height:1.2}
+.hero .sub{font-size:12.5px;opacity:.85;margin-top:4px}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);
+  border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;margin-top:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#9AA3B2}
+.dot.on{background:#31c48d;box-shadow:0 0 0 3px rgba(49,196,141,.25)}
+.wrap{max-width:520px;margin:0 auto;padding:0 14px}
+.card{background:rgba(255,255,255,.07);border-radius:14px;padding:15px 16px;margin-top:14px}
+.lab{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;font-weight:700;margin-bottom:10px}
+.st{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.st:last-child{border-bottom:none}
+.pos{width:22px;font-family:Georgia,serif;font-weight:800;font-size:17px;opacity:.6;text-align:center}
+.chip{width:11px;height:24px;border-radius:4px;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+.hn{flex:1;font-size:16px;font-weight:700}
+.gd{font-size:11px;opacity:.7}
+.pts{font-family:Georgia,serif;font-size:23px;font-weight:800}
+.ev{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.ev:last-child{border-bottom:none}
+.ev b{font-size:13.5px;display:block}
+.ev span{font-size:12px;opacity:.8}
+.foot{text-align:center;font-size:11px;opacity:.55;margin-top:16px;line-height:1.6}
+.empty{opacity:.6;font-size:13px;padding:14px 0}
+.mcard{background:rgba(255,255,255,.1);border-radius:14px;padding:14px 15px;margin-top:14px;
+  box-shadow:0 0 0 2px rgba(229,72,77,.45)}
+.mtop{display:flex;align-items:center;gap:8px;font-size:11.5px;margin-bottom:10px;flex-wrap:wrap}
+.mlive{color:#FF6B6E;font-weight:800;letter-spacing:.06em}
+.mper{opacity:.75;margin-left:auto}
+.mclock{font-family:Georgia,serif;font-weight:800;font-size:14px;background:rgba(0,0,0,.25);
+  border-radius:6px;padding:1px 8px}
+.mrow{display:flex;align-items:center;gap:9px}
+.mside{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
+.mside.r{justify-content:flex-end}
+.mchip{width:8px;height:20px;border-radius:3px;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+.mnm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msc{font-family:Georgia,serif;font-size:31px;font-weight:800;line-height:1}
+.mw{font-size:17px;opacity:.75}
+.mv{opacity:.5;font-size:17px}
+.mnote{margin-top:9px;font-size:11.5px;opacity:.85;font-style:italic}
+</style></head>
+<body>
+<div class="hero">
+  <h1 id="mName">${esc(MEET.name)}</h1>
+  <div class="sub" id="mSub">${esc(BRAND.name)}</div>
+  <div class="badge"><span class="dot" id="dot"></span><span id="stat">Connecting…</span></div>
+</div>
+<div class="wrap">
+  <div id="livewrap"></div>
+  <div class="card"><div class="lab" id="lab1">House standings</div><div id="stand"></div></div>
+  <div class="card"><div class="lab">Latest results</div><div id="feed"></div></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+${LiveRelay.SOURCE}
+var TOPIC=${JSON.stringify(MEET.topic)};
+var S=${seed};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+// The scorer sends how long the match has been running, not when it started —
+// a phone's clock is rarely in sync with a laptop's, and a start timestamp
+// would show the match minutes fast or slow. We tick on from what we received.
+var RX=0;
+function mmss(ms){var s=Math.max(0,Math.floor(ms/1000));
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+function paintLive(){
+  var lm=S.live||[];
+  var el=document.getElementById("livewrap");
+  if(!lm.length){el.innerHTML="";return;}
+  el.innerHTML=lm.map(function(m){
+    var clock=m.el!=null?mmss(m.el+(m.r?Date.now()-RX:0)):"";
+    return '<div class="mcard"><div class="mtop"><span class="mlive">● LIVE</span>'+
+      '<b>'+esc(m.i)+' '+esc(m.s)+'</b>'+
+      '<span class="mper">'+esc(m.p||"")+(m.ov?' · '+esc(m.ov)+' ov':'')+'</span>'+
+      (clock?'<span class="mclock">'+clock+'</span>':'')+'</div>'+
+      '<div class="mrow">'+
+        '<div class="mside">'+(m.ac?'<span class="mchip" style="background:'+esc(m.ac)+'"></span>':'')+
+          '<span class="mnm">'+esc(m.an)+'</span></div>'+
+        '<div class="msc">'+m.as+(m.aw!=null?'<span class="mw">/'+m.aw+'</span>':'')+
+          (m.sets?'<span class="mw"> ('+(m.ax||0)+')</span>':'')+'</div>'+
+        '<div class="mv">–</div>'+
+        '<div class="msc">'+m.bs+(m.bw!=null?'<span class="mw">/'+m.bw+'</span>':'')+
+          (m.sets?'<span class="mw"> ('+(m.bx||0)+')</span>':'')+'</div>'+
+        '<div class="mside r"><span class="mnm">'+esc(m.bn)+'</span>'+
+          (m.bc?'<span class="mchip" style="background:'+esc(m.bc)+'"></span>':'')+'</div>'+
+      '</div>'+(m.note?'<div class="mnote">'+esc(m.note)+'</div>':'')+'</div>';
+  }).join("");
+}
+setInterval(function(){if((S.live||[]).some(function(m){return m.r;}))paintLive();},1000);
+
+function paint(){
+  RX=Date.now();
+  document.getElementById("mName").textContent=S.name||"Sports Day";
+  document.getElementById("mSub").textContent=(S.academy||"")+(S.date?" · "+S.date:"");
+  paintLive();
+  var st=S.standings||[];
+  var medals=["🥇","🥈","🥉"];
+  document.getElementById("lab1").textContent=S.ind?"Leaderboard":"House standings";
+  document.getElementById("stand").innerHTML=st.length?st.map(function(h,i){
+    return '<div class="st"><div class="pos">'+(S.ind&&i<3?medals[i]:(i+1))+'</div>'+
+      (S.ind?'':'<span class="chip" style="background:'+esc(h.c)+'"></span>')+
+      '<div class="hn">'+esc(h.n)+'<div class="gd">'+(h.g||0)+' first place'+(h.g===1?'':'s')+'</div></div>'+
+      '<div class="pts">'+h.p+'</div></div>';}).join(""):'<div class="empty">Waiting for the first result…</div>';
+  var rc=S.recent||[],rm=S.recentMatches||[];
+  var items=rm.map(function(m){
+    return '<div class="ev"><b>'+esc(m.an)+' '+m.as+' – '+m.bs+' '+esc(m.bn)+'</b>'+
+      '<span>'+esc(m.s)+' · full time</span></div>';
+  }).concat(rc.map(function(r){
+    return '<div class="ev"><b>'+esc(r.e)+'</b><span>'+esc(r.c)+
+      (r.w?' · 🥇 '+esc(r.w):'')+(r.h?' ('+esc(r.h)+')':'')+(r.m?' · '+esc(r.m):'')+'</span></div>';
+  }));
+  document.getElementById("feed").innerHTML=items.length?items.join("")
+    :'<div class="empty">No events finished yet.</div>';
+  document.getElementById("foot").textContent=
+    (S.done!=null?S.done+" of "+S.total+" events completed · ":"")+
+    "updates automatically — keep this page open";
+}
+paint();
+var relay=lrConnect({topic:TOPIC,subscribe:true,
+  onMessage:function(data){if(data&&data.v){S=data;paint();
+    document.getElementById("dot").className="dot on";
+    document.getElementById("stat").textContent="Live";}},
+  onStatus:function(s){
+    var d=document.getElementById("dot"),t=document.getElementById("stat");
+    if(s==="connected"){d.className="dot on";t.textContent="Live";}
+    else{d.className="dot";t.textContent=s==="connecting"||s==="reconnecting"?"Connecting…":"Reconnecting…";}
+  }});
+<\/script>
+</body></html>`;
+}
+
+/* ---------------- scoreboard ---------------- */
+function openBoard(){$("board").classList.add("on");$("board").classList.toggle("final",BOARD==="final");
+  document.body.style.overflow="hidden";   // otherwise the page behind leaves a scrollbar on the TV
+  paintBoard();
+  if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});}
+function closeBoard(){$("board").classList.remove("on");BOARD="live";document.body.style.overflow="";
+  if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
+function paintBoard(){
+  $("bdTitle").textContent=MEET.name;
+  $("bdSub").textContent=BRAND.name+" · "+MEET.date+" · "+doneCount()+" of "+MEET.events.length+" events";
+
+  // The end-of-meet board: one champion, a podium, nothing else competing for
+  // attention. Shown when the results view sends it to the big screen.
+  if(BOARD==="final"){
+    const sc=standings().filter(s=>s.results>0);
+    const ch=sc[0];
+    $("bdFinal").innerHTML=!ch?`<div class="bd-empty">No results recorded yet.</div>`:`
+      <div class="fw-lab">${isIndiv()?"Champion of the meet":"Champion house"}</div>
+      <div class="fw-nm">${isIndiv()?"🏆 ":""}${esc(ch.name)}</div>
+      <div class="fw-sub">${ch.pts} points · ${ch.golds} first place${ch.golds===1?"":"s"}</div>
+      <div class="fw-pod">
+        ${[1,0,2].filter(i=>sc[i]).map(i=>`
+          <div class="fw-p p${i+1}">
+            <div class="fw-med">${["🥇","🥈","🥉"][i]}</div>
+            <div class="fw-pn">${esc(sc[i].name)}</div>
+            <div class="fw-pp">${sc[i].pts}</div>
+            <div class="fw-bl">${i+1}</div>
+          </div>`).join("")}
+      </div>
+      ${sc.length>3?`<div class="fw-rest">${sc.slice(3,9).map((s,i)=>
+        `<span><b>${i+4}</b> ${esc(s.name)} · ${s.pts}</span>`).join("")}</div>`:""}`;
+    return;
+  }
+
+  // A match in play is the thing the crowd is actually watching — it takes the
+  // top of the board, and the standings step aside until full time.
+  const lm=liveMatches();
+  const hero=$("bdHero");
+  hero.className=lm.length?"bd-hero on":"bd-hero";
+  hero.innerHTML=lm.slice(0,2).map(m=>{
+    const sp=MATCH_SPORTS[m.sport]||{};
+    const chip=n=>isIndiv()?"":`<span class="hero-chip" style="background:${esc(houseColor(n))}"></span>`;
+    const sc=s=>`${s.score||0}${sp.wickets?`<span class="hw">/${s.wkts||0}</span>`:""}`;
+    return `<div class="hero-m">
+      <div class="hero-top"><span class="hero-live">● LIVE</span>
+        <b>${sp.icon||""} ${esc(sp.label||m.sport)}</b>
+        <span class="hero-per">${esc(m.period||"")}${sp.wickets&&m.overs?" · "+esc(m.overs)+" ov":""}</span>
+        ${sp.clock?`<span class="hero-clock">${mmss(elapsedOf(m))}</span>`:""}</div>
+      <div class="hero-row">
+        <div class="hero-side">${chip(m.a.house)}
+          <span class="hero-nm">${esc(m.a.name)}</span></div>
+        <div class="hero-sc">${sc(m.a)}${m.sets?`<span class="hs">(${m.a.sets||0})</span>`:""}</div>
+        <div class="hero-v">–</div>
+        <div class="hero-sc">${sc(m.b)}${m.sets?`<span class="hs">(${m.b.sets||0})</span>`:""}</div>
+        <div class="hero-side r"><span class="hero-nm">${esc(m.b.name)}</span>
+          ${chip(m.b.house)}</div>
+      </div>
+      ${m.note?`<div class="hero-note">${esc(m.note)}</div>`:""}
+    </div>`;}).join("");
+
+  $("bdLab").textContent=isIndiv()?"Leaderboard":"House standings";
+  const all=standings();
+  const st=isIndiv()?all.filter(s=>s.results>0).slice(0,8):all;
+  $("bdStand").innerHTML=st.map((s,i)=>`<div class="bd-stand">
+    <div class="bd-pos">${i+1}</div>
+    ${isIndiv()?"":`<span class="bd-chip" style="background:${esc(s.color)}"></span>`}
+    <div class="bd-hn">${esc(s.name)}</div>
+    <div class="bd-pts">${s.pts}</div></div>`).join("")
+    ||`<div class="bd-empty">${isIndiv()?"No results recorded yet.":"No houses set up yet."}</div>`;
+  $("bdFeed").innerHTML=recentResults(7).map(x=>`<div class="bd-ev">
+    <b>${esc(x.ev.name)} · ${esc(x.ev.cat)}</b>
+    <span>🥇 ${esc(x.winner.name||"—")}${x.winner.house?" · "+esc(x.winner.house):""}${x.winner.mark?" · "+esc(x.winner.mark):""}</span>
+  </div>`).join("")||`<div class="bd-empty">Results appear here as you save them.</div>`;
+}
+/* Tick the clock in place rather than re-rendering — a re-render mid-match
+   would blow away whatever the scorer is typing in the note field. */
+setInterval(function(){
+  const m=(MEET.matches||[]).find(x=>x.id===MCUR);
+  const el=$("mClock");
+  if(el&&m&&m.clockRunning)el.textContent=mmss(elapsedOf(m));
+  if($("board").classList.contains("on")&&liveMatches().some(x=>x.clockRunning))paintBoard();
+},1000);
+
+$("showBoard").addEventListener("click",openBoard);
+$("bdClose").addEventListener("click",closeBoard);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBoard();});
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{VIEW=t.dataset.v;CUR=null;render();}));
+
+render();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,14 +6,14 @@
 <title>Pre-Primary Development Reports</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
   --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
-  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
   --b1:#B4472F; --b1s:#F6E3DD; /* needs practice */
   --b2:#C9791B; --b2s:#FBEEDC; /* satisfactory */
   --b4:#2E8B8A; --b4s:#DEF0EF; /* good */
@@ -31,7 +31,7 @@ a{color:var(--teal)}
 
 /* ---------- LANDING ---------- */
 #landing{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative}
-.back-link{position:absolute;top:22px;left:24px;color:#7C8598;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.back-link{position:absolute;top:22px;left:24px;color:#556074;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600}
 .back-link:hover{color:var(--navy)}
 .land-card{max-width:760px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .land-head{background:linear-gradient(135deg,#1B2540 0%,#25335A 55%,#1F2A44 100%);color:#fff;padding:32px 40px 34px;text-align:center}
@@ -45,7 +45,7 @@ a{color:var(--teal)}
 #drop{border:2px dashed var(--line2);border-radius:12px;padding:34px;text-align:center;transition:border-color .2s,background .2s;background:#FCFBF7}
 #drop.drag{border-color:var(--teal);background:var(--teal-soft)}
 #drop .ic{width:44px;height:44px;margin:0 auto 12px;color:var(--teal)}
-#drop h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
+#drop h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
 #drop p{margin:0;color:var(--mut);font-size:13px}
 .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;font-weight:600;font-size:14px;padding:11px 18px;transition:transform .05s,filter .15s}
 .btn:active{transform:translateY(1px)}
@@ -55,7 +55,7 @@ a{color:var(--teal)}
 .btn-ghost:hover{background:#F0EEE7}
 .land-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;align-items:center}
 .land-note{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.land-note h4{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
+.land-note h3{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
 .land-note p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.5}
 @media(max-width:600px){.land-note{grid-template-columns:1fr}}
 .hidden{display:none !important}
@@ -101,7 +101,7 @@ label.flab{font-size:12px;color:var(--mut);font-weight:600;margin-right:2px}
 .panel h3{margin:0 0 3px;font-size:14.5px;color:var(--navy);font-weight:700}
 .panel .sub{font-size:12px;color:var(--mut);margin:0 0 16px}
 .warn-box{background:var(--amber-soft);border:1px solid #EBD3A8;border-radius:10px;padding:13px 16px;margin-bottom:16px}
-.warn-box h4{margin:0 0 6px;font-size:13px;color:#8A5310}
+.warn-box h3{margin:0 0 6px;font-size:13px;color:#8A5310}
 .warn-box ul{margin:0;padding-left:18px;font-size:12.5px;color:#6E4A1A}
 .warn-box li{margin:2px 0}
 
@@ -172,7 +172,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .spotlight.attention{border-left:5px solid var(--b2);background:linear-gradient(135deg,#FFF8ED,#FFFFFF)}
 .spotlight-head{display:flex;align-items:center;gap:6px;margin-bottom:5px}
 .spotlight-ic{font-size:14px;line-height:1}
-.spotlight h4{margin:0;font-size:14.5px;color:var(--navy);font-family:Georgia,serif;font-weight:600;flex:1}
+.spotlight h3{margin:0;font-size:14.5px;color:var(--navy);font-family:Georgia,serif;font-weight:600;flex:1}
 .spotlight p{margin:0 0 4px;font-size:10.5px;line-height:1.5;color:#3f4756}
 .spotlight p:last-child{margin-bottom:0}
 .spotlight p b{color:var(--navy)}
@@ -234,7 +234,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .mile-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#3f4756;padding:3px 0}
 .mile-check{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700}
 .mile-check.yes{background:var(--b5)}
-.mile-check.no{background:#E4E0D6;color:#9AA3B2}
+.mile-check.no{background:#E4E0D6;color:#656E82}
 .goals-box{border:1px solid var(--line2);border-left:3px solid var(--teal);border-radius:7px;padding:7px 11px;font-size:10.5px;color:#22595a;background:#FBFDFC;line-height:1.5}
 .mile-class-row{display:grid;grid-template-columns:200px 1fr 46px;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
 .mile-class-row:last-child{border-bottom:none}
@@ -244,7 +244,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .mile-class-val{text-align:right;color:var(--mut);font-weight:600}
 
 .rep-sec{margin-top:9px}
-.rep-sec h4{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--navy);font-weight:700;margin:0 0 5px;padding-bottom:3px;border-bottom:1px solid var(--line2)}
+.rep-sec h3{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--navy);font-weight:700;margin:0 0 5px;padding-bottom:3px;border-bottom:1px solid var(--line2)}
 .skill-block{margin-bottom:10px}
 .skill-block:last-child{margin-bottom:0}
 .skill-block .skill-h{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:5px}
@@ -319,12 +319,14 @@ tbody tr.clickable:hover{background:#FAF8F2}
 }
 .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 
 <!-- ============ LANDING ============ -->
 <div id="landing">
-  <a class="back-link" href="../../index.html">← All programs</a>
+  <a class="back-link" href="../index.html">← All programs</a>
   <div class="land-card">
     <div class="land-head">
       <img class="land-logo" id="landingLogo" alt="Academy logo">
@@ -335,7 +337,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
     <div class="land-body">
       <div id="drop">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
-        <h3>Drop your Excel file here</h3>
+        <h2>Drop your Excel file here</h2>
         <p>or click to choose — .xlsx from the Pre-Primary template</p>
         <input id="file" type="file" accept=".xlsx,.xls" class="hidden">
       </div>
@@ -344,15 +346,15 @@ tbody tr.clickable:hover{background:#FAF8F2}
         <button class="btn btn-primary" id="pick">Choose file</button>
         <button class="btn btn-ghost" id="demo">Explore with sample data</button>
         <button class="btn btn-ghost" id="manualEntry">Type data in manually</button>
-        <a class="btn btn-ghost" href="../../assets/templates/pre-primary/Pre_Primary_Evaluation_Template.xlsx" download>Download template</a>
+        <a class="btn btn-ghost" href="../assets/templates/pre-primary/Pre_Primary_Evaluation_Template.xlsx" download>Download template</a>
       </div>
       <div class="land-note">
         <div>
-          <h4>Uses the fill-in template</h4>
+          <h3>Uses the fill-in template</h3>
           <p>The workbook has Students, Evaluation and Attendance sheets. Each evaluation cycle rates 7 development areas as Excellent / Good / Satisfactory / Needs Practice.</p>
         </div>
         <div>
-          <h4>Private by design</h4>
+          <h3>Private by design</h3>
           <p>Your file is read on this device only. Nothing is sent to a server. Close the tab and it's gone.</p>
         </div>
       </div>
@@ -374,7 +376,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
       <button class="mini-btn" id="editDataBtn" title="View or edit the data behind these reports">✎ Edit data</button>
       <button class="mini-btn" id="settingsBtn" title="Customize branding & labels">⚙ Settings</button>
       <button class="mini-btn" id="reload">New file</button>
-      <a class="mini-btn" href="../../index.html" title="Back to segment picker">⌂ Segments</a>
+      <a class="mini-btn" href="../index.html" title="Back to segment picker">⌂ Segments</a>
     </div>
   </div>
   <input id="photoPickInput" type="file" accept="image/*" class="hidden">
@@ -401,6 +403,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
       </div>
       <p class="sub" style="margin:16px 0 6px">Report wording</p>
       <label>Teacher note heading<input id="lbl-teacherNoteHeading" type="text"></label>
+      <label>AI evaluation heading<input id="lbl-remarksHeading" type="text"></label>
       <div class="sign-row">
         <label>Signature 1<input id="lbl-sign1" type="text"></label>
         <label>Signature 2<input id="lbl-sign2" type="text"></label>
@@ -446,8 +449,8 @@ const SAMPLE_SHEETS = {
    ================================================================= */
 const DEFAULT_BRANDING={
   name:"The Extra Step Academy",
-  logoFull:"../../assets/images/tesa-logo-full.png",
-  logoEmblem:"../../assets/images/tesa-emblem.png"
+  logoFull:"../assets/images/tesa-logo-full.png",
+  logoEmblem:"../assets/images/tesa-emblem.png"
 };
 const BRANDING_KEY="spdBrandingOverrides_v1";
 function loadBranding(){
@@ -680,7 +683,7 @@ function attendanceRingSVG(pct,size,thickness){
   const r=(size-thickness)/2,cx=size/2,cy=size/2,C=2*Math.PI*r;
   const p=pct==null?0:Math.max(0,Math.min(100,pct));
   const dash=C*p/100,gap=C-dash;
-  const hex=pct==null?"#9AA3B2":p>=90?"#1F7A4D":p>=75?"#2E8B8A":p>=50?"#C9791B":"#B4472F";
+  const hex=pct==null?"#656E82":p>=90?"#1F7A4D":p>=75?"#2E8B8A":p>=50?"#C9791B":"#B4472F";
   return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E4E0D6" stroke-width="${thickness}"/>
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${hex}" stroke-width="${thickness}"
@@ -720,7 +723,7 @@ function miniLineSVG(series,h,w){
     }else{
       s+=`<circle cx="${x}" cy="${(padT+chartH).toFixed(1)}" r="2.4" fill="#DDD6C4"><title>${esc(pt.cycle)}: Not yet rated</title></circle>`;
     }
-    s+=`<text x="${x}" y="${h-1}" text-anchor="middle" font-size="7.5" fill="#9AA3B2">${esc(label)}</text>`;
+    s+=`<text x="${x}" y="${h-1}" text-anchor="middle" font-size="7.5" fill="#656E82">${esc(label)}</text>`;
   });
   s+="</svg>";
   return s;
@@ -997,6 +1000,7 @@ let DATA=null,AN=null,BATCHES=[],CURRENT_BATCH=0,curStudent=null;
 const LABELS={
   bandExcellent:"Excellent",bandGood:"Good",bandSatisfactory:"Satisfactory",bandNeedsPractice:"Needs Practice",
   teacherNoteHeading:"Note from the Teacher",
+  remarksHeading:"AI Evaluation",
   sign1:"Class Teacher",sign2:"Academy Head",sign3:"Parent / Guardian"
 };
 
@@ -1076,7 +1080,7 @@ function renderOverview(){
     <div class="view-head">
       <div><div class="eyebrow">Holistic view</div><h2>Class Overview</h2></div>
     </div>
-    ${DATA.warnings.length?`<div class="warn-box"><h4>⚠ ${DATA.warnings.length} data check${DATA.warnings.length>1?"s":""} to review</h4>
+    ${DATA.warnings.length?`<div class="warn-box"><h3>⚠ ${DATA.warnings.length} data check${DATA.warnings.length>1?"s":""} to review</h3>
       <ul>${DATA.warnings.slice(0,6).map(w=>`<li>${esc(w)}</li>`).join("")}</ul></div>`:""}
     <div class="kpis">
       <div class="kpi"><div class="k">Students</div><div class="v">${AN.S.length}</div><div class="s">${esc(DATA.batch||"—")}</div></div>
@@ -1109,20 +1113,20 @@ function spotlightHTML(kind,s,pn){
   const comment=pn?s.pointerStats[pn].latestComment:"";
   if(!pn){
     return `<div class="spotlight strength">
-      <div class="spotlight-head"><span class="spotlight-ic">🌟</span><h4>Best At</h4></div>
+      <div class="spotlight-head"><span class="spotlight-ic">🌟</span><h3>Best At</h3></div>
       <p>${esc(s.name)} is building strengths steadily across every area this term.</p>
     </div>`;
   }
   if(isAttn){
     return `<div class="spotlight attention">
-      <div class="spotlight-head"><span class="spotlight-ic">🎯</span><h4>Needs Attention: ${esc(pn)}</h4>${chip(tier)}</div>
+      <div class="spotlight-head"><span class="spotlight-ic">🎯</span><h3>Needs Attention: ${esc(pn)}</h3>${chip(tier)}</div>
       <p>${esc(s.name)} could use some extra support in ${esc(pn)} right now. ${esc(areaPhrase(pn,tier))}</p>
       ${comment?`<p><b>Teacher's note:</b> ${esc(comment)}</p>`:""}
       <p><b>Suggestion:</b> ${esc(areaActivity(pn,tier))}</p>
     </div>`;
   }
   return `<div class="spotlight strength">
-    <div class="spotlight-head"><span class="spotlight-ic">🌟</span><h4>Best At: ${esc(pn)}</h4>${chip(tier)}</div>
+    <div class="spotlight-head"><span class="spotlight-ic">🌟</span><h3>Best At: ${esc(pn)}</h3>${chip(tier)}</div>
     <p>${esc(s.name)} is doing best in ${esc(pn)} this term. ${esc(areaPhrase(pn,tier))}</p>
     ${comment?`<p><b>Teacher's note:</b> ${esc(comment)}</p>`:""}
   </div>`;
@@ -1130,7 +1134,7 @@ function spotlightHTML(kind,s,pn){
 function attentionSpotlightHTML(s){
   if(!s.growth.length){
     return `<div class="spotlight strength">
-      <div class="spotlight-head"><span class="spotlight-ic">🎯</span><h4>Needs Attention</h4></div>
+      <div class="spotlight-head"><span class="spotlight-ic">🎯</span><h3>Needs Attention</h3></div>
       <p>Nothing needs immediate attention this term — ${esc(s.name)} is doing well across the board!</p>
     </div>`;
   }
@@ -1141,13 +1145,17 @@ function teacherSectionHTML(s,noteText){
     .filter(pn=>{const t=s.pointerStats[pn].latestTier;return t===1||t===2;})
     .map(pn=>({pn,tip:areaActivity(pn,s.pointerStats[pn].latestTier)}))
     .filter(t=>t.tip);
-  return `<div class="rep-sec"><h4>${esc(LABELS.teacherNoteHeading)}</h4>
+  // Two sections, deliberately: what the teacher actually wrote, and what this tool
+  // worked out on its own. A parent should never have to guess which is which.
+  return `<div class="rep-sec"><h3>${esc(LABELS.teacherNoteHeading)}</h3>
     <div class="remarks" contenteditable="true">${noteText||"—"}</div>
-    ${tips.length?`<div class="suggest-wrap">
+  </div>
+  ${tips.length?`<div class="rep-sec"><h3>${esc(LABELS.remarksHeading)}</h3>
+    <div class="suggest-wrap">
       <div class="suggest-head">How you can help at home</div>
       <ul class="suggest-list">${tips.map(t=>`<li><b>${esc(t.pn)}:</b> ${esc(t.tip)}</li>`).join("")}</ul>
-    </div>`:""}
-  </div>`;
+    </div>
+  </div>`:""}`;
 }
 function skillChecksHTML(s){
   if(!s.testResults.length)return"";
@@ -1159,13 +1167,13 @@ function skillChecksHTML(s){
     </div>`).join("");
     return `<div class="skill-block"><div class="skill-h">${esc(tr.testName)} <span>· ${esc(tr.date)}</span></div><div class="snap-grid">${items}</div></div>`;
   }).join("");
-  return `<div class="rep-sec"><h4>Skill checks</h4>${blocks}</div>`;
+  return `<div class="rep-sec"><h3>Skill checks</h3>${blocks}</div>`;
 }
 
 function topicsHTML(){
   const withTopics=AN.cycles.filter(cy=>cy.topics);
   if(!withTopics.length)return"";
-  return `<div class="rep-sec"><h4>What we covered this term</h4>
+  return `<div class="rep-sec"><h3>What we covered this term</h3>
     ${withTopics.map(cy=>`<p class="topics-line"><b>${esc(cy.name)}:</b> ${esc(cy.topics)}</p>`).join("")}
   </div>`;
 }
@@ -1175,11 +1183,11 @@ function milestonesHTML(s){
     const yes=m.achieved===true;
     return `<div class="mile-item"><span class="mile-check ${yes?"yes":"no"}">${yes?"✓":"–"}</span>${esc(m.name)}</div>`;
   }).join("");
-  return `<div class="rep-sec"><h4>Milestones</h4><div class="mile-grid">${items}</div></div>`;
+  return `<div class="rep-sec"><h3>Milestones</h3><div class="mile-grid">${items}</div></div>`;
 }
 function goalsHTML(s){
   if(!s.latestGoals)return"";
-  return `<div class="rep-sec"><h4>Goals for next term</h4><div class="goals-box">${esc(s.latestGoals)}</div></div>`;
+  return `<div class="rep-sec"><h3>Goals for next term</h3><div class="goals-box">${esc(s.latestGoals)}</div></div>`;
 }
 function trendTag(trend){
   return trend==="up"?'<span class="trend up">▲ Improving</span>':trend==="down"?'<span class="trend down">▼ Needs focus</span>':'<span class="trend flat">▬ Steady</span>';
@@ -1194,7 +1202,7 @@ function progressGraphicHTML(s){
       ${trendTag(stat.trend)}
     </div>`;
   }).join("");
-  return `<div class="rep-sec"><h4>Progress Over Time</h4>${rows}</div>`;
+  return `<div class="rep-sec"><h3>Progress Over Time</h3>${rows}</div>`;
 }
 
 function studentPickerHTML(){
@@ -1239,7 +1247,7 @@ function reportSheetHTML(s){
     </div>
     ${topicsHTML()}
     <div class="rep-sec">
-      <h4>This term's snapshot</h4>
+      <h3>This term's snapshot</h3>
       <div class="tile-grid" style="grid-template-columns:repeat(${n},1fr)">${AN.pointerNames.map(pn=>{
         const stat=s.pointerStats[pn];
         const tier=stat.latestTier;
@@ -1778,7 +1786,7 @@ document.getElementById("settingsSave").addEventListener("click",()=>{
 });
 document.getElementById("settingsReset").addEventListener("click",()=>{
   LABELS.bandExcellent="Excellent";LABELS.bandGood="Good";LABELS.bandSatisfactory="Satisfactory";LABELS.bandNeedsPractice="Needs Practice";
-  LABELS.teacherNoteHeading="Note from the Teacher";
+  LABELS.teacherNoteHeading="Note from the Teacher";LABELS.remarksHeading="AI Evaluation";
   LABELS.sign1="Class Teacher";LABELS.sign2="Academy Head";LABELS.sign3="Parent / Guardian";
   openSettings();
 });

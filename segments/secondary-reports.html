@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>College Progress Dashboard</title>
+<title>Secondary School Progress Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
 <style>
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
   --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
-  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
   /* calibrated performance bands (print-safe, not stoplight) */
   --b1:#B4472F; --b1s:#F6E3DD; /* concern */
   --b2:#C9791B; --b2s:#FBEEDC; /* watch */
@@ -37,7 +37,7 @@ a{color:var(--teal)}
 
 /* ---------- UPLOAD / LANDING ---------- */
 #landing{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative}
-.back-link{position:absolute;top:22px;left:24px;color:#7C8598;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.back-link{position:absolute;top:22px;left:24px;color:#556074;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600}
 .back-link:hover{color:var(--navy)}
 .land-card{max-width:760px;width:100%;background:var(--card);border:1px solid var(--line);
   border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
@@ -64,7 +64,7 @@ a{color:var(--teal)}
   transition:border-color .2s,background .2s;background:#FCFBF7}
 #drop.drag{border-color:var(--teal);background:var(--teal-soft)}
 #drop .ic{width:44px;height:44px;margin:0 auto 12px;color:var(--teal)}
-#drop h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
+#drop h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
 #drop p{margin:0;color:var(--mut);font-size:13px}
 .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;
   font-weight:600;font-size:14px;padding:11px 18px;transition:transform .05s,filter .15s}
@@ -76,7 +76,7 @@ a{color:var(--teal)}
 .land-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;align-items:center}
 .land-note{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);
   display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.land-note h4{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
+.land-note h3{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
 .land-note p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.5}
 
 /* ---------- APP SHELL ---------- */
@@ -201,7 +201,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .attn-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
   padding:3px 8px;border-radius:6px;flex-shrink:0;margin-top:1px}
 .warn-box{background:var(--amber-soft);border:1px solid #EBD3A8;border-radius:10px;padding:13px 16px;margin-bottom:16px}
-.warn-box h4{margin:0 0 6px;font-size:13px;color:#8A5310}
+.warn-box h3{margin:0 0 6px;font-size:13px;color:#8A5310}
 .warn-box ul{margin:0;padding-left:18px;font-size:12.5px;color:#6E4A1A}
 .warn-box li{margin:2px 0}
 
@@ -228,7 +228,7 @@ svg text{font-family:system-ui,sans-serif}
 .rep-strip .box .big{font-family:Georgia,serif;font-size:19px;color:var(--navy);margin-top:2px;line-height:1}
 .rep-strip .box .cap{font-size:9px;color:var(--mut);margin-top:1px}
 .rep-sec{margin-top:12px}
-.rep-sec h4{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);
+.rep-sec h3{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);
   font-weight:700;margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid var(--line2)}
 .rep-table{width:100%;border-collapse:collapse;font-size:10px}
 .rep-table th{font-size:8.5px;padding:4px 6px;background:#F6F5F0;border-bottom:1px solid var(--line2);color:var(--navy)}
@@ -289,24 +289,26 @@ svg text{font-family:system-ui,sans-serif}
   .award-grid{break-inside:avoid}
 }
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 
 <!-- ============ LANDING ============ -->
 <div id="landing">
-  <a class="back-link" href="../../index.html">← All programs</a>
+  <a class="back-link" href="../index.html">← All programs</a>
   <div class="land-card">
     <div class="land-head">
       <img class="land-logo" id="landingLogo" alt="Academy logo">
-      <div class="kicker">College Progress Dashboard</div>
-      <h1 class="serif">Turn semester marks into SGPA, CGPA and clear reports</h1>
-      <p>Upload the marks workbook your faculty fill in. Get a college overview, CGPA rankings, and printable semester report cards — all in your browser, nothing uploaded anywhere.</p>
+      <div class="kicker">Secondary School Dashboard</div>
+      <h1 class="serif">Turn unit tests and term exams into clear reports</h1>
+      <p>Upload the marks workbook your teachers fill in. Get a class overview, student rankings, and printable report cards for parents — all in your browser, nothing uploaded anywhere.</p>
     </div>
     <div class="land-body">
       <div id="drop">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
-        <h3>Drop your Excel file here</h3>
-        <p>or click to choose — .xlsx from the template</p>
+        <h2>Drop your Excel file here</h2>
+        <p>or click to choose — .xlsx from the Secondary School template</p>
         <input id="file" type="file" accept=".xlsx,.xls" class="hidden">
       </div>
       <div id="uploadError" class="upload-err hidden"></div>
@@ -314,15 +316,15 @@ svg text{font-family:system-ui,sans-serif}
         <button class="btn btn-primary" id="pick">Choose file</button>
         <button class="btn btn-ghost" id="demo">Explore with sample data</button>
         <button class="btn btn-ghost" id="manualEntry">Type data in manually</button>
-        <a class="btn btn-ghost" href="../../assets/templates/college/College_Progress_Template.xlsx" download>Download template</a>
+        <a class="btn btn-ghost" href="../assets/templates/secondary/Student_Progress_Template.xlsx" download>Download template</a>
       </div>
       <div class="land-note">
         <div>
-          <h4>Uses the fill-in template</h4>
-          <p>The workbook has Students, Subjects (credits), Marks and Attendance sheets. Absent = <b>A</b>, never 0. Add a column block per semester.</p>
+          <h3>Uses the fill-in template</h3>
+          <p>The workbook has Students, Marks and Attendance sheets. Absent = <b>A</b>, never 0. Add a column block per test.</p>
         </div>
         <div>
-          <h4>Private by design</h4>
+          <h3>Private by design</h3>
           <p>Your file is read on this device only. Nothing is sent to a server. Close the tab and it's gone.</p>
         </div>
       </div>
@@ -334,9 +336,9 @@ svg text{font-family:system-ui,sans-serif}
 <div id="app">
   <div class="topbar">
     <img class="top-logo" id="topLogo" alt="">
-    <div class="brand"><b class="serif" id="brandName">Academy</b><span id="brandSub">College</span></div>
+    <div class="brand"><b class="serif" id="brandName">Academy</b><span id="brandSub">Secondary School</span></div>
     <div class="tabs">
-      <button class="tab active" data-view="overview">College Overview</button>
+      <button class="tab active" data-view="overview">Academy Overview</button>
       <button class="tab" data-view="rankings">Rankings</button>
       <button class="tab" data-view="awards">Awards</button>
       <button class="tab" data-view="report">Student Report</button>
@@ -347,7 +349,7 @@ svg text{font-family:system-ui,sans-serif}
       <button class="mini-btn" id="editDataBtn" title="View or edit the data behind these reports">✎ Edit data</button>
       <button class="mini-btn" id="settingsBtn" title="Customize branding & labels">⚙ Settings</button>
       <button class="mini-btn" id="reload">New file</button>
-      <a class="mini-btn" href="../../index.html" style="text-decoration:none;display:inline-flex;align-items:center" title="Back to segment picker">⌂ Segments</a>
+      <a class="mini-btn" href="../index.html" style="text-decoration:none;display:inline-flex;align-items:center" title="Back to segment picker">⌂ Segments</a>
     </div>
   </div>
   <div id="settingsModal" class="modal-wrap hidden">
@@ -404,7 +406,7 @@ svg text{font-family:system-ui,sans-serif}
 /* =================================================================
    EMBEDDED SAMPLE (June records) — goes through the same parser
    ================================================================= */
-const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample College",null,null,null,null,null,null,null,null,null],["BATCH","B.Tech CSE - Div A",null,"YEAR","2025-26",null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null],[null,"SEMESTER →","Semester 1",null,null,null,null,"Semester 2",null,null,null],[null,"DATE →","2025-11-20",null,null,null,null,"2026-05-18",null,null,null],[null,"TYPE →","End Semester",null,null,null,null,"End Semester",null,null,null],["Roll No","Student Name","Engineering Mathematics 1","Physics","Programming in C","Communication Skills",null,"Engineering Mathematics 2","Data Structures","Digital Electronics","Environmental Studies"],[1,"Aditi Rao",88,82,91,85,null,90,93,87,89],[2,"Kunal Deshmukh",68,65,70,72,null,66,64,69,71],[3,"Sanika Joshi",52,48,55,60,null,70,68,72,75],[4,"Rohan Bhosale",75,70,78,74,null,55,38,50,48],[5,"Tanvi Kulkarni",80,76,82,79,null,78,"A",81,77]],"Students":[["Roll No","Student Name","Program / Division","Gender","Parent / Guardian Name","Parent Phone","Teacher Rating","Behaviour Points","Previous CGPA","Notes"],[1,"Aditi Rao","B.Tech CSE - Div A",null,"Aditi Family",null,9,9,8.6,"Consistently excellent, mentors juniors."],[2,"Kunal Deshmukh","B.Tech CSE - Div A",null,"Kunal Family",null,6,7,null,null],[3,"Sanika Joshi","B.Tech CSE - Div A",null,"Sanika Family",null,7,8,null,"Great improvement this semester, keep it up."],[4,"Rohan Bhosale","B.Tech CSE - Div A",null,"Rohan Family",null,5,6,null,"Needs to attend Data Structures classes regularly."],[5,"Tanvi Kulkarni","B.Tech CSE - Div A",null,"Tanvi Family",null,8,8,null,null]],"Subjects":[["Semester","Subject","Credits"],["Semester 1","Engineering Mathematics 1",4],["Semester 1","Physics",3],["Semester 1","Programming in C",4],["Semester 1","Communication Skills",2],["Semester 2","Engineering Mathematics 2",4],["Semester 2","Data Structures",4],["Semester 2","Digital Electronics",3],["Semester 2","Environmental Studies",2]],"Attendance":[[null,"SEMESTER →","Semester 1",null,null,null,null,"Semester 2",null,null,null],["Roll No","Student Name","Engineering Mathematics 1","Physics","Programming in C","Communication Skills",null,"Engineering Mathematics 2","Data Structures","Digital Electronics","Environmental Studies"],[1,"Aditi Rao",95,92,96,94,null,96,94,95,97],[2,"Kunal Deshmukh",84,81,85,83,null,82,80,84,81],[3,"Sanika Joshi",72,70,74,73,null,88,86,89,87],[4,"Rohan Bhosale",85,83,86,84,null,68,65,70,67],[5,"Tanvi Kulkarni",91,89,92,90,null,90,60,91,88]]};
+const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample Academy"],["BATCH","9th A",null,"YEAR","2025-26"],[],[null,"TEST →","Unit Test 1",null,null,null,null,null,null,"Term 1",null,null,null,null,null,null,"Unit Test 2",null,null,null,null,null,null,"Term 2",null,null,null,null,null,null,"Prelims",null,null,null,null,null],[null,"DATE →","2025-06-20",null,null,null,null,null,null,"2025-09-10",null,null,null,null,null,null,"2025-10-15",null,null,null,null,null,null,"2025-12-12",null,null,null,null,null,null,"2026-01-20",null,null,null,null,null],[null,"TYPE →","Unit Test",null,null,null,null,null,null,"Term Exam",null,null,null,null,null,null,"Unit Test",null,null,null,null,null,null,"Term Exam",null,null,null,null,null,null,"Prelim",null,null,null,null,null],[null,"MAX MARKS →",20,20,20,20,20,100,null,40,40,40,40,40,200,null,20,20,20,20,20,100,null,40,40,40,40,40,200,null,50,50,50,50,50,250],["Roll No","Student Name","English","Hindi","Maths","Science","Social Science","Total",null,"English","Hindi","Maths","Science","Social Science","Total",null,"English","Hindi","Maths","Science","Social Science","Total",null,"English","Hindi","Maths","Science","Social Science","Total",null,"English","Hindi","Maths","Science","Social Science","Total"],[1,"Ishita Mehra",18,16,19,17,18,88,null,35,32,38,34,36,175,null,19,17,20,18,19,93,null,37,34,39,36,38,184,null,45,41,47,43,44,220],[2,"Aryan Kapoor",12,10,14,13,11,60,null,22,"A",28,24,20,94,null,14,11,15,14,12,66,null,24,20,30,26,22,122,null,28,24,32,29,25,138],[3,"Sanya Bhatt",16,15,12,16,17,76,null,30,28,24,31,33,146,null,17,16,13,17,18,81,null,32,29,26,33,34,154,null,38,35,30,39,40,182],[4,"Rudra Iyer",9,8,7,10,9,43,null,17,15,"A",19,16,67,null,10,9,8,11,10,48,null,19,16,14,20,18,87,null,22,19,17,23,21,102],[5,"Meera Choudhary",20,19,20,18,20,97,null,39,37,40,36,38,190,null,20,20,19,19,20,98,null,40,38,40,37,39,194,null,48,46,49,45,47,235]],"Students":[["Roll No","Student Name","Batch","Gender","Parent / Guardian Name","Parent Phone","Teacher Rating","Behaviour Points","Notes"],[1,"Ishita Mehra","9th A","F","Mehra Family",987654001,9,9,"Consistently strong across all subjects."],[2,"Aryan Kapoor","9th A","M","Kapoor Family",null,6,7,"Needs to work on regularity — missed a test."],[3,"Sanya Bhatt","9th A","F","Bhatt Family",null,7,8,null],[4,"Rudra Iyer","9th A","M","Iyer Family",null,6,6,"Struggling with Maths, needs extra support."],[5,"Meera Choudhary","9th A","F","Choudhary Family",null,10,9,"Outstanding all-round performance."]],"Attendance":[["Roll No","Student Name","2025-06-20","2025-06-27","2025-07-04","2025-07-11","2025-07-18"],[1,"Ishita Mehra","P","P","P","P","P"],[2,"Aryan Kapoor","P","A","P","P","L"],[3,"Sanya Bhatt","P","P","P","A","P"],[4,"Rudra Iyer","P","P","L","P","P"],[5,"Meera Choudhary","P","P","P","P","P"],[null,null,null,null,null,null,null],[null,"Mark each day as  P (present) · A (absent) · L (leave).  Add a new dated column for every class day.",null,null,null,null,null]]};
 
 /* =================================================================
    PARSER
@@ -415,8 +417,8 @@ const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample College",null,null,null,null,
 // so the shipped defaults stay untouched for anyone who wants them back.
 const DEFAULT_BRANDING={
   name:"The Extra Step Academy",
-  logoFull:"../../assets/images/tesa-logo-full.png",
-  logoEmblem:"../../assets/images/tesa-emblem.png"
+  logoFull:"../assets/images/tesa-logo-full.png",
+  logoEmblem:"../assets/images/tesa-emblem.png"
 };
 const BRANDING_KEY="spdBrandingOverrides_v1";
 function loadBranding(){
@@ -483,23 +485,23 @@ function formatDateDisplay(v){
   return d.getDate()+" "+MONTH_NAMES[d.getMonth()]+" "+d.getFullYear();
 }
 
-// Shared shape between Marks and Attendance: student rows, with a "SEMESTER →" meta row above
-// the header identifying which semester each column block belongs to, subject columns until a
-// blank column ends the block. Marks additionally reads DATE/TYPE meta rows; Attendance doesn't.
-function findHeaderRow(aoa){
-  for(let i=0;i<Math.min(aoa.length,30);i++){const row=aoa[i]||[];if(row.some(c=>["student name","name of student","name"].includes(keyName(c))))return i;}
-  return -1;
-}
-function parseSemesterBlocks(aoa,{wantDate=false,wantType=false}={}){
-  const hr=findHeaderRow(aoa);
-  if(hr<0)return null;
+function parseMarks(aoa,warnings){
+  let hr=-1;
+  for(let i=0;i<Math.min(aoa.length,30);i++){const row=aoa[i]||[];if(row.some(c=>["student name","name of student","name"].includes(keyName(c)))){hr=i;break;}}
+  if(hr<0){warnings.push("Could not find the 'Student Name' header row in the Marks sheet.");return{tests:[],marks:[]};}
+  // meta rows sit directly above the header, each identified by its own row label rather than a
+  // fixed offset — so any subset of TEST/DATE/TYPE/DIFFICULTY/MAX/TOPICS rows, in any order,
+  // keeps working, and older template files (missing the newer optional rows) still parse fine.
   const rowLabel=ri=>{const row=aoa[ri]||[];for(let i=0;i<Math.min(3,row.length);i++){const k=keyName(row[i]);if(k)return k;}return"";};
-  let rSem=-1,rDate=-1,rType=-1;
-  for(let i=hr-1;i>=Math.max(0,hr-8);i--){
+  let rName=-1,rDate=-1,rType=-1,rDiff=-1,rMax=-1,rTopic=-1;
+  for(let i=hr-1;i>=Math.max(0,hr-10);i--){
     const lbl=rowLabel(i);if(!lbl)continue;
-    if(wantType&&rType<0&&lbl.includes("type"))rType=i;
-    else if(wantDate&&rDate<0&&lbl.includes("date"))rDate=i;
-    else if(rSem<0&&lbl.includes("semester"))rSem=i;
+    if(rMax<0&&lbl.includes("max"))rMax=i;
+    else if(rTopic<0&&lbl.includes("topic"))rTopic=i;
+    else if(rDiff<0&&(lbl.includes("difficult")||lbl.includes("level")))rDiff=i;
+    else if(rType<0&&lbl.includes("type"))rType=i;
+    else if(rDate<0&&lbl.includes("date"))rDate=i;
+    else if(rName<0&&(lbl.includes("test")||lbl.includes("name")))rName=i;
   }
   const header=aoa[hr]||[];
   let cRoll=-1,cName=-1;
@@ -509,97 +511,63 @@ function parseSemesterBlocks(aoa,{wantDate=false,wantType=false}={}){
   if(cName<0)cName=1;
   const startCol=Math.max(cName,cRoll)+1;
   const at=(ri)=>ri>=0?(aoa[ri]||[]):[];
-  const semRow=at(rSem),dateRow=at(rDate),typeRow=at(rType);
-  const semesters=[];let c=startCol;
+  const maxRow=at(rMax),typeRow=at(rType),dateRow=at(rDate),nameRow=at(rName),topicRow=at(rTopic),diffRow=at(rDiff);
+  const tests=[];let c=startCol;
   while(c<header.length){
     if(keyName(header[c])===""){c++;continue;}
-    const subjCols=[];let cc=c;
+    const subjCols=[];let totalCol=-1,cc=c;
     while(cc<header.length){
-      if(keyName(header[cc])===""){break;}
+      const hk=keyName(header[cc]);
+      if(hk==="total"||hk==="grand total"||hk==="overall"){totalCol=cc;cc++;break;}
+      if(hk===""){break;}
       subjCols.push(cc);cc++;
     }
     if(subjCols.length){
       const anchor=subjCols[0];
-      const sname=norm(semRow[anchor])||("Semester "+(semesters.length+1));
-      const subjects=subjCols.map(sc=>({name:norm(header[sc])||("Sub"+sc),col:sc}));
-      semesters.push({name:sname,date:formatDateDisplay(dateRow[anchor]),dateRaw:dateRow[anchor],type:norm(typeRow[anchor])||"End Semester",subjects});
-      c=subjCols[subjCols.length-1]+1;
+      const tname=norm(nameRow[anchor])||("Test "+(tests.length+1));
+      const ttype=norm(typeRow[anchor])||"General";
+      const tdiff=norm(diffRow[anchor])||"Medium";
+      const subjects=subjCols.map(sc=>({name:norm(header[sc])||("Sub"+sc),col:sc,max:toNum(maxRow[sc])||0,topic:norm(topicRow[sc])||"-"}));
+      const totMax=(totalCol>=0?toNum(maxRow[totalCol]):null)||subjects.reduce((a,s)=>a+s.max,0);
+      tests.push({name:tname,type:ttype,difficulty:tdiff,date:formatDateDisplay(dateRow[anchor]),dateRaw:dateRow[anchor],subjects,totalCol,totalMax:totMax});
+      c=(totalCol>=0?totalCol:subjCols[subjCols.length-1])+1;
     }else c++;
   }
-  return{hr,cRoll,cName,semesters};
-}
-function parseCollegeMarks(aoa,warnings){
-  const meta=parseSemesterBlocks(aoa,{wantDate:true,wantType:true});
-  if(!meta){warnings.push("Could not find the 'Student Name' header row in the Marks sheet.");return{semesters:[],marks:[]};}
-  const{hr,cRoll,cName,semesters}=meta;
   const marks=[];
   for(let i=hr+1;i<aoa.length;i++){
     const row=aoa[i]||[];const nm=norm(row[cName]);if(nm==="")continue;
     const roll=cRoll>=0?toNum(row[cRoll]):null;
-    const rec={roll,name:nm,semesters:{}};
-    semesters.forEach(sem=>{
-      const subs={};
-      sem.subjects.forEach(su=>{
-        const cs=cellState(row[su.col]);
-        if(cs.type==="num"){subs[su.name]={state:"ok",mark:cs.val};
-          if(cs.val>100)warnings.push(nm+" · "+sem.name+" · "+su.name+": "+cs.val+" — marks are expected out of 100.");}
-        else if(cs.type==="absent")subs[su.name]={state:"absent",mark:null};
-        else if(cs.type==="na")subs[su.name]={state:"na",mark:null};
-        else subs[su.name]={state:"blank",mark:null};
+    const rec={roll,name:nm,tests:{}};
+    tests.forEach(t=>{
+      const subs={};let obtained=0,denom=0,attempted=0,enrolled=0;
+      t.subjects.forEach(s=>{
+        const cs=cellState(row[s.col]);
+        if(cs.type==="num"){subs[s.name]={state:"ok",absent:false,mark:cs.val,max:s.max};obtained+=cs.val;denom+=s.max;attempted++;enrolled++;
+          if(s.max>0&&cs.val>s.max)warnings.push(nm+" · "+t.name+" · "+s.name+": "+cs.val+" exceeds max "+s.max+".");}
+        else if(cs.type==="absent"){subs[s.name]={state:"absent",absent:true,mark:null,max:s.max};enrolled++;}
+        else if(cs.type==="na"){subs[s.name]={state:"na",absent:false,mark:null,max:s.max,na:true};}
+        else{subs[s.name]={state:"blank",absent:false,mark:null,max:s.max,blank:true};}
       });
-      rec.semesters[sem.name]=subs;
+      const applies=enrolled>0;
+      const absent=applies&&attempted===0;
+      rec.tests[t.name]={subjects:subs,applies,absent,obtained:attempted>0?obtained:null,
+        max:denom,pct:(attempted>0&&denom>0)?(obtained/denom*100):null};
     });
     marks.push(rec);
   }
-  return{semesters,marks};
-}
-function parseAttendanceSubjectwise(aoa){
-  const meta=parseSemesterBlocks(aoa,{wantDate:false,wantType:false});
-  if(!meta)return{semesters:[],byName:{}};
-  const{hr,cRoll,cName,semesters}=meta;
-  const byName={};
-  for(let i=hr+1;i<aoa.length;i++){
-    const row=aoa[i]||[];const nm=norm(row[cName]);if(nm==="")continue;
-    const bySem={};
-    semesters.forEach(sem=>{
-      const bySubj={};
-      sem.subjects.forEach(su=>{const n=toNum(row[su.col]);if(n!=null)bySubj[su.name]=Math.max(0,Math.min(100,n));});
-      bySem[sem.name]=bySubj;
-    });
-    byName[keyName(nm)]=bySem;
-  }
-  return{semesters,byName};
-}
-// Subjects sheet is plain curriculum metadata (Semester | Subject | Credits) — not a per-student
-// block-grid — so a subject's credit weight can be looked up regardless of which student or
-// column layout the Marks/Attendance sheets used for that same semester.
-function parseSubjectsMeta(aoa){
-  const map={};
-  if(!aoa||aoa.length<2)return map;
-  const header=(aoa[0]||[]).map(keyName);
-  const cSem=header.findIndex(h=>h.includes("semester"));
-  const cSub=header.findIndex(h=>h.includes("subject"));
-  const cCred=header.findIndex(h=>h.includes("credit"));
-  if(cSem<0||cSub<0||cCred<0)return map;
-  for(let i=1;i<aoa.length;i++){
-    const row=aoa[i]||[];const sem=norm(row[cSem]),sub=norm(row[cSub]);
-    if(!sem||!sub)continue;
-    const cr=toNum(row[cCred]);
-    map[keyName(sem)+"||"+keyName(sub)]=cr!=null?cr:3;
-  }
-  return map;
+  return{tests,marks};
 }
 function parseStudents(aoa){
   if(!aoa||!aoa.length)return[];
   const header=(aoa[0]||[]).map(keyName);
   const idx=ns=>{for(const n of ns){const i=header.findIndex(h=>h===n||h.startsWith(n));if(i>=0)return i;}return -1;};
   const cRoll=idx(["roll no","roll","sr. no."]),cName=idx(["student name","name of student","name"]),
-    cBatch=idx(["program / division","program","batch","class","division"]),cGender=idx(["gender","sex"]),
+    cBatch=idx(["batch","class","batch / class"]),cGender=idx(["gender","sex"]),
     cPName=idx(["parent / guardian name","parent name","guardian name"]),cPhone=idx(["parent phone","phone","contact","mobile"]),
-    cNotes=idx(["notes","note","remark","remarks","mentor note","mentor's note","faculty remarks","comments"]),
-    cTRating=idx(["teacher rating","mentor rating","faculty rating","teacher score","mentor input"]),
+    cNotes=idx(["notes","note","remark","remarks","teacher note","teacher's note","teacher remarks","comments"]),
+    cTRating=idx(["teacher rating","teacher score","teacher input","teacher assessment"]),
     cBehaviour=idx(["behaviour points","behavior points","behaviour","behavior","conduct","conduct points"]),
-    cPrevCGPA=idx(["previous cgpa","last cgpa","previous term cgpa","prior cgpa"]);
+    cPrevTerm=idx(["previous term %","previous term","last term %","last term score","previous exam %","previous score"]);
   const out=[];
   for(let i=1;i<aoa.length;i++){const row=aoa[i]||[];const nm=norm(row[cName]);if(nm==="")continue;
     out.push({roll:cRoll>=0?toNum(row[cRoll]):null,name:nm,batch:cBatch>=0?norm(row[cBatch]):"",
@@ -607,29 +575,57 @@ function parseStudents(aoa){
       notes:cNotes>=0?norm(row[cNotes]):"",
       teacherRating:cTRating>=0?toNum(row[cTRating]):null,
       behaviour:cBehaviour>=0?toNum(row[cBehaviour]):null,
-      prevCGPA:cPrevCGPA>=0?toNum(row[cPrevCGPA]):null});}
+      prevTermPct:cPrevTerm>=0?toNum(row[cPrevTerm]):null});}
   return out;
+}
+function parseAttendance(aoa){
+  if(!aoa||aoa.length<2)return{byName:{},days:0};
+  const header=aoa[0]||[];let cName=-1,cRoll=-1;
+  header.forEach((c,i)=>{const k=keyName(c);if(["student name","name"].includes(k))cName=i;if(["roll no","roll"].includes(k))cRoll=i;});
+  if(cName<0)cName=1;
+  const dayCols=[];header.forEach((c,i)=>{if(i>Math.max(cName,cRoll)&&norm(c)!=="")dayCols.push(i);});
+  const byName={};
+  for(let i=1;i<aoa.length;i++){const row=aoa[i]||[];const nm=norm(row[cName]);if(nm==="")continue;
+    let P=0,A=0,L=0;dayCols.forEach(dc=>{const v=norm(row[dc]).toUpperCase();if(v==="P")P++;else if(v==="A")A++;else if(v==="L")L++;});
+    const total=P+A+L; if(total===0)continue; // skip note/blank rows
+    byName[keyName(nm)]={present:P,absent:A,leave:L,total,pct:P/total*100};}
+  return{byName,days:dayCols.length};
+}
+function parseHomework(aoa){
+  if(!aoa||aoa.length<2)return{byName:{},n:0};
+  const header=aoa[0]||[];let cName=-1,cRoll=-1;
+  header.forEach((c,i)=>{const k=keyName(c);if(["student name","name"].includes(k))cName=i;if(["roll no","roll"].includes(k))cRoll=i;});
+  if(cName<0)cName=1;
+  const taskCols=[];header.forEach((c,i)=>{if(i>Math.max(cName,cRoll)&&norm(c)!=="")taskCols.push(i);});
+  const byName={};
+  for(let i=1;i<aoa.length;i++){const row=aoa[i]||[];const nm=norm(row[cName]);if(nm==="")continue;
+    let done=0,marked=0;
+    taskCols.forEach(tc=>{const v=norm(row[tc]).toUpperCase();
+      if(["Y","YES","DONE","D","COMPLETE","COMPLETED","1"].includes(v)){done++;marked++;}
+      else if(["N","NO","NOT DONE","ND","PENDING","INCOMPLETE","0"].includes(v)){marked++;}});
+    if(marked===0)continue; // skip blank/note rows
+    byName[keyName(nm)]={done,marked,pct:done/marked*100};}
+  return{byName,n:taskCols.length};
 }
 function parseWorkbook(sheets){
   const warnings=[];
   const find=w=>{for(const k of Object.keys(sheets))if(keyName(k)===w)return sheets[k];return null;};
   const marksAoa=find("marks")||Object.values(sheets)[0];
-  const studAoa=find("students"),attAoa=find("attendance"),subjAoa=find("subjects");
-  const {semesters,marks}=parseCollegeMarks(marksAoa,warnings);
+  const studAoa=find("students"),attAoa=find("attendance"),hwAoa=find("homework");
+  const {tests,marks}=parseMarks(marksAoa,warnings);
   const students=studAoa?parseStudents(studAoa):[];
-  const attendance=attAoa?parseAttendanceSubjectwise(attAoa):{semesters:[],byName:{}};
-  const creditsMap=subjAoa?parseSubjectsMeta(subjAoa):{};
-  if(subjAoa&&Object.keys(creditsMap).length===0)warnings.push("The Subjects sheet has no readable Semester/Subject/Credits rows — every subject defaulted to 3 credits.");
+  const attendance=attAoa?parseAttendance(attAoa):{byName:{},days:0};
+  const homework=hwAoa?parseHomework(hwAoa):{byName:{},n:0};
   let academy="",batch="",year="";
   (marksAoa||[]).slice(0,3).forEach(row=>{(row||[]).forEach((c,i)=>{const k=keyName(c);
     if(k==="academy")academy=norm(row[i+1]);if(k==="batch")batch=norm(row[i+1]);if(k==="year")year=norm(row[i+1]);});});
-  return{academy,batch,year,semesters,marks,students,attendance,creditsMap,warnings};
+  return{academy,batch,year,tests,marks,students,attendance,homework,warnings};
 }
 
-// detects one or more batches in a workbook: sheets named "Marks", "Marks - CSE Div A", etc.
-// each batch pairs with Attendance/Students/Subjects sheets sharing the same suffix, falling back
-// to a shared sheet when there's only one. Single-sheet workbooks (the common case) come back as
-// one batch with an empty suffix, so nothing changes for existing files.
+// detects one or more batches in a workbook: sheets named "Marks", "Marks - 11th Commerce", etc.
+// each batch pairs with an Attendance/Students sheet sharing the same suffix, falling back to
+// a shared "Students"/"Attendance" sheet when there's only one. Single-sheet workbooks (the common
+// case) come back as one batch with an empty suffix, so nothing changes for existing files.
 function stripPrefix(name,prefix){
   const m=name.match(new RegExp("^\\s*"+prefix+"\\s*","i"));
   if(!m)return null;
@@ -644,22 +640,26 @@ function detectBatches(sheets){
   }
   const attSheets=names.filter(n=>stripPrefix(n,"attendance")!==null);
   const studSheets=names.filter(n=>stripPrefix(n,"students")!==null);
-  const subjSheets=names.filter(n=>stripPrefix(n,"subjects")!==null);
+  const hwSheets=names.filter(n=>stripPrefix(n,"homework")!==null);
   const sharedStudents=names.find(n=>keyName(n)==="students");
   const sharedAtt=names.find(n=>keyName(n)==="attendance");
-  const sharedSubj=names.find(n=>keyName(n)==="subjects");
+  const sharedHw=names.find(n=>keyName(n)==="homework");
   return marksSheets.map((mn,idx)=>{
     const suffix=stripPrefix(mn,"marks");
     const matchSuffix=(list,prefix)=>list.find(n=>keyName(stripPrefix(n,prefix)||"")===keyName(suffix||""));
     const attName=(suffix?matchSuffix(attSheets,"attendance"):null)||sharedAtt||(attSheets.length===1?attSheets[0]:null);
     const studName=(suffix?matchSuffix(studSheets,"students"):null)||sharedStudents||(studSheets.length===1?studSheets[0]:null);
-    const subjName=(suffix?matchSuffix(subjSheets,"subjects"):null)||sharedSubj||(subjSheets.length===1?subjSheets[0]:null);
+    const hwName=(suffix?matchSuffix(hwSheets,"homework"):null)||sharedHw||(hwSheets.length===1?hwSheets[0]:null);
     const built={Marks:sheets[mn]};
     if(studName)built.Students=sheets[studName];
     if(attName)built.Attendance=sheets[attName];
-    if(subjName)built.Subjects=sheets[subjName];
+    if(hwName)built.Homework=sheets[hwName];
     const data=parseWorkbook(built);
     const label=suffix||data.batch||(marksSheets.length>1?`Batch ${idx+1}`:"Default");
+    // the sheet's own internal "BATCH" cell can go stale when a batch is duplicated from
+    // another sheet (e.g. copying Science's tab to make Commerce and forgetting to edit the
+    // header) — the sheet NAME is what the teacher actually controls per batch, so once there's
+    // more than one batch, trust that suffix over whatever text happens to be typed inside.
     if(suffix)data.batch=suffix;
     return{key:"b"+idx,label,data};
   });
@@ -686,103 +686,99 @@ function band(pct){ // 5-band performance scale (coaching-calibrated), names cus
   if(pct>=25)return{i:2,name:LABELS.band2,c:"var(--b2)",s:"var(--b2s)"};
   return{i:1,name:LABELS.band1,c:"var(--b1)",s:"var(--b1s)"};
 }
-// Absolute 10-point grading scale used across Indian engineering/degree colleges.
-function gradeFromMarks(m){
-  if(m>=90)return{letter:"O",points:10};
-  if(m>=80)return{letter:"A+",points:9};
-  if(m>=70)return{letter:"A",points:8};
-  if(m>=60)return{letter:"B+",points:7};
-  if(m>=50)return{letter:"B",points:6};
-  if(m>=45)return{letter:"C",points:5};
-  if(m>=40)return{letter:"P",points:4};
-  return{letter:"F",points:0};
-}
 
 function analyze(data){
-  const {semesters,marks,attendance,students,creditsMap}=data;
+  const {tests,marks,attendance,students,homework}=data;
   const rosterBy={};students.forEach(s=>rosterBy[keyName(s.name)]=s);
-  const creditFor=(semName,subName)=>{const k=keyName(semName)+"||"+keyName(subName);return creditsMap[k]!=null?creditsMap[k]:3;};
+  // subjects present anywhere
+  const subjectSet=[];tests.forEach(t=>t.subjects.forEach(s=>{if(!subjectSet.includes(s.name))subjectSet.push(s.name);}));
 
   const S=marks.map(m=>{
-    const semRecs=semesters.map((sem,si)=>{
-      const subs=m.semesters[sem.name]||{};
-      // absent counts as a fail (0 marks, grade F) — same treatment a real transcript gives a
-      // missed exam; "na"/blank means the subject doesn't apply to this student this semester
-      // (e.g. an elective they didn't take) and is excluded from the credit sum entirely.
-      const subjRows=sem.subjects.map(su=>{
-        const rec=subs[su.name]||{state:"blank",mark:null};
-        const credits=creditFor(sem.name,su.name);
-        let marksVal=null,grade=null,applies=false;
-        if(rec.state==="ok"){marksVal=rec.mark;grade=gradeFromMarks(marksVal);applies=true;}
-        else if(rec.state==="absent"){marksVal=0;grade=gradeFromMarks(0);applies=true;}
-        return{name:su.name,credits,marks:marksVal,grade,applies,absent:rec.state==="absent"};
-      });
-      const counted=subjRows.filter(r=>r.applies);
-      const creditSum=counted.reduce((a,r)=>a+r.credits,0);
-      const qualityPoints=counted.reduce((a,r)=>a+r.credits*r.grade.points,0);
-      const sgpa=creditSum>0?qualityPoints/creditSum:null;
-      const backlogs=counted.filter(r=>r.grade.points===0).map(r=>r.name);
-      const attBySubj=(attendance.byName[keyName(m.name)]||{})[sem.name]||{};
-      const attRows=sem.subjects.map(su=>({name:su.name,pct:attBySubj[su.name]!=null?attBySubj[su.name]:null}));
-      const attVals=attRows.map(r=>r.pct).filter(v=>v!=null);
-      const attAvg=attVals.length?mean(attVals):null;
-      const lowAttSubjects=attRows.filter(r=>r.pct!=null&&r.pct<75).map(r=>r.name);
-      return{name:sem.name,type:sem.type,date:sem.date,subjects:subjRows,creditSum,sgpa,backlogs,attRows,attAvg,lowAttSubjects,si};
-    });
-    const gradedSems=semRecs.filter(sr=>sr.sgpa!=null);
-    const totalCredits=gradedSems.reduce((a,sr)=>a+sr.creditSum,0);
-    const cgpa=totalCredits>0?gradedSems.reduce((a,sr)=>a+sr.sgpa*sr.creditSum,0)/totalCredits:null;
-    const sgpaScaled=gradedSems.map(sr=>sr.sgpa*10); // scaled to 0-100 so the same stdev/slope maths as the marks-based segments applies
-    const sd=stdev(sgpaScaled);
-    const consistency=sgpaScaled.length>=2?clamp(100-sd*2.4,0,100):(sgpaScaled.length?65:0);
-    const sl=slope(gradedSems.map(sr=>({x:sr.si,y:sr.sgpa*10})));
-    const trend=gradedSems.length<2?"flat":(sl>2.5?"up":sl<-2.5?"down":"flat");
-    const attAvgs=semRecs.map(sr=>sr.attAvg).filter(v=>v!=null);
-    const attPct=attAvgs.length?mean(attAvgs):null;
-    const latestSem=gradedSems.length?gradedSems[gradedSems.length-1]:null;
-    const backlogSubjects=latestSem?latestSem.backlogs:[];
+    const perTest=tests.map((t,ti)=>{const r=m.tests[t.name];return{ti,name:t.name,type:t.type,date:t.date,difficulty:t.difficulty,
+      pct:r.pct,obtained:r.obtained,max:r.max,absent:r.absent,applies:r.applies};});
+    const applicable=perTest.filter(p=>p.applies).length;
+    const attended=perTest.filter(p=>p.applies&&!p.absent&&p.pct!=null);
+    const pcts=attended.map(p=>p.pct);
+    const avgPct=mean(pcts);
+    const sd=stdev(pcts);
+    const consistency=pcts.length>=2?clamp(100-sd*2.4,0,100):(avgPct!=null?65:0);
+    const sl=slope(attended.map(p=>({x:p.ti,y:p.pct})));
+    const trend=attended.length<2?"flat":(sl>2.5?"up":sl<-2.5?"down":"flat");
+    // subject profile
+    const subjAvg={},subjectsTaken=[];
+    subjectSet.forEach(sn=>{const vals=[];tests.forEach(t=>{const sd2=m.tests[t.name].subjects[sn];
+      if(sd2&&sd2.state==="ok"&&sd2.mark!=null&&sd2.max>0)vals.push(sd2.mark/sd2.max*100);});
+      subjAvg[sn]=vals.length?mean(vals):null;if(vals.length)subjectsTaken.push(sn);});
+    // topic profile — same idea as subjects, but at chapter/topic granularity where the
+    // teacher has tagged one, so weakness can be pinpointed below the subject level
+    const topicMap={};
+    tests.forEach(t=>{t.subjects.forEach(su=>{
+      if(!su.topic||su.topic==="-")return;
+      const sd2=m.tests[t.name].subjects[su.name];
+      if(!sd2||sd2.state!=="ok"||sd2.mark==null||!su.max)return;
+      const key=su.name+"||"+su.topic;
+      (topicMap[key]=topicMap[key]||{subject:su.name,topic:su.topic,vals:[]}).vals.push(sd2.mark/su.max*100);
+    });});
+    const topicPerf=Object.values(topicMap).map(x=>({subject:x.subject,topic:x.topic,avg:mean(x.vals),n:x.vals.length}))
+      .sort((a,b)=>a.avg-b.avg);
+    // attendance
+    const att=attendance.byName[keyName(m.name)];
+    const testAttPct=applicable?(attended.length/applicable*100):null;
+    const attPct=att?att.pct:testAttPct;
+    // homework completion
+    const hw=homework&&homework.byName?homework.byName[keyName(m.name)]:null;
+    const hwPct=hw?hw.pct:null;
+    // term-over-term comparison, from the roster's optional "Previous Term %" column
     const info=rosterBy[keyName(m.name)]||{};
-    const prevCGPA=info.prevCGPA!=null?info.prevCGPA:null;
-    const cgpaDelta=(cgpa!=null&&prevCGPA!=null)?cgpa-prevCGPA:null;
-    const academicPct=cgpa!=null?cgpa*10:null;
-    const composite=academicPct==null?0:(0.70*academicPct+0.15*consistency+0.15*(attPct==null?60:attPct));
-    const subjAvgLists={};
-    semRecs.forEach(sr=>sr.subjects.forEach(r=>{if(r.marks==null)return;(subjAvgLists[r.name]=subjAvgLists[r.name]||[]).push(r.marks);}));
-    const subjAvgMean={};Object.keys(subjAvgLists).forEach(k=>subjAvgMean[k]=mean(subjAvgLists[k]));
-    return{roll:m.roll,name:m.name,info,semRecs,gradedSems,totalCredits,cgpa,academicPct,sd,consistency,trend,slope:sl,
-      attPct,latestSem,backlogSubjects,prevCGPA,cgpaDelta,composite,subjAvgMean};
+    const prevTermPct=info.prevTermPct!=null?info.prevTermPct:null;
+    const termDelta=(avgPct!=null&&prevTermPct!=null)?avgPct-prevTermPct:null;
+    const composite=avgPct==null?0:(0.70*avgPct+0.15*consistency+0.15*(attPct==null?60:attPct));
+    return {roll:m.roll,name:m.name,info,perTest,attended:attended.length,
+      total:perTest.length,applicable,subjectsTaken,avgPct,sd,consistency,trend,slope:sl,subjAvg,topicPerf,
+      attPct,attInfo:att,hwPct,hwInfo:hw,prevTermPct,termDelta,composite};
   });
 
-  const ranked=[...S].filter(s=>s.cgpa!=null).sort((a,b)=>b.composite-a.composite);
+  // ranks by composite
+  const ranked=[...S].filter(s=>s.avgPct!=null).sort((a,b)=>b.composite-a.composite);
   ranked.forEach((s,i)=>{s.rank=i+1;s.percentile=Math.round((1-(i)/Math.max(ranked.length,1))*100);});
-  S.filter(s=>s.cgpa==null).forEach(s=>{s.rank=null;s.percentile=null;});
+  S.filter(s=>s.avgPct==null).forEach(s=>{s.rank=null;s.percentile=null;});
 
-  const perSemClass=semesters.map((sem,si)=>{
-    const vals=S.map(s=>s.semRecs[si]).filter(sr=>sr&&sr.sgpa!=null).map(sr=>sr.sgpa);
-    return{name:sem.name,avg:vals.length?mean(vals):null,n:vals.length};
-  });
-  const subjectSet=[];semesters.forEach(sem=>sem.subjects.forEach(su=>{if(!subjectSet.includes(su.name))subjectSet.push(su.name);}));
-  const subjClass={};subjectSet.forEach(sn=>{const vals=S.map(s=>s.subjAvgMean[sn]).filter(v=>v!=null);subjClass[sn]=vals.length?mean(vals):null;});
-  const classCGPA=mean(S.map(s=>s.cgpa).filter(v=>v!=null));
+  // class aggregates
+  const perTestClass=tests.map((t,ti)=>{const vals=S.map(s=>s.perTest[ti]).filter(p=>!p.absent&&p.pct!=null).map(p=>p.pct);
+    return{name:t.name,type:t.type,avg:mean(vals),n:vals.length};});
+  const subjClass={};subjectSet.forEach(sn=>{const vals=S.map(s=>s.subjAvg[sn]).filter(v=>v!=null);subjClass[sn]=mean(vals);});
+  const topicClassMap={};
+  S.forEach(s=>s.topicPerf.forEach(tp=>{const key=tp.subject+"||"+tp.topic;
+    (topicClassMap[key]=topicClassMap[key]||{subject:tp.subject,topic:tp.topic,vals:[]}).vals.push(tp.avg);}));
+  const topicClass=Object.values(topicClassMap).map(x=>({subject:x.subject,topic:x.topic,avg:mean(x.vals),n:x.vals.length}))
+    .sort((a,b)=>a.avg-b.avg);
+  const typeClass={};tests.forEach((t,ti)=>{(typeClass[t.type]=typeClass[t.type]||[]).push(...S.map(s=>s.perTest[ti]).filter(p=>!p.absent&&p.pct!=null).map(p=>p.pct));});
+  Object.keys(typeClass).forEach(k=>typeClass[k]=mean(typeClass[k]));
+  const classAvg=mean(S.map(s=>s.avgPct).filter(v=>v!=null));
   const classAtt=mean(S.map(s=>s.attPct).filter(v=>v!=null));
+  const classHw=mean(S.map(s=>s.hwPct).filter(v=>v!=null));
   const improving=S.filter(s=>s.trend==="up").length;
   const declining=S.filter(s=>s.trend==="down").length;
-  const dist=[1,2,3,4,5].map(i=>({i,count:S.filter(s=>s.academicPct!=null&&band(s.academicPct).i===i).length}));
 
+  // distribution bands
+  const dist=[1,2,3,4,5].map(i=>({i,count:S.filter(s=>s.avgPct!=null&&band(s.avgPct).i===i).length}));
+
+  // attention list
   const attention=[];
   S.forEach(s=>{
-    if(s.cgpa!=null&&s.cgpa<5)attention.push({name:s.name,tag:"Low CGPA",tone:"b1",
-      note:`CGPA ${s.cgpa.toFixed(2)}/10 — needs support.`});
-    if(s.backlogSubjects&&s.backlogSubjects.length)attention.push({name:s.name,tag:"Backlog",tone:"b1",
-      note:`Failing grade in ${s.backlogSubjects.join(", ")} this semester.`});
+    if(s.avgPct!=null&&s.avgPct<35)attention.push({name:s.name,tag:"Low marks",tone:"b1",
+      note:`Overall ${s.avgPct.toFixed(0)}% — below the ${band(35).name.toLowerCase()} line.`});
     if(s.trend==="down")attention.push({name:s.name,tag:"Slipping",tone:"b2",
-      note:`SGPA trending down across recent semesters.`});
+      note:`Scores trending down across recent tests.`});
     if(s.attPct!=null&&s.attPct<75)attention.push({name:s.name,tag:"Attendance",tone:"b2",
-      note:`Present for ${s.attPct.toFixed(0)}% — below the usual 75% eligibility line.`});
+      note:`Present for ${s.attPct.toFixed(0)}% — missing classes.`});
+    if(s.applicable-s.attended>=2)attention.push({name:s.name,tag:"Missed tests",tone:"b3",
+      note:`Absent for ${s.applicable-s.attended} of ${s.applicable} tests.`});
   });
 
-  const teacherNotes=S.filter(s=>s.info&&s.info.notes).map(s=>({name:s.name,note:s.info.notes,rank:s.rank,cgpa:s.cgpa}));
-  return{S,ranked,semesters,subjectSet,perSemClass,subjClass,classCGPA,classAtt,improving,declining,dist,attention,teacherNotes};
+  const teacherNotes=S.filter(s=>s.info&&s.info.notes).map(s=>({name:s.name,note:s.info.notes,rank:s.rank,avgPct:s.avgPct}));
+  return{S,ranked,tests,subjectSet,perTestClass,subjClass,topicClass,typeClass,classAvg,classAtt,classHw,improving,declining,dist,attention,teacherNotes,
+    types:[...new Set(tests.map(t=>t.type))]};
 }
 
 /* =================================================================
@@ -792,34 +788,37 @@ function analyze(data){
    AWARDS ENGINE — composite score from marks, attendance, teacher input,
    and behaviour, with adjustable weights and per-award manual override.
    ================================================================= */
-let AWARD_WEIGHTS={academic:50,attendance:20,teacher:15,behaviour:15};
-let AWARDS=[{id:1,title:"Student of the Semester",override:null}];
+let AWARD_WEIGHTS={academic:45,attendance:20,teacher:15,behaviour:10,homework:10};
+let AWARDS=[{id:1,title:"Student of the Month",override:null}];
 let AWARD_ID_SEQ=2;
 function computeAwardScores(a){
   const hasTeacher=a.S.some(s=>s.info&&s.info.teacherRating!=null);
   const hasBehaviour=a.S.some(s=>s.info&&s.info.behaviour!=null);
   const hasAtt=a.S.some(s=>s.attPct!=null);
+  const hasHw=a.S.some(s=>s.hwPct!=null);
   // redistribute weight of any missing factor proportionally across the rest
   let w={academic:AWARD_WEIGHTS.academic,
     attendance:hasAtt?AWARD_WEIGHTS.attendance:0,
     teacher:hasTeacher?AWARD_WEIGHTS.teacher:0,
-    behaviour:hasBehaviour?AWARD_WEIGHTS.behaviour:0};
-  const total=w.academic+w.attendance+w.teacher+w.behaviour;
+    behaviour:hasBehaviour?AWARD_WEIGHTS.behaviour:0,
+    homework:hasHw?AWARD_WEIGHTS.homework:0};
+  const total=w.academic+w.attendance+w.teacher+w.behaviour+w.homework;
   if(total>0)Object.keys(w).forEach(k=>w[k]=w[k]/total*100);
-  const rows=a.S.filter(s=>s.cgpa!=null).map(s=>{
+  const rows=a.S.filter(s=>s.avgPct!=null).map(s=>{
     const tRating=s.info&&s.info.teacherRating!=null?clamp(s.info.teacherRating,0,10)*10:null;
     const behav=s.info&&s.info.behaviour!=null?clamp(s.info.behaviour,0,10)*10:null;
     const parts=[];
     let score=0;
-    score+=(s.academicPct||0)*(w.academic/100);parts.push({label:"Academic (CGPA)",v:s.academicPct,w:w.academic});
+    score+=(s.avgPct||0)*(w.academic/100);parts.push({label:"Academic",v:s.avgPct,w:w.academic});
     if(hasAtt){score+=(s.attPct||0)*(w.attendance/100);parts.push({label:"Attendance",v:s.attPct,w:w.attendance});}
-    if(hasTeacher){score+=(tRating??70)*(w.teacher/100);parts.push({label:"Mentor rating",v:tRating,w:w.teacher});}
+    if(hasTeacher){score+=(tRating??70)*(w.teacher/100);parts.push({label:"Teacher rating",v:tRating,w:w.teacher});}
     if(hasBehaviour){score+=(behav??70)*(w.behaviour/100);parts.push({label:"Behaviour",v:behav,w:w.behaviour});}
-    return{name:s.name,roll:s.roll,cgpa:s.cgpa,attPct:s.attPct,teacherRating:s.info&&s.info.teacherRating,
-      behaviour:s.info&&s.info.behaviour,score,parts};
+    if(hasHw){score+=(s.hwPct??70)*(w.homework/100);parts.push({label:"Homework",v:s.hwPct,w:w.homework});}
+    return{name:s.name,roll:s.roll,avgPct:s.avgPct,attPct:s.attPct,teacherRating:s.info&&s.info.teacherRating,
+      behaviour:s.info&&s.info.behaviour,hwPct:s.hwPct,score,parts};
   }).sort((x,y)=>y.score-x.score);
   rows.forEach((r,i)=>r.rank=i+1);
-  return{rows,weights:w,hasTeacher,hasBehaviour,hasAtt};
+  return{rows,weights:w,hasTeacher,hasBehaviour,hasAtt,hasHw};
 }
 
 function bandColor(pct){return band(pct).c;}
@@ -844,7 +843,7 @@ function svgLine(series,labels,{w=560,h=230,max=100}={}){
   const n=labels.length;const X=i=>pad.l+(n<=1?iw/2:iw*i/(n-1));const Y=v=>pad.t+ih*(1-clamp(v,0,max)/max);
   let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img">`;
   [0,25,50,75,100].forEach(g=>{const y=Y(g);s+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#EDEAE1"/>`+
-    `<text x="${pad.l-6}" y="${y+3}" text-anchor="end" font-size="9.5" fill="#9AA3B2">${g}</text>`;});
+    `<text x="${pad.l-6}" y="${y+3}" text-anchor="end" font-size="9.5" fill="#656E82">${g}</text>`;});
   labels.forEach((lb,i)=>{s+=`<text x="${X(i)}" y="${h-12}" text-anchor="middle" font-size="10" fill="#5B6472">${lb}</text>`;});
   series.forEach(se=>{const pts=se.data.map((v,i)=>v==null?null:[X(i),Y(v)]).filter(Boolean);
     if(pts.length){const d=pts.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join(" ");
@@ -864,22 +863,43 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","
 /* =================================================================
    STATE + RENDER
    ================================================================= */
-let DATA=null, AN=null, curStudent=null, BATCHES=[], CURRENT_BATCH=0;
+let DATA=null, AN=null, FILTER={type:"__all",month:"__all"}, curStudent=null, BATCHES=[], CURRENT_BATCH=0;
 const LABELS={
   remarksHeading:"AI Evaluation",
-  teacherNoteHeading:"Mentor’s Note & Evaluation",
-  sign1:"Class Mentor", sign2:"HOD / Principal", sign3:"Parent / Guardian",
+  teacherNoteHeading:"Teacher’s Note",
+  sign1:"Class Teacher", sign2:"Academy Head", sign3:"Parent / Guardian",
   overviewBanner:"",
   showAttention:true,
   band5:"Strong", band4:"Good", band3:"Fair", band2:"Watch", band1:"Concern"
 };
 
 function fmtPct(v,d=0){return v==null?"—":v.toFixed(d)+"%";}
-function fmtGPA(v,d=2){return v==null?"—":v.toFixed(d);}
 
-function applyFilter(){AN=analyze(DATA);}
-function typeFilterHTML(){return"";}
-function monthFilterHTML(){return"";}
+function applyFilter(){
+  // rebuild analytics on a filtered copy of tests
+  let list=DATA.tests;
+  if(FILTER.type!=="__all")list=list.filter(t=>t.type===FILTER.type);
+  if(FILTER.month!=="__all")list=list.filter(t=>monthKeyOf(t.dateRaw)===FILTER.month);
+  if(list.length===DATA.tests.length){AN=analyze(DATA);return;}
+  const keep=new Set(list.map(t=>t.name));
+  const sub={...DATA,tests:list,
+    marks:DATA.marks.map(m=>({...m,tests:Object.fromEntries(Object.entries(m.tests).filter(([k])=>keep.has(k)))}))};
+  AN=analyze(sub);
+}
+
+function typeFilterHTML(){
+  const types=[...new Set(DATA.tests.map(t=>t.type))];
+  if(types.length<=1)return"";
+  return `<label class="flab">Test type</label><select id="typeFilter">
+    <option value="__all">All tests</option>${types.map(t=>`<option value="${esc(t)}" ${FILTER.type===t?"selected":""}>${esc(t)}</option>`).join("")}</select>`;
+}
+function monthFilterHTML(){
+  const keys=[...new Set(DATA.tests.map(t=>monthKeyOf(t.dateRaw)).filter(Boolean))].sort();
+  if(keys.length<=1)return"";
+  return `<label class="flab">Month</label><select id="monthFilter">
+    <option value="__all" ${FILTER.month==="__all"?"selected":""}>All months</option>
+    ${keys.map(k=>`<option value="${k}" ${FILTER.month===k?"selected":""}>${monthLabelOf(k)}</option>`).join("")}</select>`;
+}
 
 /* ---------- OVERVIEW ---------- */
 function renderOverview(){
@@ -887,21 +907,25 @@ function renderOverview(){
   const a=AN;
   const kpis=[
     {k:"Students",v:DATA.marks.length,s:DATA.batch||""},
-    {k:"Semesters recorded",v:a.semesters.length,s:""},
-    {k:"Class average CGPA",v:fmtGPA(a.classCGPA),s:band(a.classCGPA==null?null:a.classCGPA*10).name},
+    {k:"Tests recorded",v:AN.tests.length,s:FILTER.type==="__all"?"all types":FILTER.type},
+    {k:"Class average",v:fmtPct(a.classAvg),s:band(a.classAvg).name},
     {k:"Avg attendance",v:fmtPct(a.classAtt),s:"across the batch"},
     {k:"Improving",v:a.improving,s:a.declining+" slipping"},
     {k:"Need attention",v:new Set(a.attention.map(x=>x.name)).size,s:"flagged students"},
   ];
+  if(a.classHw!=null)kpis.push({k:"Homework done",v:fmtPct(a.classHw),s:"class average"});
   const top=a.ranked.slice(0,3);
   const subjItems=a.subjectSet.map(sn=>({label:sn,val:a.subjClass[sn]}));
-  const trendLabels=a.perSemClass.map(t=>t.name);
-  const trendData=a.perSemClass.map(t=>t.avg==null?null:t.avg*10);
+  const trendLabels=a.perTestClass.map(t=>t.name);
+  const trendData=a.perTestClass.map(t=>t.avg);
   const distMax=Math.max(1,...a.dist.map(d=>d.count));
   const bandNames={1:LABELS.band1,2:LABELS.band2,3:LABELS.band3,4:LABELS.band4,5:LABELS.band5};
   const bandCols={1:"var(--b1)",2:"var(--b2)",3:"var(--b3)",4:"var(--b4)",5:"var(--b5)"};
 
-  const warnHTML=DATA.warnings.length?`<div class="warn-box"><h4>⚠ ${DATA.warnings.length} data check${DATA.warnings.length>1?"s":""} to review</h4>
+  // type comparison (CET vs JEE ...)
+  const typeItems=Object.entries(a.typeClass).map(([k,v])=>({label:k,val:v}));
+
+  const warnHTML=DATA.warnings.length?`<div class="warn-box"><h3>⚠ ${DATA.warnings.length} data check${DATA.warnings.length>1?"s":""} to review</h3>
     <ul>${DATA.warnings.slice(0,6).map(w=>`<li>${esc(w)}</li>`).join("")}${DATA.warnings.length>6?`<li>…and ${DATA.warnings.length-6} more</li>`:""}</ul></div>`:"";
 
   const attnUnique=[];const seen={};
@@ -909,10 +933,10 @@ function renderOverview(){
 
   el.innerHTML=`
     <div class="view-head no-print">
-      <div><div class="eyebrow">Holistic view</div><h2>College Overview</h2></div>
-      <div class="filters"><button class="btn btn-ghost" id="printOverview">Print / Save as PDF</button><button class="btn btn-primary" id="shareOverview">Share (WhatsApp / Email)</button></div>
+      <div><div class="eyebrow">Holistic view</div><h2>Academy Overview</h2></div>
+      <div class="filters">${typeFilterHTML()}${monthFilterHTML()}<button class="btn btn-ghost" id="printOverview">Print / Save as PDF</button><button class="btn btn-primary" id="shareOverview">Share (WhatsApp / Email)</button></div>
     </div>
-    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">College Overview</div></div>
+    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Academy Overview</div></div>
       <div class="meta">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>Generated ${new Date().toLocaleDateString()}</div></div>
     ${LABELS.overviewBanner?`<div class="ov-banner">${esc(LABELS.overviewBanner)}</div>`:""}
     ${warnHTML}
@@ -920,12 +944,12 @@ function renderOverview(){
 
     <div class="grid g3" style="margin-bottom:16px">
       <div class="panel">
-        <h3>Class average SGPA, semester by semester</h3>
-        <p class="sub">Is the batch's average SGPA moving up or down?</p>
-        ${svgLine([{data:trendData,color:"var(--teal)"}],trendLabels,{max:100})}
+        <h3>Class average, test by test</h3>
+        <p class="sub">Are weekly scores moving up or down across the batch?</p>
+        ${svgLine([{data:trendData,color:"var(--teal)"}],trendLabels)}
       </div>
       <div class="panel">
-        <h3>CGPA distribution</h3>
+        <h3>Score distribution</h3>
         <p class="sub">How many students sit in each band</p>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
         ${a.dist.slice().reverse().map(d=>`<div style="display:flex;align-items:center;gap:10px">
@@ -939,14 +963,15 @@ function renderOverview(){
     <div class="grid g2" style="margin-bottom:16px">
       <div class="panel">
         <h3>Subject strengths across the class</h3>
-        <p class="sub">Average marks per subject (all semesters) — where the batch is strong or weak</p>
+        <p class="sub">Average % per subject — where the batch is strong or weak</p>
         ${svgBars(subjItems,{h:Math.max(120,subjItems.length*46)})}
       </div>
       <div class="panel">
-        <h3>Top performers</h3>
-        <p class="sub">Ranked by the composite index (CGPA + consistency + attendance)</p>
-        ${top.map((s,i)=>`<div class="rank-row"><div class="medal" style="background:${['var(--gold)','var(--silver)','var(--bronze)'][i]}">${i+1}</div>
-            <div style="flex:1"><div class="rank-name">${esc(s.name)}</div><div class="rank-sub">CGPA ${fmtGPA(s.cgpa)} · ${trendGlyph(s.trend)}</div></div>
+        <h3>${typeItems.length>1?"Performance by test type":"Top performers"}</h3>
+        <p class="sub">${typeItems.length>1?"Average % grouped by the test type you tagged":"Ranked by the composite index"}</p>
+        ${typeItems.length>1?svgBars(typeItems,{h:Math.max(120,typeItems.length*52)}):
+          top.map((s,i)=>`<div class="rank-row"><div class="medal" style="background:${['var(--gold)','var(--silver)','var(--bronze)'][i]}">${i+1}</div>
+            <div style="flex:1"><div class="rank-name">${esc(s.name)}</div><div class="rank-sub">${fmtPct(s.avgPct)} overall · ${trendGlyph(s.trend)}</div></div>
             <div class="stars" style="color:var(--gold)">${stars(s.composite)}</div></div>`).join("")}
       </div>
     </div>
@@ -954,26 +979,33 @@ function renderOverview(){
     <div class="grid ${LABELS.showAttention?"g2":"g1"}">
       <div class="panel">
         <h3>Top performers</h3>
-        <p class="sub">Best students by the composite index (CGPA + consistency + attendance)</p>
+        <p class="sub">Best students by the composite index (marks + consistency + attendance)</p>
         ${a.ranked.slice(0,5).map((s,i)=>`<div class="rank-row">
           <div class="medal" style="background:${i<3?['var(--gold)','var(--silver)','var(--bronze)'][i]:'var(--mut2)'}">${i+1}</div>
           <div style="flex:1"><div class="rank-name">${esc(s.name)}</div>
-            <div class="rank-sub">CGPA ${fmtGPA(s.cgpa)} · attd ${fmtPct(s.attPct)} · ${trendGlyph(s.trend)}</div></div>
+            <div class="rank-sub">${fmtPct(s.avgPct)} · attd ${fmtPct(s.attPct)} · ${trendGlyph(s.trend)}</div></div>
           <div class="stars" style="color:var(--gold)">${stars(s.composite)}</div></div>`).join("")}
       </div>
       ${LABELS.showAttention?`<div class="panel">
         <h3>Students who need attention</h3>
-        <p class="sub">Low CGPA, backlogs, slipping trends, or low attendance</p>
+        <p class="sub">Low marks, slipping trends, or missed classes</p>
         ${attnUnique.length?attnUnique.slice(0,7).map(x=>`<div class="attn-item">
           <span class="attn-tag" style="background:var(--${x.tone}s);color:var(--${x.tone})">${x.tag}</span>
           <div><b style="color:var(--navy);font-size:13.5px">${esc(x.name)}</b><div style="font-size:12px;color:var(--mut);margin-top:1px">${esc(x.note)}</div></div>
         </div>`).join(""):`<div class="empty">No students flagged. 🎉</div>`}
       </div>`:""}
     </div>
+    ${a.topicClass&&a.topicClass.length?`<div class="panel" style="margin-top:16px">
+      <h3>Topics that need attention (class-wide)</h3><p class="sub">Chapter/topic-level averages across the batch, weakest first — a target list for revision classes</p>
+      <div class="topic-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+        ${a.topicClass.slice(0,8).map(tp=>`<div class="topic-row"><span class="topic-name">${esc(tp.topic)}<span class="topic-subj">${esc(tp.subject)}</span></span><b style="color:${bandColor(tp.avg)}">${fmtPct(tp.avg)}</b></div>`).join("")}
+      </div>
+    </div>`:""}
     ${a.teacherNotes&&a.teacherNotes.length?`<div class="panel" style="margin-top:16px">
-      <h3>Mentor notes</h3><p class="sub">Personalised remarks recorded on the student roster</p>
+      <h3>Teacher notes</h3><p class="sub">Personalised remarks recorded on the student roster</p>
       <div class="tnote-grid">${a.teacherNotes.map(tn=>`<div class="tnote-card"><div class="tnote-nm">${esc(tn.name)}</div><div class="tnote-tx">${esc(tn.note)}</div></div>`).join("")}</div>
     </div>`:""}`;
+  bindTypeFilter(el);
   const pb=document.getElementById("printOverview");if(pb)pb.addEventListener("click",()=>printView("v-overview"));
   document.getElementById("shareOverview").addEventListener("click",e=>{
     forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_overview.pdf","Academy Overview",e.target));
@@ -984,43 +1016,44 @@ function renderOverview(){
 function renderRankings(){
   const el=document.getElementById("v-rankings");const a=AN;
   const rows=a.ranked.map(s=>{
-    const b=band(s.academicPct);
+    const b=band(s.avgPct);
     return `<tr class="clickable" data-name="${esc(s.name)}">
       <td class="c"><b style="color:${s.rank<=3?['var(--gold)','var(--silver)','var(--bronze)'][s.rank-1]:'var(--navy)'};font-size:15px">${s.rank}</b></td>
       <td><b style="color:var(--navy)">${esc(s.name)}</b><div style="font-size:11px;color:var(--mut)">Roll ${s.roll??"—"}${s.info.batch?" · "+esc(s.info.batch):""}</div>${s.info&&s.info.notes?`<div class="note-line">✎ ${esc(s.info.notes)}</div>`:""}</td>
       <td class="stars" style="color:var(--gold)">${stars(s.composite)}</td>
-      <td><div style="display:flex;align-items:center;gap:8px"><div class="bar-mini"><span style="width:${clamp(s.academicPct,0,100)}%;background:${b.c}"></span></div><b class="num" style="min-width:40px;color:${b.c}">${fmtGPA(s.cgpa)}</b></div></td>
-      <td class="c">${chip(s.academicPct)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="bar-mini"><span style="width:${clamp(s.avgPct,0,100)}%;background:${b.c}"></span></div><b class="num" style="min-width:40px;color:${b.c}">${fmtPct(s.avgPct)}</b></div></td>
+      <td class="c">${chip(s.avgPct)}</td>
       <td class="c num">${s.consistency.toFixed(0)}</td>
       <td class="c num">${fmtPct(s.attPct)}</td>
       <td class="c">${trendGlyph(s.trend)}</td>
     </tr>`;}).join("");
-  const absentOnly=a.S.filter(s=>s.cgpa==null);
+  const absentOnly=a.S.filter(s=>s.avgPct==null);
   el.innerHTML=`
     <div class="view-head no-print">
       <div><div class="eyebrow">Best students</div><h2>Rankings & Ratings</h2></div>
-      <div class="filters"><button class="btn btn-ghost" id="printRankings">Print / Save as PDF</button><button class="btn btn-primary" id="shareRankings">Share (WhatsApp / Email)</button></div>
+      <div class="filters">${typeFilterHTML()}${monthFilterHTML()}<button class="btn btn-ghost" id="printRankings">Print / Save as PDF</button><button class="btn btn-primary" id="shareRankings">Share (WhatsApp / Email)</button></div>
     </div>
     <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Rankings & Ratings</div></div>
       <div class="meta">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>Generated ${new Date().toLocaleDateString()}</div></div>
     <div class="panel" style="padding:8px 6px">
       <table>
-        <thead><tr><th class="c">Rank</th><th>Student</th><th>Rating</th><th>CGPA</th>
+        <thead><tr><th class="c">Rank</th><th>Student</th><th>Rating</th><th>Overall %</th>
         <th class="c">Band</th><th class="c">Consistency</th><th class="c">Attendance</th><th class="c">Trend</th></tr></thead>
-        <tbody>${rows||`<tr><td colspan="8" class="empty">No graded semesters yet.</td></tr>`}</tbody>
+        <tbody>${rows||`<tr><td colspan="8" class="empty">No graded tests yet.</td></tr>`}</tbody>
       </table>
     </div>
-    ${absentOnly.length?`<p style="font-size:12px;color:var(--mut);margin-top:12px">Not ranked (no graded semesters): ${absentOnly.map(s=>esc(s.name)).join(", ")}.</p>`:""}
+    ${absentOnly.length?`<p style="font-size:12px;color:var(--mut);margin-top:12px">Not ranked (no attended tests): ${absentOnly.map(s=>esc(s.name)).join(", ")}.</p>`:""}
     <div class="panel" style="margin-top:16px">
       <h3>How the rating works</h3>
-      <p class="sub" style="margin-bottom:10px">Rank and stars come from a composite index, so a steady, present student can outrank a spiky one on the same CGPA.</p>
+      <p class="sub" style="margin-bottom:10px">Rank and stars come from a composite index, so a steady, present student can outrank a spiky one on the same average.</p>
       <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:12.5px;color:var(--ink)">
-        <div><b style="color:var(--teal)">70%</b> CGPA</div>
-        <div><b style="color:var(--teal)">15%</b> consistency (steady SGPA scores higher)</div>
+        <div><b style="color:var(--teal)">70%</b> average marks (absent tests excluded)</div>
+        <div><b style="color:var(--teal)">15%</b> consistency (steady scores score higher)</div>
         <div><b style="color:var(--teal)">15%</b> attendance</div>
       </div>
     </div>`;
   el.querySelectorAll("tr.clickable").forEach(tr=>tr.addEventListener("click",()=>{curStudent=tr.dataset.name;switchView("report");}));
+  bindTypeFilter(el);
   const pb=document.getElementById("printRankings");if(pb)pb.addEventListener("click",()=>printView("v-rankings"));
   document.getElementById("shareRankings").addEventListener("click",e=>{
     forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_rankings.pdf","Rankings & Ratings",e.target));
@@ -1032,7 +1065,7 @@ function renderAwards(){
   const el=document.getElementById("v-awards");const a=AN;
   const res=computeAwardScores(a);
   const rows=res.rows;
-  if(!rows.length){el.innerHTML=`<div class="empty">No scored students yet — awards need at least one graded semester.</div>`;return;}
+  if(!rows.length){el.innerHTML=`<div class="empty">No scored students yet — awards need at least one graded test.</div>`;return;}
 
   const studentOpts=(selected)=>`<option value="" ${!selected?"selected":""}>Auto — highest score</option>`+
     rows.map(r=>`<option value="${esc(r.name)}" ${r.name===selected?"selected":""}>${esc(r.name)}</option>`).join("");
@@ -1057,24 +1090,26 @@ function renderAwards(){
   const factorChips=[
     {label:"Academic",w:res.weights.academic,on:true},
     {label:"Attendance",w:res.weights.attendance,on:res.hasAtt},
-    {label:"Mentor rating",w:res.weights.teacher,on:res.hasTeacher},
+    {label:"Teacher rating",w:res.weights.teacher,on:res.hasTeacher},
     {label:"Behaviour",w:res.weights.behaviour,on:res.hasBehaviour},
+    {label:"Homework",w:res.weights.homework,on:res.hasHw},
   ];
 
   const leaderRows=rows.map(r=>`<tr>
     <td class="c">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</td>
     <td><b style="color:var(--navy)">${esc(r.name)}</b><div style="font-size:11px;color:var(--mut)">Roll ${r.roll??"—"}</div></td>
-    <td class="c num">${fmtGPA(r.cgpa)}</td>
+    <td class="c num">${fmtPct(r.avgPct)}</td>
     <td class="c num">${r.attPct!=null?fmtPct(r.attPct):"—"}</td>
     <td class="c num">${r.teacherRating!=null?r.teacherRating+"/10":"—"}</td>
     <td class="c num">${r.behaviour!=null?r.behaviour+"/10":"—"}</td>
+    <td class="c num">${r.hwPct!=null?fmtPct(r.hwPct):"—"}</td>
     <td class="c num"><b style="color:var(--teal)">${r.score.toFixed(0)}</b></td>
   </tr>`).join("");
 
   el.innerHTML=`
     <div class="view-head no-print">
       <div><div class="eyebrow">Recognition</div><h2>Awards</h2></div>
-      <div class="filters"><button class="btn btn-ghost" id="printAwards">Print / Save as PDF</button><button class="btn btn-primary" id="shareAwards">Share (WhatsApp / Email)</button></div>
+      <div class="filters">${typeFilterHTML()}${monthFilterHTML()}<button class="btn btn-ghost" id="printAwards">Print / Save as PDF</button><button class="btn btn-primary" id="shareAwards">Share (WhatsApp / Email)</button></div>
     </div>
     <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Awards</div></div>
       <div class="meta">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>Generated ${new Date().toLocaleDateString()}</div></div>
@@ -1088,16 +1123,17 @@ function renderAwards(){
       <div class="weight-row no-print">
         <label>Academic <input type="number" id="w-academic" min="0" max="100" value="${AWARD_WEIGHTS.academic}"></label>
         <label>Attendance <input type="number" id="w-attendance" min="0" max="100" value="${AWARD_WEIGHTS.attendance}" ${res.hasAtt?"":"disabled"}></label>
-        <label>Mentor rating <input type="number" id="w-teacher" min="0" max="100" value="${AWARD_WEIGHTS.teacher}" ${res.hasTeacher?"":"disabled"}></label>
+        <label>Teacher rating <input type="number" id="w-teacher" min="0" max="100" value="${AWARD_WEIGHTS.teacher}" ${res.hasTeacher?"":"disabled"}></label>
         <label>Behaviour <input type="number" id="w-behaviour" min="0" max="100" value="${AWARD_WEIGHTS.behaviour}" ${res.hasBehaviour?"":"disabled"}></label>
+        <label>Homework <input type="number" id="w-homework" min="0" max="100" value="${AWARD_WEIGHTS.homework}" ${res.hasHw?"":"disabled"}></label>
       </div>
       <div class="factor-chips">${factorChips.filter(f=>f.on).map(f=>`<span class="chip" style="background:var(--teal-soft);color:var(--teal)">${f.label} · ${f.w.toFixed(0)}%</span>`).join("")}</div>
-      ${(!res.hasTeacher||!res.hasBehaviour)?`<p class="sub" style="margin-top:10px">${!res.hasTeacher?"Add a <b>Teacher Rating</b> column (0–10) to the Students sheet to factor in mentor input. ":""}${!res.hasBehaviour?"Add a <b>Behaviour Points</b> column (0–10) to the Students sheet to factor in conduct. ":""}</p>`:""}
+      ${(!res.hasTeacher||!res.hasBehaviour||!res.hasHw)?`<p class="sub" style="margin-top:10px">${!res.hasTeacher?"Add a <b>Teacher Rating</b> column (0–10) to the Students sheet to factor in teacher input. ":""}${!res.hasBehaviour?"Add a <b>Behaviour Points</b> column (0–10) to the Students sheet to factor in conduct. ":""}${!res.hasHw?"Add a <b>Homework</b> sheet to factor in assignment completion.":""}</p>`:""}
     </div>
 
     <div class="panel" style="margin-top:16px;padding:8px 6px">
       <table>
-        <thead><tr><th class="c">Rank</th><th>Student</th><th class="c">CGPA</th><th class="c">Attendance</th><th class="c">Mentor</th><th class="c">Behaviour</th><th class="c">Award Score</th></tr></thead>
+        <thead><tr><th class="c">Rank</th><th>Student</th><th class="c">Academic</th><th class="c">Attendance</th><th class="c">Teacher</th><th class="c">Behaviour</th><th class="c">Homework</th><th class="c">Award Score</th></tr></thead>
         <tbody>${leaderRows}</tbody>
       </table>
     </div>`;
@@ -1106,8 +1142,9 @@ function renderAwards(){
   document.getElementById("shareAwards").addEventListener("click",e=>{
     forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_awards.pdf","Awards",e.target));
   });
+  bindTypeFilter(el);
   document.getElementById("addAward").addEventListener("click",()=>{
-    AWARDS.push({id:AWARD_ID_SEQ++,title:"Student of the Semester",override:null});
+    AWARDS.push({id:AWARD_ID_SEQ++,title:"Student of the Week",override:null});
     renderAwards();
   });
   el.querySelectorAll(".award-title").forEach(inp=>inp.addEventListener("change",e=>{
@@ -1123,7 +1160,7 @@ function renderAwards(){
     AWARDS=AWARDS.filter(x=>x.id!==id);
     renderAwards();
   }));
-  ["academic","attendance","teacher","behaviour"].forEach(k=>{
+  ["academic","attendance","teacher","behaviour","homework"].forEach(k=>{
     const inp=document.getElementById("w-"+k);
     if(inp)inp.addEventListener("change",()=>{
       AWARD_WEIGHTS[k]=clamp(Number(inp.value)||0,0,100);
@@ -1134,40 +1171,46 @@ function renderAwards(){
 
 /* ---------- STUDENT REPORT (A4) ---------- */
 function buildReportSheetHTML(s,a,sheetId){
-  const semTableRows=s.semRecs.filter(sr=>sr.creditSum>0||sr.subjects.some(x=>x.applies)).map(sr=>{
-    return `<tr><td><b>${esc(sr.name)}</b><div style="font-size:9px;color:var(--mut)">${esc(sr.type)}${sr.date?" · "+esc(sr.date):""}</div></td>
-      <td class="c num">${sr.creditSum||"—"}</td>
-      <td class="c num" style="color:${sr.sgpa!=null?bandColor(sr.sgpa*10):'var(--mut)'}"><b>${fmtGPA(sr.sgpa)}</b></td>
-      <td class="c num">${fmtPct(sr.attAvg)}</td>
-      <td class="c">${sr.sgpa!=null?chip(sr.sgpa*10):"—"}</td>
-      <td class="c" style="color:var(--b1);font-size:9.5px">${sr.backlogs.length?esc(sr.backlogs.join(", ")):"—"}</td>
-    </tr>`;
+  const marksRec=DATA.marks.find(m=>m.name===s.name);
+  const anyTopics=a.tests.some(t=>t.subjects.some(su=>su.topic&&su.topic!=="-"));
+  const nSub=a.subjectSet.length;
+  const testRows=a.tests.map((t,ti)=>{
+    const r=s.perTest[ti];const cls=a.perTestClass[ti].avg;
+    const diffColor={easy:"var(--b5)",medium:"var(--b3)",hard:"var(--b1)"}[keyName(t.difficulty)]||"var(--mut)";
+    const diffBadge=t.difficulty?` <span style="font-size:8px;font-weight:700;color:${diffColor};border:1px solid ${diffColor};border-radius:6px;padding:0 4px">${esc(t.difficulty)}</span>`:"";
+    const head=`<td><b>${esc(t.name)}</b>${diffBadge}<div style="font-size:9.5px;color:var(--mut)">${esc(t.type)}${t.date?" · "+esc(t.date):""}</div></td>`;
+    const topicsStr=[...new Set(t.subjects.map(su=>su.topic).filter(tp=>tp&&tp!=="-"))].join(", ");
+    const topicsCell=anyTopics?`<td style="font-size:8.5px;color:var(--mut);max-width:110px">${topicsStr?esc(topicsStr):"—"}</td>`:"";
+    if(!r.applies)return `<tr style="color:var(--mut2)">${head}<td colspan="${nSub+1}" style="font-style:italic">Not taken</td><td class="c">—</td><td class="c num">${fmtPct(cls)}</td><td class="c">—</td>${topicsCell}</tr>`;
+    if(r.absent)return `<tr>${head}<td colspan="${nSub+1}" style="color:var(--b1);font-weight:600">Absent</td><td class="c">—</td><td class="c num">${fmtPct(cls)}</td><td class="c">—</td>${topicsCell}</tr>`;
+    const subCells=a.subjectSet.map(sn=>{
+      const su=t.subjects.find(x=>x.name===sn);
+      if(!su)return `<td class="c" style="color:var(--line2)">·</td>`;
+      const sd=marksRec.tests[t.name].subjects[sn];
+      if(!sd||sd.state==="na"||sd.state==="blank")return `<td class="c" style="color:var(--mut2);font-size:9px">n/a</td>`;
+      if(sd.state==="absent")return `<td class="c"><span style="color:var(--b1)">A</span></td>`;
+      return `<td class="c">${sd.mark}<span style="color:var(--mut);font-size:9px">/${su.max}</span></td>`;
+    }).join("");
+    const diff=(r.pct!=null&&cls!=null)?r.pct-cls:null;
+    return `<tr>${head}${subCells}<td class="c num"><b>${r.obtained}</b><span style="color:var(--mut);font-size:9px">/${r.max}</span></td>
+      <td class="c num" style="color:${bandColor(r.pct)}"><b>${fmtPct(r.pct)}</b></td>
+      <td class="c num">${fmtPct(cls)}</td>
+      <td class="c num" style="color:${diff==null?'var(--mut)':diff>=0?'var(--b5)':'var(--b1)'};font-weight:700">${diff==null?"—":(diff>=0?"+":"")+diff.toFixed(0)}</td>${topicsCell}</tr>`;
   }).join("");
 
-  const latest=s.latestSem;
-  const latestRows=latest?latest.subjects.filter(r=>r.applies).map(r=>{
-    const attRow=latest.attRows.find(x=>x.name===r.name);
-    return `<tr><td>${esc(r.name)}</td><td class="c num">${r.credits}</td>
-      <td class="c num">${r.absent?`<span style="color:var(--b1)">Absent</span>`:r.marks}</td>
-      <td class="c"><b style="color:${r.grade.points>=6?'var(--b5)':r.grade.points>=4?'var(--b3)':'var(--b1)'}">${r.grade.letter}</b></td>
-      <td class="c num">${r.grade.points}</td>
-      <td class="c num" style="color:${attRow&&attRow.pct!=null&&attRow.pct<75?'var(--b1)':'inherit'}">${attRow&&attRow.pct!=null?fmtPct(attRow.pct):"—"}</td>
-    </tr>`;
-  }).join("") : "";
-
-  const subjCmp=a.subjectSet.filter(sn=>s.subjAvgMean[sn]!=null).map(sn=>{
-    const you=s.subjAvgMean[sn],cls=a.subjClass[sn];
+  const subjCmp=a.subjectSet.filter(sn=>s.subjAvg[sn]!=null).map(sn=>{
+    const you=s.subjAvg[sn],cls=a.subjClass[sn];
     return `<div class="cmp-row"><span style="font-weight:600;color:var(--navy)">${esc(sn)}</span>
       <div class="cmp-track"><div class="cmp-you" style="width:${clamp(you||0,0,100)}%;background:${bandColor(you)}"></div>
         <div class="cmp-cls" style="left:${clamp(cls||0,0,100)}%" title="class ${fmtPct(cls)}"></div></div>
       <span class="num" style="text-align:right"><b style="color:${bandColor(you)}">${fmtPct(you)}</b> <span style="color:var(--mut);font-size:10px">cls ${fmtPct(cls)}</span></span></div>`;
   }).join("");
 
-  const semLabels=s.gradedSems.map(sr=>sr.name);
-  const youData=s.gradedSems.map(sr=>sr.sgpa*10);
-  const clsData=s.gradedSems.map(sr=>{const c=a.perSemClass.find(x=>x.name===sr.name);return c&&c.avg!=null?c.avg*10:null;});
+  const labels=a.tests.map(t=>t.name);
+  const youData=s.perTest.map(p=>(!p.applies||p.absent)?null:p.pct);
+  const clsData=a.perTestClass.map(t=>t.avg);
 
-  const subjPairs=a.subjectSet.map(sn=>({sn,v:s.subjAvgMean[sn]})).filter(x=>x.v!=null).sort((x,y)=>y.v-x.v);
+  const subjPairs=a.subjectSet.map(sn=>({sn,v:s.subjAvg[sn]})).filter(x=>x.v!=null).sort((x,y)=>y.v-x.v);
   const strong=subjPairs[0],weak=subjPairs[subjPairs.length-1];
   const remark=autoRemark(s,a,strong,weak);
 
@@ -1177,9 +1220,9 @@ function buildReportSheetHTML(s,a,sheetId){
       <div class="rep-head">
         <div style="display:flex;align-items:center;gap:12px">
           <img class="rep-logo" src="${BRANDING.logoEmblem}" alt="">
-          <div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Semester Progress Report</div></div>
+          <div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Student Progress Report</div></div>
         </div>
-        <div class="period">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>${a.semesters.length} semester${a.semesters.length===1?"":"s"} recorded<br>Generated ${new Date().toLocaleDateString()}</div>
+        <div class="period">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>${a.tests.length} tests${FILTER.type!=="__all"?" · "+esc(FILTER.type):""}${FILTER.month!=="__all"?" · "+esc(monthLabelOf(FILTER.month)):""}<br>Generated ${new Date().toLocaleDateString()}</div>
       </div>
       <div class="rep-id">
         <div><div class="l">Student</div><div class="v">${esc(s.name)}</div></div>
@@ -1188,53 +1231,62 @@ function buildReportSheetHTML(s,a,sheetId){
         <div><div class="l">Class Rank</div><div class="v">${s.rank?`${s.rank} <span style="font-size:11px;color:var(--mut)">of ${nRanked(a)}</span>`:"—"}</div></div>
       </div>
       <div class="rep-strip">
-        <div class="box"><div class="lab">CGPA</div><div class="big" style="color:${bandColor(s.academicPct)}">${fmtGPA(s.cgpa)}</div><div class="cap">${band(s.academicPct).name}</div></div>
+        <div class="box"><div class="lab">Overall</div><div class="big" style="color:${bandColor(s.avgPct)}">${fmtPct(s.avgPct)}</div><div class="cap">${band(s.avgPct).name}</div></div>
         <div class="box"><div class="lab">Rating</div><div class="big" style="color:var(--gold);font-size:22px;letter-spacing:1px">${stars(s.composite)}</div><div class="cap">${s.percentile?`top ${100-s.percentile+1}% band`:""}</div></div>
-        <div class="box"><div class="lab">Attendance</div><div class="big">${fmtPct(s.attPct)}</div><div class="cap">avg across semesters</div></div>
+        <div class="box"><div class="lab">Attendance</div><div class="big">${fmtPct(s.attPct)}</div><div class="cap">${s.attInfo?`${s.attInfo.present}/${s.attInfo.total} days`:`${s.attended}/${s.applicable} tests`}</div></div>
         <div class="box"><div class="lab">Trend</div><div class="big" style="font-size:19px;color:${s.trend==='up'?'var(--b5)':s.trend==='down'?'var(--b1)':'var(--mut)'}">${s.trend==='up'?'▲':s.trend==='down'?'▼':'▬'}</div><div class="cap">${s.trend==='up'?'improving':s.trend==='down'?'slipping':'steady'}</div></div>
-        ${s.backlogSubjects&&s.backlogSubjects.length?`<div class="box"><div class="lab">Backlogs</div><div class="big" style="color:var(--b1);font-size:19px">${s.backlogSubjects.length}</div><div class="cap">this semester</div></div>`:""}
-        ${s.cgpaDelta!=null?`<div class="box"><div class="lab">vs Previous CGPA</div><div class="big" style="font-size:19px;color:${s.cgpaDelta>=0?'var(--b5)':'var(--b1)'}">${s.cgpaDelta>=0?"+":""}${s.cgpaDelta.toFixed(2)}</div><div class="cap">was ${fmtGPA(s.prevCGPA)}</div></div>`:""}
+        ${s.hwPct!=null?`<div class="box"><div class="lab">Homework</div><div class="big" style="color:${bandColor(s.hwPct)}">${fmtPct(s.hwPct)}</div><div class="cap">${s.hwInfo.done}/${s.hwInfo.marked} done</div></div>`:""}
+        ${s.termDelta!=null?`<div class="box"><div class="lab">vs Last Term</div><div class="big" style="font-size:19px;color:${s.termDelta>=0?'var(--b5)':'var(--b1)'}">${s.termDelta>=0?"+":""}${s.termDelta.toFixed(0)}%</div><div class="cap">was ${fmtPct(s.prevTermPct)}</div></div>`:""}
       </div>
 
       <div class="rep-sec">
-        <h4>Semester-wise summary</h4>
+        <h3>Test-by-test record</h3>
         <table class="rep-table">
-          <thead><tr><th>Semester</th><th class="c">Credits</th><th class="c">SGPA</th><th class="c">Attendance</th><th class="c">Band</th><th>Backlogs</th></tr></thead>
-          <tbody>${semTableRows||`<tr><td colspan="6" class="empty">No graded semesters yet.</td></tr>`}</tbody>
+          <thead><tr><th>Test</th>${a.subjectSet.map(sn=>`<th class="c">${esc(sn)}</th>`).join("")}<th class="c">Total</th><th class="c">Your %</th><th class="c">Class %</th><th class="c">vs Class</th>${anyTopics?"<th>Topics</th>":""}</tr></thead>
+          <tbody>${testRows}</tbody>
         </table>
       </div>
 
-      ${latest?`<div class="rep-sec">
-        <h4>${esc(latest.name)} — subject-wise marks &amp; attendance</h4>
-        <table class="rep-table">
-          <thead><tr><th>Subject</th><th class="c">Credits</th><th class="c">Marks</th><th class="c">Grade</th><th class="c">Points</th><th class="c">Attendance</th></tr></thead>
-          <tbody>${latestRows}</tbody>
-        </table>
-      </div>`:""}
-
       <div class="rep-sec" style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
         <div>
-          <h4>Subject profile — you vs class</h4>
+          <h3>Subject profile — you vs class</h3>
           <div class="cmp">${subjCmp}</div>
-          <div style="font-size:9.5px;color:var(--mut);margin-top:8px">Bar = this student (avg marks, all semesters). Vertical line = class average.</div>
+          <div style="font-size:9.5px;color:var(--mut);margin-top:8px">Bar = this student. Vertical line = class average.</div>
         </div>
         <div>
-          <h4>SGPA across semesters</h4>
-          ${svgLine([{data:youData,color:"var(--teal)",width:2.6},{data:clsData,color:"var(--mut2)",dash:true,width:2}],semLabels,{h:200,max:100})}
+          <h3>Progress across tests</h3>
+          ${svgLine([{data:youData,color:"var(--teal)",width:2.6},{data:clsData,color:"var(--mut2)",dash:true,width:2}],labels,{h:200})}
           <div style="font-size:9.5px;color:var(--mut)"><span style="color:var(--teal)">━ ${esc(s.name.split(" ")[0])}</span> &nbsp; <span style="color:var(--mut2)">╌ class average</span></div>
         </div>
       </div>
 
+      ${(()=>{ if(!s.topicPerf||!s.topicPerf.length)return"";
+        const half=Math.min(3,Math.floor(s.topicPerf.length/2));
+        if(half<1)return"";
+        const weakT=s.topicPerf.slice(0,half),strongT=s.topicPerf.slice(-half).reverse();
+        const row=tp=>`<div class="topic-row"><span class="topic-name">${esc(tp.topic)}<span class="topic-subj">${esc(tp.subject)}</span></span><b style="color:${bandColor(tp.avg)}">${fmtPct(tp.avg)}</b></div>`;
+        return `<div class="rep-sec">
+          <h3>Topic-wise focus</h3>
+          <div class="topic-grid">
+            <div class="topic-col"><div class="topic-col-h" style="color:var(--b1)">Needs practice</div>${weakT.map(row).join("")}</div>
+            <div class="topic-col"><div class="topic-col-h" style="color:var(--b5)">Strong in</div>${strongT.map(row).join("")}</div>
+          </div>
+        </div>`; })()}
+
+      ${s.info&&s.info.notes?`<div class="rep-sec">
+        <h3>${esc(LABELS.teacherNoteHeading)}</h3>
+        <div class="tnote">${esc(s.info.notes)}</div>
+      </div>`:""}
+
       <div class="rep-sec">
-        <h4>${esc(LABELS.teacherNoteHeading)}</h4>
-        ${s.info&&s.info.notes?`<div class="tnote">${esc(s.info.notes)}</div>`:""}
+        <h3>${esc(LABELS.remarksHeading)}</h3>
         <div class="remarks" contenteditable="true" spellcheck="false">${remark}</div>
       </div>
 
       <div class="sign">
         <div>${esc(LABELS.sign1)}</div><div>${esc(LABELS.sign2)}</div><div>${esc(LABELS.sign3)}</div>
       </div>
-      <div class="rep-foot">A missed exam is graded as a fail (F, 0 points) and counts toward CGPA, the same as a real transcript. This report reflects records entered to date and is intended for parent/guardian review.</div>
+      <div class="rep-foot">Absent tests are excluded from the average and counted under attendance. This report reflects records entered to date and is intended for parent review.</div>
     </div>
     </div>`;
 }
@@ -1244,10 +1296,12 @@ function renderReport(){
   const s=a.S.find(x=>x.name===curStudent)||a.S[0];
   if(!s){el.innerHTML=`<div class="empty">No student data.</div>`;return;}
   const opts=DATA.marks.map(m=>`<option value="${esc(m.name)}" ${m.name===s.name?"selected":""}>${esc(m.name)}</option>`).join("");
+  const n=DATA.marks.length;
   el.innerHTML=`
     <div id="report-toolbar" class="no-print">
       <label class="flab">Student</label>
       <select id="studentPick">${opts}</select>
+      ${typeFilterHTML()}${monthFilterHTML()}
       <div style="flex:1"></div>
       <button class="btn btn-ghost" id="printAllBtn">Print All Students</button>
       <button class="btn btn-ghost" id="printBtn">Print / Save as PDF</button>
@@ -1256,6 +1310,7 @@ function renderReport(){
     </div>
     ${buildReportSheetHTML(s,a,"reportSheet")}`;
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=e.target.value;renderReport();});
+  bindTypeFilter(el);
   document.getElementById("printBtn").addEventListener("click",()=>{
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("print-target"));
     el.classList.add("print-target");fitSheetsToPage();window.print();});
@@ -1269,7 +1324,7 @@ function renderReport(){
 function printAllReports(){
   const a=AN;
   const el=document.getElementById("v-report-all");
-  const sheets=a.S.filter(s=>s.cgpa!=null||s.semRecs.some(sr=>sr.subjects.some(x=>x.applies))).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
+  const sheets=a.S.filter(s=>s.avgPct!=null||s.perTest.some(p=>p.applies)).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
   el.innerHTML=sheets;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("print-target"));
   el.classList.remove("hidden");el.classList.add("print-target");
@@ -1278,7 +1333,7 @@ function printAllReports(){
 async function shareAllReportsAsPDF(btnEl){
   const a=AN;
   const el=document.getElementById("v-report-all");
-  const sheets=a.S.filter(s=>s.cgpa!=null||s.semRecs.some(sr=>sr.subjects.some(x=>x.applies))).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
+  const sheets=a.S.filter(s=>s.avgPct!=null||s.perTest.some(p=>p.applies)).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
   el.innerHTML=sheets;
   await shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_all_reports.pdf","All Student Reports",btnEl);
 }
@@ -1286,11 +1341,15 @@ function nRanked(a){return a.ranked.length;}
 function autoRemark(s,a,strong,weak){
   const first=esc(s.name.split(" ")[0]);
   const parts=[];
-  if(s.cgpa!=null){parts.push(`${first} has a CGPA of ${s.cgpa.toFixed(2)} (${band(s.academicPct).name.toLowerCase()})${s.rank?`, ranking ${ordinal(s.rank)} of ${a.ranked.length} in the batch`:""}.`);}
-  if(strong)parts.push(`Strongest in ${esc(strong.sn)} (avg ${strong.v.toFixed(0)} marks)${weak&&weak.sn!==strong.sn?`, and needs the most support in ${esc(weak.sn)} (avg ${weak.v.toFixed(0)} marks)`:""}.`);
-  if(s.backlogSubjects&&s.backlogSubjects.length)parts.push(`Currently carrying a backlog in ${s.backlogSubjects.map(esc).join(", ")} — clearing this should be the top priority.`);
-  parts.push(s.trend==="up"?`The SGPA trend across recent semesters is encouraging — keep the momentum.`:s.trend==="down"?`SGPA has slipped in recent semesters; a focused revision plan would help.`:`Performance has been steady across semesters.`);
-  if(s.attPct!=null&&s.attPct<75)parts.push(`Attendance at ${s.attPct.toFixed(0)}% is below the usual 75% eligibility line; regular attendance is important.`);
+  if(s.avgPct!=null){parts.push(`${first} has an overall ${s.avgPct.toFixed(0)}% (${band(s.avgPct).name.toLowerCase()})${s.rank?`, ranking ${ordinal(s.rank)} of ${a.ranked.length} in the batch`:""}.`);}
+  if(strong)parts.push(`Strongest in ${esc(strong.sn)} (${strong.v.toFixed(0)}%)${weak&&weak.sn!==strong.sn?`, and needs the most support in ${esc(weak.sn)} (${weak.v.toFixed(0)}%)`:""}.`);
+  if(s.topicPerf&&s.topicPerf.length>=2){
+    const weakTopic=s.topicPerf[0],strongTopic=s.topicPerf[s.topicPerf.length-1];
+    if(weakTopic&&strongTopic&&weakTopic.topic!==strongTopic.topic)
+      parts.push(`At the topic level, ${esc(weakTopic.topic)} (${esc(weakTopic.subject)}, ${weakTopic.avg.toFixed(0)}%) is the area to prioritise, while ${esc(strongTopic.topic)} (${esc(strongTopic.subject)}, ${strongTopic.avg.toFixed(0)}%) shows real strength.`);
+  }
+  parts.push(s.trend==="up"?`The trend across recent tests is encouraging — keep the momentum.`:s.trend==="down"?`Recent scores have slipped; a focused revision plan would help.`:`Performance has been steady across tests.`);
+  if(s.attPct!=null&&s.attPct<80)parts.push(`Attendance at ${s.attPct.toFixed(0)}% is affecting continuity; regular presence is important.`);
   return parts.join(" ");
 }
 function ordinal(n){const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
@@ -1383,13 +1442,21 @@ function switchView(v){
   if(v==="awards")renderAwards();
   if(v==="report")renderReport();
 }
+function bindTypeFilter(el){
+  const f=el.querySelector("#typeFilter");
+  if(f)f.addEventListener("change",e=>{FILTER.type=e.target.value;applyFilter();
+    const active=document.querySelector(".tab.active").dataset.view;switchView(active);});
+  const mf=el.querySelector("#monthFilter");
+  if(mf)mf.addEventListener("change",e=>{FILTER.month=e.target.value;applyFilter();
+    const active=document.querySelector(".tab.active").dataset.view;switchView(active);});
+}
 /* =================================================================
    WORKBOOK CACHE (IndexedDB) — remembers the last uploaded file for this
    app, so a refresh or accidental tab close doesn't force a re-upload.
    Demo data is never cached. Keyed per-segment in case the browser shares
    storage across file:// pages (it already does for BRANDING_KEY above).
    ================================================================= */
-const WB_CACHE_DB="spdWorkbookCache_v1",WB_CACHE_STORE="workbooks",WB_CACHE_KEY="college",PHOTO_STORE="photoOverrides";
+const WB_CACHE_DB="spdWorkbookCache_v1",WB_CACHE_STORE="workbooks",WB_CACHE_KEY="secondary",PHOTO_STORE="photoOverrides";
 function wbCacheOpen(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(WB_CACHE_DB,2);
@@ -1447,10 +1514,10 @@ function boot(batches){
   document.getElementById("app").style.display="block";
 }
 function loadBatch(i){
-  CURRENT_BATCH=i;DATA=BATCHES[i].data;applyFilter();
+  CURRENT_BATCH=i;DATA=BATCHES[i].data;FILTER={type:"__all",month:"__all"};applyFilter();
   document.getElementById("brandName").textContent=DATA.academy||BRANDING.name;
-  document.getElementById("brandSub").textContent=(BATCHES[i].label||DATA.batch||"College");
-  document.getElementById("dataPill").textContent=`${DATA.marks.length} students · ${DATA.semesters.length} semesters`;
+  document.getElementById("brandSub").textContent=(BATCHES[i].label||DATA.batch||"Secondary School");
+  document.getElementById("dataPill").textContent=`${DATA.marks.length} students · ${DATA.tests.length} tests`;
   const bp=document.getElementById("batchPick");
   if(BATCHES.length>1){
     bp.classList.remove("hidden");
@@ -1464,13 +1531,13 @@ function showUploadError(html){
 }
 function clearUploadError(){document.getElementById("uploadError").classList.add("hidden");}
 // shared by real uploads and by the IndexedDB cache-restore path below, so both go through
-// identical validation (throws NO_TESTS if the workbook has no usable semester data)
+// identical validation (throws NO_TESTS if the workbook has no usable test data)
 let LAST_SHEETS=null;
 function parseWorkbookBytes(bytes){
   const wb=XLSX.read(new Uint8Array(bytes),{type:"array"}); // no cellDates — decoded manually below (SheetJS's own cellDates conversion is timezone-dependent and can shift dates by a day)
   const sheets={};wb.SheetNames.forEach(n=>{sheets[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null,raw:true});});
   const batches=detectBatches(sheets);
-  const hasTests=batches.some(b=>b.data.semesters.length);
+  const hasTests=batches.some(b=>b.data.tests.length);
   if(!hasTests){const e=new Error("NO_TESTS");e.code="NO_TESTS";throw e;}
   LAST_SHEETS=sheets;
   return batches;
@@ -1505,8 +1572,8 @@ function readFile(file){
       if(window.SPDRoster)SPDRoster.merge(SPDRoster.fromSheets(LAST_SHEETS)); // top up the shared roster
     }catch(err){
       if(err.code==="NO_TESTS"){
-        showUploadError(`<b>No semesters were found in the Marks sheet.</b>
-          <p style="margin:6px 0 0">This usually means the header row got moved or its "Student Name" label was renamed. The app looks for one exact cell — subject names, semester names, and credits can all change freely, but this one can't:</p>
+        showUploadError(`<b>No tests were found in the Marks sheet.</b>
+          <p style="margin:6px 0 0">This usually means the header row got moved or its "Student Name" label was renamed. The app looks for one exact cell — subject names, test names, and totals can all change freely, but this one can't:</p>
           <ul><li>A header cell that says <b>"Student Name"</b> (or "Name") on the row above your student rows</li></ul>
           <p style="margin:8px 0 0">Check that row is still there and re-upload. If it looks right and this still happens, the file may be missing the Marks sheet entirely.</p>`);
       }else{
@@ -1532,15 +1599,15 @@ document.getElementById("manualEntry").addEventListener("click",()=>{
   clearUploadError();
   SPDGrid.open(SPDGrid.blankFrom(SAMPLE_SHEETS),{
     title:"Type your data in",
-    subtitle:"Fill the rows below — one student per row. The Subjects sheet holds each subject's credits. Add more rows as you need, then continue.",
+    subtitle:"Fill the rows below — one student per row. Add more rows as you need, then continue. You can also download it as an Excel file to keep for next time.",
     applyLabel:"Build the reports",
     filename:slugify(BRANDING.name)+"_data.xlsx",
     onApply:edited=>{
       LAST_SHEETS=edited;
       try{
         const batches=detectBatches(edited);
-        if(!batches.some(b=>b.data.semesters.length)){
-          showUploadError(`<b>No semester data yet.</b> <p style="margin:6px 0 0">Add at least one student row with marks, then try again.</p>`);
+        if(!batches.some(b=>b.data.tests.length)){
+          showUploadError(`<b>No test data yet.</b> <p style="margin:6px 0 0">Add at least one student row with marks, then try again.</p>`);
           return;
         }
         boot(batches);
@@ -1613,8 +1680,8 @@ document.getElementById("settingsSave").addEventListener("click",()=>{
   applyBranding();
 });
 document.getElementById("settingsReset").addEventListener("click",()=>{
-  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Mentor’s Note & Evaluation";
-  LABELS.sign1="Class Mentor";LABELS.sign2="HOD / Principal";LABELS.sign3="Parent / Guardian";
+  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Teacher’s Note";
+  LABELS.sign1="Class Teacher";LABELS.sign2="Academy Head";LABELS.sign3="Parent / Guardian";
   LABELS.overviewBanner="";LABELS.showAttention=true;
   LABELS.band5="Strong";LABELS.band4="Good";LABELS.band3="Fair";LABELS.band2="Watch";LABELS.band1="Concern";
   openSettings();

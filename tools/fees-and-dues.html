@@ -6,9 +6,9 @@
 <title>Fees &amp; Dues</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .due-pill{font-weight:700}
 .bal-0{color:var(--b5)} .bal-due{color:var(--amber)} .bal-over{color:var(--b1)}
@@ -38,6 +38,8 @@
 .rc-note{margin-top:14px;font-size:9.5px;color:var(--mut2);text-align:center;border-top:1px solid var(--line);padding-top:8px}
 @media print{.receipt{width:auto;border:none;box-shadow:none;padding:0;margin:0}}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -344,7 +346,7 @@ OFFICE.boot({
   blurb:"Upload your fee ledger and get an outstanding-dues register plus printable receipts — installments, monthly fees or one-time payments all work.",
   noteLeft:"Three sheets: Students, Charges (what you billed) and Payments (what came in). The tool works out the balance.",
   manualHint:"Students, then what you charged them, then what they've paid. The balance is calculated for you.",
-  templateHref:"../../assets/templates/office/Fees_Template.xlsx",
+  templateHref:"../assets/templates/office/Fees_Template.xlsx",
   cacheKey:"tool-fees",
   sampleSheets:SAMPLE_SHEETS,
   ledgerSheets:["Charges","Payments"], // a student owns many rows here — that's the point, not a typo

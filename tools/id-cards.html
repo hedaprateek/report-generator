@@ -6,9 +6,9 @@
 <title>ID Cards</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 /* CR80 — the standard plastic-card size (85.6 x 54 mm), so these fit any
    off-the-shelf lanyard holder. Printed 10 to an A4 sheet with cut guides. */
@@ -41,6 +41,8 @@
   .card-item{border:1px dashed #bbb}
 }
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -158,7 +160,7 @@ OFFICE.boot({
   blurb:"Upload your roster and get print-ready identity cards at standard plastic-card size — ten to an A4 sheet, with your academy's logo and colours.",
   noteLeft:"One sheet: Students. Roll no, class, contact, blood group and an optional Photo URL all appear on the card.",
   manualHint:"One row per student. Only the name is required — everything else just adds detail to the card.",
-  templateHref:"../../assets/templates/office/Office_Roster_Template.xlsx",
+  templateHref:"../assets/templates/office/Office_Roster_Template.xlsx",
   cacheKey:"tool-idcards",
   sampleSheets:SAMPLE_SHEETS,
   // Cards need nothing but the roster, so the shared master alone can drive this tool.

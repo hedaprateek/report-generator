@@ -1,0 +1,70 @@
+/* =====================================================================
+   Shared accessibility layer for every page in the suite.
+
+   These rules are deliberately kept out of the individual pages so that
+   the whole suite gains a fix at once, and so a page can never quietly
+   drift into having no visible focus ring.
+
+   Nothing here changes layout or colour of existing content — it only
+   adds what was missing: visible focus, a skip link, honest target
+   sizes, and respect for a reduced-motion preference.
+   ===================================================================== */
+
+/* ---------- focus ----------
+   :focus-visible only, so a mouse click doesn't leave a ring behind but
+   a keyboard user can always see where they are. The double ring works
+   on both the cream page and the dark navy top bars. */
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{
+  outline:3px solid #0E7C7B;
+  outline-offset:2px;
+  border-radius:6px;
+  box-shadow:0 0 0 5px rgba(14,124,123,.22);
+}
+/* on dark bars the teal ring alone is hard to see, so add a light halo */
+.top :where(a,button):focus-visible,
+.of-top :where(a,button):focus-visible,
+.bar :where(a,button):focus-visible{
+  outline-color:#7FE3E1;
+  box-shadow:0 0 0 5px rgba(255,255,255,.28);
+}
+
+/* ---------- skip link ----------
+   First thing a keyboard or screen-reader user meets; invisible until
+   focused, so it costs the visual design nothing. */
+.skip-link{
+  position:absolute;left:-9999px;top:0;z-index:9999;
+  background:#0E7C7B;color:#fff;font:600 14px/1 system-ui,sans-serif;
+  padding:13px 18px;border-radius:0 0 9px 0;text-decoration:none;
+}
+.skip-link:focus{left:0}
+
+/* ---------- screen-reader-only text ---------- */
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+/* ---------- target size ----------
+   A 16px-tall back link is a hard thing to hit on a phone. These lift the
+   known-small controls to a comfortable size without moving anything. */
+.back-link,.of-back{display:inline-flex;align-items:center;min-height:28px;padding:4px 2px}
+.sm-del,.x{min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center}
+input[type=checkbox],input[type=radio]{width:17px;height:17px}
+
+/* ---------- motion ----------
+   Pulsing "live" dots are useful, but they should not be forced on
+   someone who has asked their system for less movement. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* ---------- forced colours (Windows high contrast) ---------- */
+@media (forced-colors:active){
+  .card,.panel,.of-card{border:1px solid CanvasText}
+  :where(a,button):focus-visible{outline:3px solid Highlight}
+}

@@ -1,4 +1,4 @@
-/* =====================================================================
+﻿/* =====================================================================
    SPDGrid — shared data review + manual-entry grid for every segment app.
 
    Every segment parses its workbook into the same intermediate shape: a
@@ -24,14 +24,14 @@ const CSS = `
   max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
 .spdg-head{padding:18px 22px 14px;border-bottom:1px solid #E4E0D6;flex-shrink:0}
 .spdg-head h3{margin:0 0 3px;font-family:Georgia,serif;font-size:19px;color:#1F2A44;font-weight:600}
-.spdg-head p{margin:0;font-size:12.5px;color:#7C8598;line-height:1.5}
+.spdg-head p{margin:0;font-size:12.5px;color:#556074;line-height:1.5}
 .spdg-issues{margin:12px 0 0;background:#FBEEDC;border:1px solid #EBD3A8;border-left:3px solid #C9791B;
   border-radius:9px;padding:11px 14px;max-height:132px;overflow:auto}
 .spdg-issues h4{margin:0 0 6px;font-size:12.5px;color:#8A5310}
 .spdg-issues ul{margin:0;padding-left:18px;font-size:12px;color:#6E4A1A;line-height:1.55}
 .spdg-issues li{margin:2px 0}
 .spdg-tabs{display:flex;gap:2px;padding:0 22px;border-bottom:1px solid #E4E0D6;flex-shrink:0;overflow-x:auto}
-.spdg-tab{background:none;border:none;font-family:inherit;font-size:13px;font-weight:600;color:#7C8598;
+.spdg-tab{background:none;border:none;font-family:inherit;font-size:13px;font-weight:600;color:#556074;
   padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
 .spdg-tab:hover{color:#1F2A44}
 .spdg-tab.on{color:#1F2A44;border-bottom-color:#0E7C7B}
@@ -41,13 +41,13 @@ const CSS = `
 .spdg-table td,.spdg-table th{border:1px solid #E4E0D6;padding:0;vertical-align:middle}
 .spdg-table th{background:#F3F1EA;position:sticky;top:0;z-index:2;font-weight:700;color:#5B6472;
   font-size:10.5px;padding:5px 7px;text-align:center;min-width:34px}
-.spdg-rowhead{background:#F3F1EA;color:#9AA3B2;font-size:10px;font-weight:700;text-align:center;
+.spdg-rowhead{background:#F3F1EA;color:#656E82;font-size:10px;font-weight:700;text-align:center;
   padding:0 6px;position:sticky;left:0;z-index:1;min-width:30px}
 .spdg-cell{min-width:92px;max-width:230px;padding:5px 7px;outline:none;white-space:pre-wrap;word-break:break-word;background:#FFF}
 .spdg-cell:focus{background:#E2F0EF;box-shadow:inset 0 0 0 2px #0E7C7B}
 .spdg-cell.spdg-flag{background:#FBEEDC;box-shadow:inset 0 0 0 2px #C9791B}
 .spdg-cell.spdg-meta{background:#F6F5F0;color:#5B6472;font-weight:600}
-.spdg-del{border:none;background:none;color:#9AA3B2;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:5px}
+.spdg-del{border:none;background:none;color:#656E82;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:5px}
 .spdg-del:hover{background:#F6E3DD;color:#B4472F}
 .spdg-bodyfoot{padding:10px 0 14px;display:flex;gap:10px;align-items:center}
 .spdg-foot{padding:14px 22px;border-top:1px solid #E4E0D6;display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap}
@@ -58,7 +58,7 @@ const CSS = `
 .spdg-btn-primary:hover{filter:brightness(1.07)}
 .spdg-btn-ghost{background:transparent;color:#1F2A44;border:1px solid #D8D3C6}
 .spdg-btn-ghost:hover{background:#F0EEE7}
-.spdg-hint{font-size:11.5px;color:#9AA3B2}
+.spdg-hint{font-size:11.5px;color:#656E82}
 @media(max-width:700px){.spdg-head,.spdg-tabs,.spdg-body,.spdg-foot{padding-left:14px;padding-right:14px}}
 `;
 

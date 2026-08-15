@@ -1,4 +1,4 @@
-/* =====================================================================
+﻿/* =====================================================================
    SPDRoster — the shared Student Master.
 
    Every segment app and office tool used to want its own Excel upload, so
@@ -170,8 +170,8 @@ const CSS=`
 .sm-card{background:#fff;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.4);width:100%;max-width:1180px;
   display:flex;flex-direction:column;overflow:hidden}
 .sm-head{padding:18px 22px 14px;border-bottom:1px solid #E4E0D6;flex-shrink:0;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
-.sm-head h3{margin:0 0 3px;font-family:Georgia,serif;font-size:19px;color:#1F2A44;font-weight:600}
-.sm-head p{margin:0;font-size:12.5px;color:#7C8598}
+.sm-head h2{margin:0 0 3px;font-family:Georgia,serif;font-size:19px;color:#1F2A44;font-weight:600}
+.sm-head p{margin:0;font-size:12.5px;color:#556074}
 .sm-head .sm-grow{flex:1}
 .sm-search{font-family:inherit;font-size:13px;padding:8px 12px;border:1px solid #D8D3C6;border-radius:8px;min-width:190px}
 .sm-body{flex:1;overflow:auto;padding:0;background:#FCFBF7}
@@ -183,7 +183,7 @@ const CSS=`
 .sm-cell{padding:7px 9px;outline:none;min-height:32px;white-space:pre-wrap;word-break:break-word}
 .sm-cell:focus{background:#E2F0EF;box-shadow:inset 0 0 0 2px #0E7C7B}
 .sm-cell.sm-req:empty::before{content:"required";color:#B4472F;font-style:italic}
-.sm-del{border:none;background:none;color:#9AA3B2;cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px}
+.sm-del{border:none;background:none;color:#656E82;cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px}
 .sm-del:hover{background:#F6E3DD;color:#B4472F}
 .sm-foot{padding:14px 22px;border-top:1px solid #E4E0D6;display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 .sm-foot .sm-grow{flex:1}
@@ -195,8 +195,8 @@ const CSS=`
 .sm-btn-ghost:hover{background:#F0EEE7}
 .sm-btn-danger{background:transparent;color:#B4472F;border:1px solid #E8B49A}
 .sm-btn-danger:hover{background:#FDF1EC}
-.sm-hint{font-size:11.5px;color:#9AA3B2}
-.sm-empty{padding:40px 20px;text-align:center;color:#7C8598;font-size:13.5px}
+.sm-hint{font-size:11.5px;color:#656E82}
+.sm-empty{padding:40px 20px;text-align:center;color:#556074;font-size:13.5px}
 `;
 function injectCSS(){
   if(document.getElementById("smCSS"))return;
@@ -206,9 +206,9 @@ function injectCSS(){
 function managerHTML(embedded){
   return `<div class="sm-card sm-wrap">
     <div class="sm-head">
-      <div><h3 id="smTitle">Student Master</h3><p id="smSub"></p></div>
+      <div><h2 id="smTitle">Student Master</h2><p id="smSub"></p></div>
       <div class="sm-grow"></div>
-      <input class="sm-search" id="smSearch" type="text" placeholder="Search name, class, phone…">
+      <input class="sm-search" id="smSearch" type="search" aria-label="Search students by name, class or phone" placeholder="Search name, class, phone…">
     </div>
     <div class="sm-body" id="smBody"></div>
     <div class="sm-foot">

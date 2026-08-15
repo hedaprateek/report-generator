@@ -6,9 +6,9 @@
 <title>Student File</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .sf-layout{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
 @media(max-width:980px){.sf-layout{grid-template-columns:1fr}}
@@ -83,6 +83,8 @@
 .sf-cut{text-align:center;font-size:9px;color:var(--mut2);margin-top:6px}
 @media print{.sf-page{width:auto;border:none;box-shadow:none;padding:0;margin:0;min-height:0}}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -468,7 +470,7 @@ OFFICE.boot({
   blurb:"Profile, ID card, fee statement and certificate for a student — tick the pages you need and print them as a single file. Ideal for admissions and TC requests.",
   noteLeft:"Uses the shared Student Master, so there's usually nothing to upload. Attach a fees or marks workbook to add those pages.",
   manualHint:"One row per student. Everything else on this page is built from these details.",
-  templateHref:"../../assets/templates/office/Office_Roster_Template.xlsx",
+  templateHref:"../assets/templates/office/Office_Roster_Template.xlsx",
   cacheKey:"tool-studentfile",
   sampleSheets:SAMPLE_SHEETS,
   rosterToSheets:students=>({Students:SPDRoster.toAoa(students)}),

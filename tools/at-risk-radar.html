@@ -6,9 +6,9 @@
 <title>At-Risk Radar</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .ar-layout{display:grid;grid-template-columns:290px 1fr;gap:18px;align-items:start}
 @media(max-width:980px){.ar-layout{grid-template-columns:1fr}}
@@ -41,6 +41,8 @@
 .call-tbl td{vertical-align:top}
 .call-note{border:1px solid var(--line2);border-radius:5px;height:34px}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -358,7 +360,7 @@ OFFICE.boot({
   blurb:"Attendance, falling marks and unpaid fees are the three signs a student is leaving. This crosses all three and tells you who to call today — and how much revenue is walking out with them.",
   noteLeft:"Upload any workbook with Students, Marks, Attendance or Charges sheets. Attach more inside to sharpen the picture.",
   manualHint:"Students, then whatever signals you have. Even a roster plus a fee ledger is enough to start.",
-  templateHref:"../../assets/templates/office/Fees_Template.xlsx",
+  templateHref:"../assets/templates/office/Fees_Template.xlsx",
   cacheKey:"tool-atrisk",
   sampleSheets:SAMPLE_SHEETS,
   ledgerSheets:["Charges","Payments"],

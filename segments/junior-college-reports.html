@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,13 +6,13 @@
 <title>Student Progress Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
 <style>
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
   --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
-  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
   /* calibrated performance bands (print-safe, not stoplight) */
   --b1:#B4472F; --b1s:#F6E3DD; /* concern */
   --b2:#C9791B; --b2s:#FBEEDC; /* watch */
@@ -37,7 +37,7 @@ a{color:var(--teal)}
 
 /* ---------- UPLOAD / LANDING ---------- */
 #landing{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative}
-.back-link{position:absolute;top:22px;left:24px;color:#7C8598;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.back-link{position:absolute;top:22px;left:24px;color:#556074;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600}
 .back-link:hover{color:var(--navy)}
 .land-card{max-width:760px;width:100%;background:var(--card);border:1px solid var(--line);
   border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
@@ -64,7 +64,7 @@ a{color:var(--teal)}
   transition:border-color .2s,background .2s;background:#FCFBF7}
 #drop.drag{border-color:var(--teal);background:var(--teal-soft)}
 #drop .ic{width:44px;height:44px;margin:0 auto 12px;color:var(--teal)}
-#drop h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
+#drop h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
 #drop p{margin:0;color:var(--mut);font-size:13px}
 .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;
   font-weight:600;font-size:14px;padding:11px 18px;transition:transform .05s,filter .15s}
@@ -76,7 +76,7 @@ a{color:var(--teal)}
 .land-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;align-items:center}
 .land-note{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);
   display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.land-note h4{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
+.land-note h3{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
 .land-note p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.5}
 
 /* ---------- APP SHELL ---------- */
@@ -201,7 +201,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .attn-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
   padding:3px 8px;border-radius:6px;flex-shrink:0;margin-top:1px}
 .warn-box{background:var(--amber-soft);border:1px solid #EBD3A8;border-radius:10px;padding:13px 16px;margin-bottom:16px}
-.warn-box h4{margin:0 0 6px;font-size:13px;color:#8A5310}
+.warn-box h3{margin:0 0 6px;font-size:13px;color:#8A5310}
 .warn-box ul{margin:0;padding-left:18px;font-size:12.5px;color:#6E4A1A}
 .warn-box li{margin:2px 0}
 
@@ -228,7 +228,7 @@ svg text{font-family:system-ui,sans-serif}
 .rep-strip .box .big{font-family:Georgia,serif;font-size:19px;color:var(--navy);margin-top:2px;line-height:1}
 .rep-strip .box .cap{font-size:9px;color:var(--mut);margin-top:1px}
 .rep-sec{margin-top:12px}
-.rep-sec h4{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);
+.rep-sec h3{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);
   font-weight:700;margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid var(--line2)}
 .rep-table{width:100%;border-collapse:collapse;font-size:10px}
 .rep-table th{font-size:8.5px;padding:4px 6px;background:#F6F5F0;border-bottom:1px solid var(--line2);color:var(--navy)}
@@ -289,12 +289,14 @@ svg text{font-family:system-ui,sans-serif}
   .award-grid{break-inside:avoid}
 }
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 
 <!-- ============ LANDING ============ -->
 <div id="landing">
-  <a class="back-link" href="../../index.html">← All programs</a>
+  <a class="back-link" href="../index.html">← All programs</a>
   <div class="land-card">
     <div class="land-head">
       <img class="land-logo" id="landingLogo" alt="Academy logo">
@@ -305,7 +307,7 @@ svg text{font-family:system-ui,sans-serif}
     <div class="land-body">
       <div id="drop">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
-        <h3>Drop your Excel file here</h3>
+        <h2>Drop your Excel file here</h2>
         <p>or click to choose — .xlsx from the template</p>
         <input id="file" type="file" accept=".xlsx,.xls" class="hidden">
       </div>
@@ -317,11 +319,11 @@ svg text{font-family:system-ui,sans-serif}
       </div>
       <div class="land-note">
         <div>
-          <h4>Uses the fill-in template</h4>
+          <h3>Uses the fill-in template</h3>
           <p>The workbook has Students, Marks and Attendance sheets. Absent = <b>A</b>, never 0. Add a column block per weekly test.</p>
         </div>
         <div>
-          <h4>Private by design</h4>
+          <h3>Private by design</h3>
           <p>Your file is read on this device only. Nothing is sent to a server. Close the tab and it's gone.</p>
         </div>
       </div>
@@ -346,7 +348,7 @@ svg text{font-family:system-ui,sans-serif}
       <button class="mini-btn" id="editDataBtn" title="View or edit the data behind these reports">✎ Edit data</button>
       <button class="mini-btn" id="settingsBtn" title="Customize branding & labels">⚙ Settings</button>
       <button class="mini-btn" id="reload">New file</button>
-      <a class="mini-btn" href="../../index.html" style="text-decoration:none;display:inline-flex;align-items:center" title="Back to segment picker">⌂ Segments</a>
+      <a class="mini-btn" href="../index.html" style="text-decoration:none;display:inline-flex;align-items:center" title="Back to segment picker">⌂ Segments</a>
     </div>
   </div>
   <div id="settingsModal" class="modal-wrap hidden">
@@ -414,8 +416,8 @@ const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample Academy",null,null,null,null,
 // so the shipped defaults stay untouched for anyone who wants them back.
 const DEFAULT_BRANDING={
   name:"The Extra Step Academy",
-  logoFull:"../../assets/images/tesa-logo-full.png",
-  logoEmblem:"../../assets/images/tesa-emblem.png"
+  logoFull:"../assets/images/tesa-logo-full.png",
+  logoEmblem:"../assets/images/tesa-emblem.png"
 };
 const BRANDING_KEY="spdBrandingOverrides_v1";
 function loadBranding(){
@@ -840,7 +842,7 @@ function svgLine(series,labels,{w=560,h=230,max=100}={}){
   const n=labels.length;const X=i=>pad.l+(n<=1?iw/2:iw*i/(n-1));const Y=v=>pad.t+ih*(1-clamp(v,0,max)/max);
   let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img">`;
   [0,25,50,75,100].forEach(g=>{const y=Y(g);s+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#EDEAE1"/>`+
-    `<text x="${pad.l-6}" y="${y+3}" text-anchor="end" font-size="9.5" fill="#9AA3B2">${g}</text>`;});
+    `<text x="${pad.l-6}" y="${y+3}" text-anchor="end" font-size="9.5" fill="#656E82">${g}</text>`;});
   labels.forEach((lb,i)=>{s+=`<text x="${X(i)}" y="${h-12}" text-anchor="middle" font-size="10" fill="#5B6472">${lb}</text>`;});
   series.forEach(se=>{const pts=se.data.map((v,i)=>v==null?null:[X(i),Y(v)]).filter(Boolean);
     if(pts.length){const d=pts.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join(" ");
@@ -863,7 +865,7 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","
 let DATA=null, AN=null, FILTER={type:"__all",month:"__all"}, curStudent=null, BATCHES=[], CURRENT_BATCH=0;
 const LABELS={
   remarksHeading:"AI Evaluation",
-  teacherNoteHeading:"Teacher’s Note & Evaluation",
+  teacherNoteHeading:"Teacher’s Note",
   sign1:"Class Teacher", sign2:"Academy Head", sign3:"Parent / Guardian",
   overviewBanner:"",
   showAttention:true,
@@ -922,7 +924,7 @@ function renderOverview(){
   // type comparison (CET vs JEE ...)
   const typeItems=Object.entries(a.typeClass).map(([k,v])=>({label:k,val:v}));
 
-  const warnHTML=DATA.warnings.length?`<div class="warn-box"><h4>⚠ ${DATA.warnings.length} data check${DATA.warnings.length>1?"s":""} to review</h4>
+  const warnHTML=DATA.warnings.length?`<div class="warn-box"><h3>⚠ ${DATA.warnings.length} data check${DATA.warnings.length>1?"s":""} to review</h3>
     <ul>${DATA.warnings.slice(0,6).map(w=>`<li>${esc(w)}</li>`).join("")}${DATA.warnings.length>6?`<li>…and ${DATA.warnings.length-6} more</li>`:""}</ul></div>`:"";
 
   const attnUnique=[];const seen={};
@@ -1237,7 +1239,7 @@ function buildReportSheetHTML(s,a,sheetId){
       </div>
 
       <div class="rep-sec">
-        <h4>Test-by-test record</h4>
+        <h3>Test-by-test record</h3>
         <table class="rep-table">
           <thead><tr><th>Test</th>${a.subjectSet.map(sn=>`<th class="c">${esc(sn)}</th>`).join("")}<th class="c">Total</th><th class="c">Your %</th><th class="c">Class %</th><th class="c">vs Class</th>${anyTopics?"<th>Topics</th>":""}</tr></thead>
           <tbody>${testRows}</tbody>
@@ -1246,12 +1248,12 @@ function buildReportSheetHTML(s,a,sheetId){
 
       <div class="rep-sec" style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
         <div>
-          <h4>Subject profile — you vs class</h4>
+          <h3>Subject profile — you vs class</h3>
           <div class="cmp">${subjCmp}</div>
           <div style="font-size:9.5px;color:var(--mut);margin-top:8px">Bar = this student. Vertical line = class average.</div>
         </div>
         <div>
-          <h4>Progress across tests</h4>
+          <h3>Progress across tests</h3>
           ${svgLine([{data:youData,color:"var(--teal)",width:2.6},{data:clsData,color:"var(--mut2)",dash:true,width:2}],labels,{h:200})}
           <div style="font-size:9.5px;color:var(--mut)"><span style="color:var(--teal)">━ ${esc(s.name.split(" ")[0])}</span> &nbsp; <span style="color:var(--mut2)">╌ class average</span></div>
         </div>
@@ -1263,16 +1265,20 @@ function buildReportSheetHTML(s,a,sheetId){
         const weakT=s.topicPerf.slice(0,half),strongT=s.topicPerf.slice(-half).reverse();
         const row=tp=>`<div class="topic-row"><span class="topic-name">${esc(tp.topic)}<span class="topic-subj">${esc(tp.subject)}</span></span><b style="color:${bandColor(tp.avg)}">${fmtPct(tp.avg)}</b></div>`;
         return `<div class="rep-sec">
-          <h4>Topic-wise focus</h4>
+          <h3>Topic-wise focus</h3>
           <div class="topic-grid">
             <div class="topic-col"><div class="topic-col-h" style="color:var(--b1)">Needs practice</div>${weakT.map(row).join("")}</div>
             <div class="topic-col"><div class="topic-col-h" style="color:var(--b5)">Strong in</div>${strongT.map(row).join("")}</div>
           </div>
         </div>`; })()}
 
+      ${s.info&&s.info.notes?`<div class="rep-sec">
+        <h3>${esc(LABELS.teacherNoteHeading)}</h3>
+        <div class="tnote">${esc(s.info.notes)}</div>
+      </div>`:""}
+
       <div class="rep-sec">
-        <h4>${esc(LABELS.teacherNoteHeading)}</h4>
-        ${s.info&&s.info.notes?`<div class="tnote">${esc(s.info.notes)}</div>`:""}
+        <h3>${esc(LABELS.remarksHeading)}</h3>
         <div class="remarks" contenteditable="true" spellcheck="false">${remark}</div>
       </div>
 
@@ -1673,7 +1679,7 @@ document.getElementById("settingsSave").addEventListener("click",()=>{
   applyBranding();
 });
 document.getElementById("settingsReset").addEventListener("click",()=>{
-  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Teacher’s Note & Evaluation";
+  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Teacher’s Note";
   LABELS.sign1="Class Teacher";LABELS.sign2="Academy Head";LABELS.sign3="Parent / Guardian";
   LABELS.overviewBanner="";LABELS.showAttention=true;
   LABELS.band5="Strong";LABELS.band4="Good";LABELS.band3="Fair";LABELS.band2="Watch";LABELS.band1="Concern";

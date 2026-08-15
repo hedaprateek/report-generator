@@ -6,8 +6,8 @@
 <title>Timetable</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .tt-sheet{background:#fff;width:297mm;max-width:100%;margin:0 auto 18px;padding:12mm;
   border:1px solid var(--line);box-shadow:var(--shadow);color:#22262F}
@@ -39,6 +39,8 @@
   .tt-sheet{width:auto;border:none;box-shadow:none;padding:0;margin:0}
 }
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -215,7 +217,7 @@ OFFICE.boot({
   blurb:"Enter each class's weekly schedule once. Get printable class timetables, each teacher's personal timetable derived automatically, and a warning whenever a teacher is double-booked.",
   noteLeft:"One sheet: Timetable. A row per period — Class, Day, Period, Subject, and optionally Teacher and Room.",
   manualHint:"One row per period. Class, Day, Period and Subject are required; add Teacher to get teacher timetables and clash detection.",
-  templateHref:"../../assets/templates/office/Timetable_Template.xlsx",
+  templateHref:"../assets/templates/office/Timetable_Template.xlsx",
   cacheKey:"tool-timetable",
   sampleSheets:SAMPLE_SHEETS,
   ledgerSheets:["Timetable"], // many rows per class/teacher by design

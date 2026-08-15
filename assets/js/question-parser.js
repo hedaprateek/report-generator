@@ -1,4 +1,4 @@
-/* =====================================================================
+﻿/* =====================================================================
    QuestionParser — turns a question paper pasted from Word, PDF or a
    text file into the Questions sheet the test tools read.
 
@@ -188,7 +188,7 @@ const CSS=`
   max-width:1120px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
 .qp-head{padding:18px 22px 14px;border-bottom:1px solid #E4E0D6}
 .qp-head h3{margin:0 0 3px;font-family:Georgia,serif;font-size:19px;color:#1F2A44;font-weight:600}
-.qp-head p{margin:0;font-size:12.5px;color:#7C8598;line-height:1.55}
+.qp-head p{margin:0;font-size:12.5px;color:#556074;line-height:1.55}
 .qp-body{flex:1;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:0}
 @media(max-width:880px){.qp-body{grid-template-columns:1fr}}
 .qp-left{padding:16px 18px;border-right:1px solid #E4E0D6;display:flex;flex-direction:column;min-height:0}
@@ -197,10 +197,10 @@ const CSS=`
   font-size:12.5px;line-height:1.65;padding:11px;border:1px solid #D8D3C6;border-radius:9px;resize:none}
 .qp-left textarea:focus{outline:2px solid #0E7C7B;border-color:#0E7C7B}
 .qp-lab{font-size:11px;font-weight:700;color:#1F2A44;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.qp-fmt{font-size:11.5px;color:#7C8598;line-height:1.6;margin-top:10px}
+.qp-fmt{font-size:11.5px;color:#556074;line-height:1.6;margin-top:10px}
 .qp-fmt code{background:#F3F1EA;border-radius:4px;padding:1px 5px;font-size:11px}
 .qp-q{border:1px solid #E4E0D6;border-radius:9px;padding:10px 12px;margin-bottom:8px;background:#fff}
-.qp-q .n{font-size:10.5px;color:#9AA3B2;font-weight:700}
+.qp-q .n{font-size:10.5px;color:#656E82;font-weight:700}
 .qp-q .t{font-size:13px;color:#2B2F3A;margin:3px 0 6px;line-height:1.45}
 .qp-o{font-size:12px;color:#5B6472;padding:2px 0}
 .qp-o.k{color:#1F7A4D;font-weight:700}
@@ -218,7 +218,7 @@ const CSS=`
 .qp-primary:disabled{opacity:.45;cursor:not-allowed}
 .qp-ghost{background:transparent;color:#1F2A44;border:1px solid #D8D3C6}
 .qp-ghost:hover{background:#F0EEE7}
-.qp-stat{font-size:12px;color:#7C8598}
+.qp-stat{font-size:12px;color:#556074}
 `;
 const SAMPLE=`Section: Physics
 

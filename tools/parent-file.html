@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,10 +6,10 @@
 <title>Parent File</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/revision-plan.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/revision-plan.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .pf-layout{display:grid;grid-template-columns:310px 1fr;gap:18px;align-items:start}
 @media(max-width:1000px){.pf-layout{grid-template-columns:1fr}}
@@ -34,6 +34,8 @@
 .logo-row img{height:38px;width:auto;max-width:90px;object-fit:contain;border:1px solid var(--line);
   border-radius:7px;background:#F6F5F0}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -180,7 +182,7 @@ function buildFile(s){
 // place to look when asking "what does the parent actually receive?"
 function FILE_TEMPLATE(d){
   const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  const band=p=>p==null?"#7C8598":p>=75?"#1F7A4D":p>=60?"#2E8B8A":p>=45?"#C9791B":"#B4472F";
+  const band=p=>p==null?"#556074":p>=75?"#1F7A4D":p>=60?"#2E8B8A":p>=45?"#C9791B":"#B4472F";
   const pct=p=>p==null?"—":p.toFixed(0)+"%";
 
   const spark=(()=>{
@@ -226,43 +228,43 @@ body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe
 .chip{background:rgba(255,255,255,.16);border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600}
 .card{background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:16px 16px;margin-top:14px;
   box-shadow:0 1px 2px rgba(31,42,68,.04),0 6px 18px rgba(31,42,68,.05)}
-.card h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7C8598;font-weight:700;margin-bottom:12px}
+.card h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#556074;font-weight:700;margin-bottom:12px}
 .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F0EEE7;cursor:pointer}
 .row:last-child{border-bottom:none}
 .row .nm{flex:1;font-weight:600;font-size:14px;color:#1F2A44}
 .bar{height:8px;background:#EFEDE6;border-radius:5px;overflow:hidden;width:96px;flex-shrink:0}
 .bar>i{display:block;height:100%;border-radius:5px}
 .val{min-width:44px;text-align:right;font-weight:700;font-size:14px}
-.sub{font-size:11.5px;color:#7C8598;padding:0 0 10px 0;display:none;line-height:1.6}
+.sub{font-size:11.5px;color:#556074;padding:0 0 10px 0;display:none;line-height:1.6}
 .row.open+.sub{display:block}
-.caret{color:#9AA3B2;font-size:11px;transition:transform .15s}
+.caret{color:#656E82;font-size:11px;transition:transform .15s}
 .row.open .caret{transform:rotate(90deg)}
 .spark{width:100%;height:auto;display:block;margin-top:4px}
-.sparkx{display:flex;justify-content:space-between;font-size:9.5px;color:#9AA3B2;margin-top:2px}
+.sparkx{display:flex;justify-content:space-between;font-size:9.5px;color:#656E82;margin-top:2px}
 .sparkx span{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:420px){.two{grid-template-columns:1fr}}
 .tlist li{list-style:none;font-size:12.5px;padding:6px 0;border-bottom:1px dotted #EFEDE6;line-height:1.4}
 .tlist li:last-child{border-bottom:none}
 .tlist .t{font-weight:600;color:#1F2A44}
-.tlist .s{color:#9AA3B2;font-size:10.5px}
+.tlist .s{color:#656E82;font-size:10.5px}
 .wk{border:1px solid #E4E0D6;border-radius:11px;margin-bottom:9px;overflow:hidden}
 .wkh{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#FCFBF7;cursor:pointer}
 .wkh .n{width:26px;height:26px;border-radius:50%;background:#0E7C7B;color:#fff;display:grid;place-items:center;
   font-weight:800;font-size:11.5px;flex-shrink:0}
 .wkh .l{flex:1;font-weight:700;font-size:13px;color:#1F2A44}
-.wkh .d{font-size:10.5px;color:#9AA3B2}
+.wkh .d{font-size:10.5px;color:#656E82}
 .wkb{display:none;padding:4px 13px 12px}
 .wk.open .wkb{display:block}
 .task{display:flex;gap:9px;padding:9px 0;border-bottom:1px dotted #EFEDE6}
 .task:last-child{border-bottom:none}
 .task .dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
 .task .tt{font-weight:600;font-size:12.5px;color:#1F2A44}
-.task .tn{font-size:11px;color:#7C8598;margin-top:2px;line-height:1.45}
+.task .tn{font-size:11px;color:#556074;margin-top:2px;line-height:1.45}
 .note{background:#E2F0EF;border-left:3px solid #0E7C7B;border-radius:8px;padding:11px 13px;
   font-size:13px;color:#22595a;line-height:1.6}
-.foot{text-align:center;font-size:10.5px;color:#9AA3B2;margin-top:18px;line-height:1.6}
-.legend{font-size:10.5px;color:#9AA3B2;margin-top:9px;line-height:1.5}
+.foot{text-align:center;font-size:10.5px;color:#656E82;margin-top:18px;line-height:1.6}
+.legend{font-size:10.5px;color:#656E82;margin-top:9px;line-height:1.5}
 </style></head>
 <body>
 <div class="hero">
@@ -304,7 +306,7 @@ body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe
 
   ${d.plan?`<div class="card">
     <h2>Study plan${d.examName?" for "+esc(d.examName):""}</h2>
-    <p style="font-size:12.5px;color:#7C8598;line-height:1.6;margin-bottom:12px">
+    <p style="font-size:12.5px;color:#556074;line-height:1.6;margin-bottom:12px">
       ${d.plan.summary.weeks} week${d.plan.summary.weeks===1?"":"s"} · ${d.plan.summary.sessionsPerWeek} sessions a week.
       More time is given to the topics that need it most${d.plan.summary.examDate?`, working back from ${esc(d.plan.summary.examDate)}`:""}.
       Tap a week to open it.</p>
@@ -325,7 +327,7 @@ body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe
   ${d.observations&&d.observations.length?`<div class="card"><h2>What the teachers have noticed</h2>
     ${d.observations.map(n=>`<div style="padding:9px 0;border-bottom:1px dotted #EFEDE6">
       <div style="font-size:13px;color:#2B2F3A;line-height:1.55">${esc(n.note)}</div>
-      <div style="font-size:10.5px;color:#9AA3B2;margin-top:3px">
+      <div style="font-size:10.5px;color:#656E82;margin-top:3px">
         ${esc([n.date,n.by,n.type].filter(Boolean).join(" · "))}</div></div>`).join("")}
     </div>`:""}
 
@@ -538,7 +540,7 @@ OFFICE.boot({
   blurb:"One small HTML file per student — their marks, their weak chapters and a study plan built from their own topic scores. Opens on any phone, needs no app or internet, and keeps working forever.",
   noteLeft:"Any workbook with a Marks sheet. Add a TOPICS COVERED row to unlock the personalised study plan.",
   manualHint:"Students and their marks, with a TOPICS row naming the chapter each column tested.",
-  templateHref:"../../assets/templates/junior-college/Student_Progress_Template.xlsx",
+  templateHref:"../assets/templates/junior-college/Student_Progress_Template.xlsx",
   cacheKey:"tool-parentfile",
   sampleSheets:SAMPLE_SHEETS,
   rosterToSheets:null,

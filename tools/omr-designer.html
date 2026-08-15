@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 <style>
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
-  --teal:#0E7C7B; --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --teal:#0E7C7B; --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
   --b1:#B4472F;
   --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   /* generic design-token aliases so the ported component's CSS resolves against our theme */
@@ -71,17 +71,21 @@ a{color:var(--teal)}
 .wm-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
 .hint{font-size:11px;color:var(--color-text-tertiary);margin-top:3px}
 .lbl-tg{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.tg{font-size:10px;color:var(--color-text-tertiary);display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;user-select:none}
-.fl .tg input[type=checkbox]{width:auto;margin:0;flex-shrink:0}
+/* the checkbox stays small to suit a dense sidebar; the label around it is the
+   real hit area, so that is what gets lifted to a comfortable target size */
+.tg{font-size:10px;color:var(--color-text-tertiary);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;user-select:none;min-height:26px;padding:0 4px}
+.fl .tg input[type=checkbox]{width:17px;height:17px;margin:0;flex-shrink:0;accent-color:var(--teal)}
 @media(max-width:1000px){.root{grid-template-columns:1fr}.sidebar{height:auto}.preview-col{max-height:none}}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
-
+<h1 class="sr-only">OMR sheet designer — printable bubble answer sheets</h1>
 <div class="tool-top">
-  <img class="tool-logo" src="../../assets/images/tesa-emblem.png" alt="">
+  <img class="tool-logo" src="../assets/images/tesa-emblem.png" alt="">
   <div class="tool-title"><b>OMR Sheet Designer</b><span>Printable bubble answer sheets for exams</span></div>
-  <a class="tool-back" href="../../index.html">⌂ All programs</a>
+  <a class="tool-back" href="../index.html">⌂ All programs</a>
 </div>
 
 <div class="wrap">
@@ -98,9 +102,9 @@ a{color:var(--teal)}
   <div class="sb-body">
     <div class="sb-pane on" id="pane0">
       <div class="sec">Institute</div>
-      <div class="fl"><label class="lbl-tg"><span>Academy / Institute name</span><span class="tg"><input type="checkbox" id="showAcademy" checked> show</span></label><input id="academy" value="The Extra Step Academy"></div>
-      <div class="fl"><label class="lbl-tg"><span>Tagline or address</span><span class="tg"><input type="checkbox" id="showTagline" checked> show</span></label><input id="tagline" value="Excellence in Competitive Exam Coaching, Ichalkaranji"></div>
-      <div class="fl"><label class="lbl-tg"><span>Sub-heading (optional)</span><span class="tg"><input type="checkbox" id="showSubhead" checked> show</span></label><input id="subhead" value="Affiliated to Maharashtra State Board" placeholder="e.g. Est. 2010 · ISO Certified"></div>
+      <div class="fl"><label class="lbl-tg"><span>Academy / Institute name</span><span class="tg"><input type="checkbox" id="showAcademy" checked> show</span></label><input id="academy" aria-label="Academy or institute name" value="The Extra Step Academy"></div>
+      <div class="fl"><label class="lbl-tg"><span>Tagline or address</span><span class="tg"><input type="checkbox" id="showTagline" checked> show</span></label><input id="tagline" aria-label="Tagline or address" value="Excellence in Competitive Exam Coaching, Ichalkaranji"></div>
+      <div class="fl"><label class="lbl-tg"><span>Sub-heading (optional)</span><span class="tg"><input type="checkbox" id="showSubhead" checked> show</span></label><input id="subhead" aria-label="Sub-heading" value="Affiliated to Maharashtra State Board" placeholder="e.g. Est. 2010 · ISO Certified"></div>
       <div class="hint">Untick <b>show</b> to drop a line from the sheet — the space is handed back to the bubble grid.</div>
     </div>
 
@@ -502,9 +506,9 @@ function render() {
     <div style="flex:1;padding:3px 5px 2px;overflow:hidden">${sectionsHTML}</div>
     <div style="flex-shrink:0">${scoreHTML}${sigHTML}</div>
     ${!footerAny?'':`<div style="flex-shrink:0;padding:1px 8px;border-top:0.5px solid #eee;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:${7*ts}px;font-weight:bold;color:#9a9a9a;letter-spacing:.03em">${showBrand?'Powered by Report Generator':''}</span>
-      <span style="font-size:${7*ts}px;font-weight:bold;color:#9a9a9a;text-align:center">${showFooterNote?g('footer'):''}</span>
-      <span style="font-size:${7*ts}px;font-weight:bold;color:#9a9a9a"></span>
+      <span style="font-size:${7*ts}px;font-weight:bold;color:#6B6B6B;letter-spacing:.03em">${showBrand?'Powered by Report Generator':''}</span>
+      <span style="font-size:${7*ts}px;font-weight:bold;color:#6B6B6B;text-align:center">${showFooterNote?g('footer'):''}</span>
+      <span style="font-size:${7*ts}px;font-weight:bold;color:#6B6B6B"></span>
     </div>`}
   </div>`;
 }

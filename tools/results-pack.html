@@ -7,9 +7,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .rp-layout{display:grid;grid-template-columns:290px 1fr;gap:18px;align-items:start}
 @media(max-width:980px){.rp-layout{grid-template-columns:1fr}}
@@ -73,6 +73,8 @@
   .story-row,.rp-side{display:none !important}
 }
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -318,7 +320,7 @@ OFFICE.boot({
   blurb:"Upload the marks you already have and get a topper poster for the noticeboard plus ready-to-send WhatsApp status cards — with photos, your logo and your colours.",
   noteLeft:"Any workbook with a Marks sheet works. Add a Students sheet with Photo URL to put faces on the poster.",
   manualHint:"Students and their marks. The tool ranks them and builds the artwork.",
-  templateHref:"../../assets/templates/office/Office_Roster_Template.xlsx",
+  templateHref:"../assets/templates/office/Office_Roster_Template.xlsx",
   cacheKey:"tool-resultspack",
   sampleSheets:SAMPLE_SHEETS,
   pill:d=>`${d.rows.length} students · top ${d.stats.top.toFixed(1)}%`,

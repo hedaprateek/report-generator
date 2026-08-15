@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
   --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
-  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
   --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
 }
 *{box-sizing:border-box}
@@ -71,6 +71,17 @@ a{color:inherit;text-decoration:none}
 @media(max-width:800px){.grid,.grid.five{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.grid,.grid.five{grid-template-columns:1fr}}
 
+/* A section with a single card left three empty columns beside it, which read as
+   a gap rather than a section. One card lies down instead: icon, text and action
+   across the full width, so it looks deliberate. */
+.grid.one{grid-template-columns:1fr}
+.grid.one .card{flex-direction:row;align-items:center;gap:18px;min-height:0;padding:18px 20px}
+.grid.one .card .ic{margin-bottom:0}
+.grid.one .card .body{flex:1;min-width:0}
+.grid.one .card p{margin-top:3px;max-width:none;font-size:12.5px}
+.grid.one .card .go{margin-top:0;white-space:nowrap}
+@media(max-width:620px){.grid.one .card{flex-direction:column;align-items:flex-start;gap:11px}}
+
 /* ---------- cards ---------- */
 .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
   padding:16px 16px 15px;box-shadow:var(--shadow);display:flex;flex-direction:column;
@@ -89,6 +100,8 @@ a{color:inherit;text-decoration:none}
 
 .foot{text-align:center;margin-top:10px;font-size:11.5px;color:var(--mut2);line-height:1.7}
 </style>
+<link rel="stylesheet" href="assets/css/a11y.css">
+<script src="assets/js/a11y.js" defer></script>
 </head>
 <body>
 
@@ -119,11 +132,11 @@ a{color:inherit;text-decoration:none}
     <div class="setup-side">
       <h2><span class="step">2</span>Then keep it up to date</h2>
       <p>No column blocks to copy — both write back into your workbook.</p>
-      <a class="roster" href="tools/marks-entry/index.html" style="margin-bottom:9px">
+      <a class="roster" href="tools/marks-entry.html" style="margin-bottom:9px">
         <span class="ic">✍️</span>
         <span><b>Enter Marks</b><span>Add a test in three steps</span></span>
       </a>
-      <a class="roster" href="tools/students/index.html">
+      <a class="roster" href="tools/student-master.html">
         <span class="ic">👥</span>
         <span><b>Student Master</b><span>Add a student mid-year in one place</span></span>
       </a>
@@ -138,35 +151,35 @@ a{color:inherit;text-decoration:none}
       <span class="n">5 programs</span>
     </div>
     <div class="grid five">
-      <a class="card prog" href="segments/pre-primary/index.html">
+      <a class="card prog" href="segments/pre-primary-reports.html">
         <span class="ic">🧸</span>
         <div class="range">Pre-Primary</div>
         <h3>Kindergarten</h3>
         <p>Holistic development — social, physical and emotional growth, with parent-friendly reports.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card prog" href="segments/primary/index.html">
+      <a class="card prog" href="segments/primary-reports.html">
         <span class="ic">✏️</span>
         <div class="range">1st – 4th</div>
         <h3>Primary School</h3>
         <p>Subject marks plus reading, handwriting, participation and homework habits.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card prog" href="segments/secondary/index.html">
+      <a class="card prog" href="segments/secondary-reports.html">
         <span class="ic">📘</span>
         <div class="range">5th – 10th</div>
         <h3>Secondary School</h3>
         <p>Test-wise tracking, rankings, awards and board-exam readiness.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card prog" href="segments/junior-college/index.html">
+      <a class="card prog" href="segments/junior-college-reports.html">
         <span class="ic">🎓</span>
         <div class="range">11th – 12th</div>
         <h3>Junior College</h3>
         <p>Weekly tests, rankings and report cards for CET / JEE / NEET batches.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card prog" href="segments/college/index.html">
+      <a class="card prog" href="segments/college-reports.html">
         <span class="ic">🏛️</span>
         <div class="range">Degree</div>
         <h3>College</h3>
@@ -184,28 +197,28 @@ a{color:inherit;text-decoration:none}
       <span class="n">4 tools</span>
     </div>
     <div class="grid">
-      <a class="card" href="tools/omr-designer/index.html">
+      <a class="card" href="tools/omr-designer.html">
         <span class="ic">🗳️</span>
         <div class="range">Before the test</div>
         <h3>OMR Sheet Designer</h3>
         <p>Design and print bubble answer sheets, then export a ready-to-print A4 PDF.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/omr-scan/index.html">
+      <a class="card" href="tools/omr-scanner.html">
         <span class="ic">📷</span>
         <div class="range">After the test</div>
         <h3>OMR Scanner</h3>
         <p>Photograph filled sheets and get marks out, with ambiguous marks flagged for review.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/test-builder/index.html">
+      <a class="card" href="tools/test-builder.html">
         <span class="ic">📝</span>
         <div class="range">Online test</div>
         <h3>Test Builder</h3>
         <p>One self-contained file students open on their own phone — offline, timed, no app.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/test-evaluate/index.html">
+      <a class="card" href="tools/test-evaluator.html">
         <span class="ic">✅</span>
         <div class="range">Online test</div>
         <h3>Test Evaluator</h3>
@@ -223,32 +236,54 @@ a{color:inherit;text-decoration:none}
       <span class="n">4 tools</span>
     </div>
     <div class="grid">
-      <a class="card" href="tools/fees/index.html">
+      <a class="card" href="tools/fees-and-dues.html">
         <span class="ic">🧾</span>
         <div class="range">Money</div>
         <h3>Fees &amp; Dues</h3>
         <p>Outstanding dues register plus printable receipts. Installments, monthly or one-time.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/id-cards/index.html">
+      <a class="card" href="tools/id-cards.html">
         <span class="ic">🪪</span>
         <div class="range">Identity</div>
         <h3>ID Cards</h3>
         <p>Plastic-card-size student IDs, ten to an A4 sheet, with photos and your colours.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/documents/index.html">
+      <a class="card" href="tools/certificates.html">
         <span class="ic">📜</span>
         <div class="range">Paperwork</div>
         <h3>Certificates</h3>
         <p>Bonafide, transfer, character and award certificates on your letterhead.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/timetable/index.html">
+      <a class="card" href="tools/timetable.html">
         <span class="ic">🗓️</span>
         <div class="range">Scheduling</div>
         <h3>Timetable</h3>
         <p>Enter each class once. Teacher timetables and clash warnings come out automatically.</p>
+        <div class="go">Open →</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ---------- sports ---------- -->
+  <div class="sec">
+    <div class="sec-head">
+      <h2>Sports</h2>
+      <span>Scoring on the ground, live for everyone else</span>
+      <span class="n">1 tool</span>
+    </div>
+    <div class="grid one">
+      <a class="card" href="tools/sports-scoreboard.html">
+        <span class="ic">🏅</span>
+        <div class="body">
+          <div class="range">Sports day</div>
+          <h3>Live Scoreboard</h3>
+          <p>Athletics, swimming and match sports in one place. Score by house or crown an individual
+             champion, put the standings on a big screen at the ground, and share a live link parents
+             can follow from anywhere.</p>
+        </div>
         <div class="go">Open →</div>
       </a>
     </div>
@@ -262,28 +297,28 @@ a{color:inherit;text-decoration:none}
       <span class="n">4 tools</span>
     </div>
     <div class="grid">
-      <a class="card" href="tools/parent-file/index.html">
+      <a class="card" href="tools/parent-file.html">
         <span class="ic">📱</span>
         <div class="range">Parent experience</div>
         <h3>Parent File</h3>
         <p>One file per student with marks, weak chapters and a study plan. Opens on any phone.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/student-file/index.html">
+      <a class="card" href="tools/student-file.html">
         <span class="ic">📁</span>
         <div class="range">One student</div>
         <h3>Student File</h3>
         <p>Profile, ID card, fee statement and certificate — printed together as one PDF.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/at-risk/index.html">
+      <a class="card" href="tools/at-risk-radar.html">
         <span class="ic">🛟</span>
         <div class="range">Retention</div>
         <h3>At-Risk Radar</h3>
         <p>Crosses attendance, falling marks and unpaid fees to show who is drifting away.</p>
         <div class="go">Open →</div>
       </a>
-      <a class="card" href="tools/results-pack/index.html">
+      <a class="card" href="tools/results-pack.html">
         <span class="ic">🏆</span>
         <div class="range">Marketing</div>
         <h3>Results Pack</h3>

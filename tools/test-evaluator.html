@@ -6,11 +6,11 @@
 <title>Test Evaluator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="../../assets/js/data-grid.js"></script>
-<script src="../../assets/js/student-master.js"></script>
-<script src="../../assets/js/test-codec.js"></script>
-<script src="../../assets/js/question-parser.js"></script>
-<script src="../../assets/js/office-common.js"></script>
+<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/test-codec.js"></script>
+<script src="../assets/js/question-parser.js"></script>
+<script src="../assets/js/office-common.js"></script>
 <style>
 .ev-drop{border:2px dashed var(--line2);border-radius:12px;padding:16px;background:#FCFBF7}
 .ev-drop textarea{width:100%;min-height:120px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -37,6 +37,8 @@
 .dist span.key{background:var(--b5s);color:var(--b5);font-weight:700}
 .dist span.trap{background:var(--b1s);color:var(--b1);font-weight:700}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <script>
@@ -375,7 +377,7 @@ OFFICE.boot({
   blurb:"Load the same question workbook you built the test from, paste the codes your students sent, and get ranked results, per-question analysis and a marks file your dashboard can read.",
   noteLeft:"The same Questions sheet used by the Test Builder — this is where the correct answers live.",
   manualHint:"One row per question, including the Correct column.",
-  templateHref:"../../assets/templates/office/Questions_Template.xlsx",
+  templateHref:"../assets/templates/office/Questions_Template.xlsx",
   cacheKey:"tool-testeval",
   sampleSheets:SAMPLE_SHEETS,
   ledgerSheets:["Questions"],

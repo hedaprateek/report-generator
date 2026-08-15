@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Master</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="../../assets/js/student-master.js"></script>
+<script src="../assets/js/student-master.js"></script>
 <style>
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
   --teal:#0E7C7B; --teal-soft:#E2F0EF; --line:#E4E0D6; --line2:#D8D3C6;
-  --mut:#7C8598; --mut2:#9AA3B2;
+  --mut:#556074; --mut2:#656E82;
   --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
 }
 *{box-sizing:border-box}
@@ -40,12 +40,14 @@ body{background:var(--paper);color:var(--ink);min-height:100vh;
 .use b{display:block;font-size:13.5px;color:var(--navy);margin-bottom:3px}
 .use span{font-size:12px;color:var(--mut);line-height:1.5}
 </style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
 <div class="top">
   <img id="topLogo" alt="">
   <div class="brand"><b class="serif" id="brandName">Academy</b><span>Student Master</span></div>
-  <a class="mini-btn" href="../../index.html">⌂ Home</a>
+  <a class="mini-btn" href="../index.html">⌂ Home</a>
 </div>
 <div class="wrap">
   <div class="intro">
@@ -58,15 +60,15 @@ body{background:var(--paper);color:var(--ink);min-height:100vh;
   </div>
   <div id="mgr"></div>
   <div class="uses">
-    <a class="use" href="../id-cards/index.html"><b>ID Cards →</b><span>Print identity cards straight from this roster.</span></a>
-    <a class="use" href="../documents/index.html"><b>Certificates →</b><span>Bonafide, transfer and character certificates.</span></a>
-    <a class="use" href="../student-file/index.html"><b>Student File →</b><span>Everything for one student as a single PDF.</span></a>
-    <a class="use" href="../fees/index.html"><b>Fees &amp; Dues →</b><span>Seed the fee ledger with these students.</span></a>
+    <a class="use" href="id-cards.html"><b>ID Cards →</b><span>Print identity cards straight from this roster.</span></a>
+    <a class="use" href="certificates.html"><b>Certificates →</b><span>Bonafide, transfer and character certificates.</span></a>
+    <a class="use" href="student-file.html"><b>Student File →</b><span>Everything for one student as a single PDF.</span></a>
+    <a class="use" href="fees-and-dues.html"><b>Fees &amp; Dues →</b><span>Seed the fee ledger with these students.</span></a>
   </div>
 </div>
 <script>
 // Branding is shared with every other page via the same localStorage key.
-const DEFAULTS={name:"The Extra Step Academy",logoEmblem:"../../assets/images/tesa-emblem.png"};
+const DEFAULTS={name:"The Extra Step Academy",logoEmblem:"../assets/images/tesa-emblem.png"};
 try{
   const saved=JSON.parse(localStorage.getItem("spdBrandingOverrides_v1")||"{}")||{};
   document.getElementById("brandName").textContent=saved.name||DEFAULTS.name;

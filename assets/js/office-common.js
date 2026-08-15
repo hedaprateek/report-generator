@@ -1,4 +1,4 @@
-/* =====================================================================
+﻿/* =====================================================================
    OFFICE — shared shell for the front-office tools (Fees, ID Cards,
    Documents, Timetable).
 
@@ -26,7 +26,7 @@ const CSS = `
 :root{
   --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
   --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
-  --line:#E4E0D6; --line2:#D8D3C6; --mut:#7C8598; --mut2:#9AA3B2;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
   --b1:#B4472F; --b1s:#F6E3DD; --b5:#1F7A4D; --b5s:#DEEEE4;
   --gold:#C9A227;
   --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
@@ -43,7 +43,7 @@ a{color:var(--teal)}
 
 /* landing */
 #ofLanding{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative}
-.of-back{position:absolute;top:22px;left:24px;color:#7C8598;font-size:12.5px;text-decoration:none;font-weight:600}
+.of-back{position:absolute;top:22px;left:24px;color:#556074;font-size:12.5px;text-decoration:none;font-weight:600}
 .of-back:hover{color:var(--navy)}
 .of-land-card{max-width:760px;width:100%;background:var(--card);border:1px solid var(--line);
   border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
@@ -55,13 +55,18 @@ a{color:var(--teal)}
 .of-land-body{padding:30px 40px 36px}
 #ofDrop{border:2px dashed var(--line2);border-radius:12px;padding:34px;text-align:center;background:#FCFBF7;cursor:pointer}
 #ofDrop.drag{border-color:var(--teal);background:var(--teal-soft)}
-#ofDrop h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
+#ofDrop h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
 #ofDrop p{margin:0;color:var(--mut);font-size:13px}
 .of-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;align-items:center}
+.of-alt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:13px;font-size:12.5px}
+.of-alt button,.of-alt a{background:none;border:none;padding:4px 2px;font:inherit;color:var(--teal);
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:26px}
+.of-alt button:hover,.of-alt a:hover{color:var(--navy)}
+.of-alt span{color:var(--mut2)}
 .of-err{background:#FDF1EC;border:1px solid #E8B49A;border-left:4px solid var(--b1);border-radius:9px;
   padding:14px 16px;margin:16px 0;font-size:13px;color:#7A3323;line-height:1.55}
 .of-note{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.of-note h4{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
+.of-note h3{margin:0 0 4px;font-size:12.5px;color:var(--navy)}
 .of-note p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.5}
 @media(max-width:640px){.of-note{grid-template-columns:1fr}}
 
@@ -150,8 +155,9 @@ tbody tr.clickable:hover{background:#FAF8F2}
 /* --------------------------------------------------------------- branding */
 const DEFAULT_BRANDING={
   name:"The Extra Step Academy",
-  logoFull:"../../assets/images/tesa-logo-full.png",
-  logoEmblem:"../../assets/images/tesa-emblem.png"
+  // resolved against the page that loads this module — every consumer lives in tools/
+  logoFull:"../assets/images/tesa-logo-full.png",
+  logoEmblem:"../assets/images/tesa-emblem.png"
 };
 const BRANDING_KEY="spdBrandingOverrides_v1"; // shared with every segment app
 function loadBranding(){
@@ -568,7 +574,7 @@ function showShareHint(title){
   box.style.cssText="position:fixed;bottom:20px;right:20px;z-index:250;background:#fff;border:1px solid #E4E0D6;"+
     "border-radius:12px;padding:14px 16px;box-shadow:0 12px 32px rgba(0,0,0,.22);max-width:300px";
   box.innerHTML=`<div style="font-weight:700;color:#1F2A44;font-size:13.5px;margin-bottom:4px">PDF downloaded ✓</div>
-    <div style="font-size:12px;color:#7C8598;margin-bottom:10px;line-height:1.5">Attach it in WhatsApp or email to send "${esc(title)}".</div>
+    <div style="font-size:12px;color:#556074;margin-bottom:10px;line-height:1.5">Attach it in WhatsApp or email to send "${esc(title)}".</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <a class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" target="_blank" rel="noopener"
          href="https://wa.me/?text=${encodeURIComponent(title)}">Open WhatsApp</a>
@@ -608,7 +614,7 @@ let CFG=null,SHEETS=null,DATA=null;
 function shell(){
   document.body.innerHTML=`
   <div id="ofLanding">
-    <a class="of-back" href="../../index.html">← All programs</a>
+    <a class="of-back" href="../index.html">← All programs</a>
     <div class="of-land-card">
       <div class="of-land-head">
         <img id="ofLandLogo" alt="">
@@ -618,21 +624,27 @@ function shell(){
       </div>
       <div class="of-land-body">
         <div id="ofDrop">
-          <h3>Drop your Excel file here</h3>
+          <h2>Drop your Excel file here</h2>
           <p>or click to choose — .xlsx from the template</p>
           <input id="ofFile" type="file" accept=".xlsx,.xls" class="hidden">
         </div>
         <div id="ofErr" class="of-err hidden"></div>
+        <!-- Five buttons of equal weight is five decisions. One obvious action,
+             one alternative, and the rest as quiet links you find when you need them. -->
         <div class="of-actions">
-          <button class="btn btn-primary hidden" id="ofRoster">Use saved students</button>
           <button class="btn btn-primary" id="ofPick">Choose file</button>
-          <button class="btn btn-ghost" id="ofDemo">Explore with sample data</button>
-          <button class="btn btn-ghost" id="ofManual">Type data in manually</button>
-          ${CFG.templateHref?`<a class="btn btn-ghost" href="${esc(CFG.templateHref)}" download>Download template</a>`:""}
+          <button class="btn btn-primary hidden" id="ofRoster">Use saved students</button>
+        </div>
+        <div class="of-alt">
+          <button type="button" id="ofDemo">Explore with sample data</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" id="ofManual">Type data in manually</button>
+          ${CFG.templateHref?`<span aria-hidden="true">·</span>
+          <a href="${esc(CFG.templateHref)}" download>Download template</a>`:""}
         </div>
         <div class="of-note">
-          <div><h4>Uses the fill-in template</h4><p>${esc(CFG.noteLeft||"Fill the sheets in the template, then upload it here.")}</p></div>
-          <div><h4>Private by design</h4><p>Your file is read on this device only. Nothing is sent to a server.</p></div>
+          <div><h3>Uses the fill-in template</h3><p>${esc(CFG.noteLeft||"Fill the sheets in the template, then upload it here.")}</p></div>
+          <div><h3>Private by design</h3><p>Your file is read on this device only. Nothing is sent to a server.</p></div>
         </div>
       </div>
     </div>
@@ -648,7 +660,7 @@ function shell(){
         <button class="mini-btn" id="ofStudents" title="The shared student roster used by every tool">👥 Students</button>
         <button class="mini-btn" id="ofEditData" title="View or edit the data behind these documents">✎ Edit data</button>
         <button class="mini-btn" id="ofReload">New file</button>
-        <a class="mini-btn" href="../../index.html" title="Back to the hub">⌂ Home</a>
+        <a class="mini-btn" href="../index.html" title="Back to the hub">⌂ Home</a>
       </div>
     </div>
     <div class="of-wrap" id="ofMount"></div>
@@ -715,9 +727,12 @@ async function refreshRosterButton(){
   if(!btn)return;
   if(!window.SPDRoster||!CFG.rosterToSheets){btn.classList.add("hidden");return;}
   const n=await SPDRoster.count();
+  // Exactly one primary action at any time: the saved roster is the fast path when
+  // it exists, otherwise choosing a file is.
   if(n>0){
     btn.textContent=`Use saved students (${n})`;
     btn.classList.remove("hidden");
+    btn.classList.add("btn-primary");btn.classList.remove("btn-ghost");
     const pick=document.getElementById("ofPick");
     if(pick){pick.classList.remove("btn-primary");pick.classList.add("btn-ghost");}
   }else{
