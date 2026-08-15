@@ -9,6 +9,7 @@
 <script src="../../assets/js/data-grid.js"></script>
 <script src="../../assets/js/student-master.js"></script>
 <script src="../../assets/js/test-codec.js"></script>
+<script src="../../assets/js/question-parser.js"></script>
 <script src="../../assets/js/office-common.js"></script>
 <style>
 .ev-drop{border:2px dashed var(--line2);border-radius:12px;padding:16px;background:#FCFBF7}
@@ -382,6 +383,8 @@ OFFICE.boot({
   parse,
   render:(data,mount)=>{D=data;MOUNT=mount;SUBS=[];REJECTS=[];RAW="";render();}
 });
+QuestionPaste.mountLandingButton(sheets=>OFFICE.use(sheets),"Paste from Word or text");
+
 </script>
 </body>
 </html>

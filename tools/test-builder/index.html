@@ -9,6 +9,7 @@
 <script src="../../assets/js/data-grid.js"></script>
 <script src="../../assets/js/student-master.js"></script>
 <script src="../../assets/js/test-codec.js"></script>
+<script src="../../assets/js/question-parser.js"></script>
 <script src="../../assets/js/office-common.js"></script>
 <style>
 .tb-layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
@@ -633,6 +634,8 @@ OFFICE.boot({
     render();
   }
 });
+QuestionPaste.mountLandingButton(sheets=>OFFICE.use(sheets),"Paste from Word or text");
+
 </script>
 </body>
 </html>
