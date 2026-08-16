@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="../assets/js/data-grid.js"></script>
 <script src="../assets/js/student-master.js"></script>
+<script src="../assets/js/workbook-pool.js"></script>
 <script src="../assets/js/office-common.js"></script>
 <style>
 .due-pill{font-weight:700}
@@ -39,6 +40,7 @@
 @media print{.receipt{width:auto;border:none;box-shadow:none;padding:0;margin:0}}
 </style>
 <link rel="stylesheet" href="../assets/css/a11y.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
 <script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
@@ -170,9 +172,9 @@ let VIEW="register",FILTER="all",CUR=null,D=null,MOUNT=null;
 const O=()=>OFFICE;
 
 function statusChip(r){
-  if(r.status==="clear")return `<span class="chip" style="background:var(--b5s);color:var(--b5)">Clear</span>`;
-  if(r.status==="overdue")return `<span class="chip" style="background:var(--b1s);color:var(--b1)">Overdue</span>`;
-  return `<span class="chip" style="background:var(--amber-soft);color:var(--amber)">Due</span>`;
+  if(r.status==="clear")return `<span class="chip" style="background:var(--b5s);color:#15593A">Clear</span>`;
+  if(r.status==="overdue")return `<span class="chip" style="background:var(--b1s);color:#9C3A25">Overdue</span>`;
+  return `<span class="chip" style="background:var(--amber-soft);color:#8A5310">Due</span>`;
 }
 function balClass(r){return r.balance<=0?"bal-0":(r.overdue>0?"bal-over":"bal-due");}
 
@@ -185,7 +187,7 @@ function renderRegister(){
       <div class="of-head no-print">
         <div><div class="of-eyebrow">Who owes what</div><h2>Outstanding Dues Register</h2></div>
         <div class="of-filters">
-          <label class="flab">Show</label>
+          <label class="flab" for="fFilter">Show</label>
           <select id="fFilter">
             <option value="all"${FILTER==="all"?" selected":""}>Everyone</option>
             <option value="pending"${FILTER==="pending"?" selected":""}>Any balance</option>
@@ -309,8 +311,8 @@ function renderReceipt(){
       <div class="of-head no-print">
         <div><div class="of-eyebrow">Give the parent paper</div><h2>Receipt / Statement</h2></div>
         <div class="of-filters">
-          <label class="flab">Student</label><select id="rStud">${opts}</select>
-          <label class="flab">Show</label><select id="rPay">${payOpts}</select>
+          <label class="flab" for="rStud">Student</label><select id="rStud">${opts}</select>
+          <label class="flab" for="rPay">Show</label><select id="rPay">${payOpts}</select>
           <button class="btn btn-ghost" id="rAll">Print all students</button>
           <button class="btn btn-ghost" id="rPrint">Print / Save as PDF</button>
           <button class="btn btn-primary" id="rShare">Share this</button>

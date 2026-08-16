@@ -1,7 +1,35 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(Add-Type -AssemblyName System.Drawing)"
+      "PowerShell(Add-Type -AssemblyName System.Drawing)",
+
+      "Bash(node C:/Users/PRATEE~1/AppData/Local/Temp/claude/*)",
+      "Bash(cd C:/Users/PRATEE~1/AppData/Local/Temp/claude/*)",
+
+      "Bash(du *)",
+      "Bash(wc *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(for *)",
+
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Measure-Object *)",
+      "PowerShell(ConvertFrom-Json *)",
+      "PowerShell(Invoke-WebRequest -Uri https://api.github.com/*)",
+      "PowerShell(Invoke-WebRequest -Uri http://127.0.0.1:9333/*)",
+
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git ls-files *)",
+      "Bash(git remote -v)",
+      "Bash(git branch *)"
     ]
   }
 }

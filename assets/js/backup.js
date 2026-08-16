@@ -91,21 +91,33 @@ function clearStore(db,store){
   });
 }
 
-/* Workbook records are {filename,savedAt,bytes}; only `bytes` is binary. */
+/* Workbook records are {filename,savedAt,bytes}; only `bytes` is binary.
+
+   The type matters: an upload arrives from FileReader.readAsArrayBuffer, so the
+   app caches an ArrayBuffer, while anything built in code tends to be a
+   Uint8Array. Both read back fine, but a restore should hand back what it was
+   given rather than quietly changing the shape of the record. */
+const isAB=v=>v instanceof ArrayBuffer;
 function encodeRow(r){
   const v=r.value;
   if(v&&typeof v==="object"&&isBinary(v.bytes))
-    return {key:r.key,value:Object.assign({},v,{bytes:bytesToB64(v.bytes),_b64:true})};
-  if(isBinary(v))return {key:r.key,value:{_rawB64:bytesToB64(v)}};
+    return {key:r.key,value:Object.assign({},v,
+      {bytes:bytesToB64(v.bytes),_b64:true,_ab:isAB(v.bytes)})};
+  if(isBinary(v))return {key:r.key,value:{_rawB64:bytesToB64(v),_ab:isAB(v)}};
   return r;
 }
 function decodeRow(r){
   const v=r.value;
   if(v&&typeof v==="object"&&v._b64){
-    const out=Object.assign({},v,{bytes:b64ToBytes(v.bytes)});
-    delete out._b64;return {key:r.key,value:out};
+    const u=b64ToBytes(v.bytes);
+    const out=Object.assign({},v,{bytes:v._ab?u.buffer:u});
+    delete out._b64;delete out._ab;
+    return {key:r.key,value:out};
   }
-  if(v&&typeof v==="object"&&v._rawB64)return {key:r.key,value:b64ToBytes(v._rawB64)};
+  if(v&&typeof v==="object"&&v._rawB64){
+    const u=b64ToBytes(v._rawB64);
+    return {key:r.key,value:v._ab?u.buffer:u};
+  }
   return r;
 }
 

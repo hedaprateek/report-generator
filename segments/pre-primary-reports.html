@@ -319,7 +319,9 @@ tbody tr.clickable:hover{background:#FAF8F2}
 }
 .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 </style>
+<script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
 <script src="../assets/js/a11y.js" defer></script>
 </head>
 <body>
@@ -348,6 +350,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
         <button class="btn btn-ghost" id="manualEntry">Type data in manually</button>
         <a class="btn btn-ghost" href="../assets/templates/pre-primary/Pre_Primary_Evaluation_Template.xlsx" download>Download template</a>
       </div>
+      <div id="wbPool" class="wp-box hidden"></div>
       <div class="land-note">
         <div>
           <h3>Uses the fill-in template</h3>
@@ -1660,6 +1663,28 @@ function bootWithReview(batches,sheets){
     }
   });
 }
+/* One upload should feed the whole suite: the master workbook carries Marks,
+   Attendance, Fees and the rest together. Offer whatever another tool already
+   cached rather than asking for the same file again. */
+function refreshWorkbookPool(){
+  const box=document.getElementById("wbPool");
+  if(!box||!window.WorkbookPool)return;
+  WorkbookPool.injectCSS();
+  WorkbookPool.mount(box,{
+    selfKey:WB_CACHE_KEY,
+    onPick:r=>{
+      clearUploadError();
+      const batches=parseWorkbookBytes(r.bytes);   // throws if it doesn't fit this segment
+      bootWithReview(batches,LAST_SHEETS);
+      wbCacheSave(r.filename,r.bytes.slice(0));
+      if(window.SPDRoster)SPDRoster.merge(SPDRoster.fromSheets(LAST_SHEETS));
+    },
+    onError:err=>showUploadError(err&&err.code==="NO_TESTS"
+      ? '<b>That workbook has no test data this dashboard can read.</b>'
+      : '<b>That workbook does not fit this section.</b><p style="margin:6px 0 0">'+esc((err&&err.message)||err)+'</p>')
+  });
+}
+
 function readFile(file){
   clearUploadError();
   const rd=new FileReader();
@@ -1691,6 +1716,7 @@ fileIn.addEventListener("change",e=>{if(e.target.files[0])readFile(e.target.file
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag");}));
 drop.addEventListener("drop",e=>{if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
 document.getElementById("demo").addEventListener("click",()=>{clearUploadError();LAST_SHEETS=SAMPLE_SHEETS;boot(detectBatches(SAMPLE_SHEETS));});
+refreshWorkbookPool();
 // Manual entry: reuse the sample workbook purely as scaffolding — same sheets, same
 // header rows, no student data — so a teacher can type straight in without Excel.
 document.getElementById("manualEntry").addEventListener("click",()=>{

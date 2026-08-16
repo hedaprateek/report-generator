@@ -1,0 +1,159 @@
+/* =====================================================================
+   Shared responsive layer.
+
+   The suite was laid out for a desk. On a phone the top bar was the single
+   biggest problem: logo + academy name + view tabs + action buttons all sat
+   in one flex row that never wrapped, roughly 700px wide, which pushed every
+   page sideways by 300-550px and left the whole layout scrollable.
+
+   Kept in one file rather than in twenty-two pages so the breakpoints stay
+   consistent and a fix lands everywhere at once. Desktop is untouched —
+   everything here is inside a max-width query.
+   ===================================================================== */
+
+/* ---------- tablet ---------- */
+@media (max-width:900px){
+  .wrap,.of-wrap{padding-left:16px;padding-right:16px}
+
+  /* side-by-side panels stack before they get too narrow to read */
+  .grid2{grid-template-columns:1fr !important}
+  .pf-layout{grid-template-columns:1fr !important}
+  .of-note,.land-note{grid-template-columns:1fr !important}
+
+  /* wide content scrolls inside its own box instead of the page */
+  .panel,.of-card,.card-wide,.tablewrap{overflow-x:auto}
+}
+
+/* ---------- the top bar ----------
+   Four different class names grew for the same thing: .topbar in the segments,
+   .of-top in the office tools (applied from JS), .tool-top in the OMR designer
+   and .top elsewhere. All four are one unwrapping flex row of logo + name +
+   tabs + buttons, roughly 700px wide, and all four have to give.
+
+   NOTE: `.bar` is a progress bar, not a top bar — deliberately not listed here.
+
+   This starts at tablet width, not phone: at 768px the row was already ~800px
+   and pushing the page sideways. */
+@media (max-width:900px){
+  .top,.of-top,.tool-top,.topbar{
+    height:auto;min-height:0;flex-wrap:wrap;
+    padding:9px 12px;gap:8px 10px;
+    position:static;                       /* a tall sticky bar eats a small screen */
+  }
+  .top img,.of-top img,.tool-logo,.top-logo{height:32px}
+
+  /* tabs take their own full-width row and scroll sideways if there are many */
+  .tabs,.of-tabs,.sb-tabs{
+    order:3;width:100%;height:auto;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    gap:0;
+  }
+  .tabs::-webkit-scrollbar,.of-tabs::-webkit-scrollbar{display:none}
+  .tab,.of-tab{
+    height:auto;padding:10px 14px;font-size:13px;white-space:nowrap;flex:0 0 auto;
+    border-bottom-width:3px;
+  }
+
+  /* action buttons wrap instead of running off the edge */
+  .top-right,.of-top-right,.tr{
+    margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;
+    justify-content:flex-end;gap:6px;min-width:0;
+  }
+  .mini-btn,.mini{padding:8px 11px;font-size:12px}
+}
+
+/* ---------- phone ---------- */
+@media (max-width:640px){
+  .brand b,.of-brand b,.tool-title b{font-size:14px}
+  .brand span,.of-brand span,.tool-title span{font-size:10px}
+  .mini-btn,.mini{padding:8px 10px;font-size:12px}
+
+  /* the status pill is informational; it is the first thing to go */
+  .pill,.of-pill{display:none}
+
+  /* --- content --- */
+  .wrap,.of-wrap{padding:16px 12px 48px}
+  .of-head,.head{flex-direction:column;align-items:stretch;gap:10px}
+  .of-filters{flex-wrap:wrap}
+  .of-filters select,.of-filters input{flex:1 1 140px;min-width:0}
+
+  /* tables are the other habitual overflow: let them scroll in place */
+  .panel,.of-card,.sheet,.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:520px}                    /* below this they become unreadable anyway */
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
+
+  /* stacked cards rather than a squeezed grid */
+  .grid,.grid.five,.grid.one{grid-template-columns:1fr !important}
+  .setup{grid-template-columns:1fr !important}
+  .setup-side{border-left:none !important;border-top:1px solid var(--line)}
+
+  /* comfortable tap targets */
+  .btn{padding:12px 16px}
+  button,.btn,select,input[type=text],input[type=number],input[type=date],input[type=search]{
+    min-height:40px;
+  }
+
+  /* landing cards should not be islands with big margins on a small screen */
+  .of-land-card,.land-card{border-radius:12px}
+  .of-land-head,.land-head{padding:24px 18px 26px}
+  .of-land-body,.land-body{padding:20px 16px 24px}
+  .of-land-head h1,.land-head h1{font-size:22px}
+  #ofLanding,#landing{padding:12px}
+}
+
+/* ---------- very small ---------- */
+@media (max-width:400px){
+  .brand span,.of-brand span,.tool-title span{display:none}   /* subtitle is the least useful line */
+  .mini-btn,.mini{padding:8px 9px;font-size:11.5px}
+  table{min-width:460px}
+}
+
+/* ---------- fixed-width previews ----------
+   Certificates, Student File and Results Pack show a real A4 page (794px at
+   96dpi) and the timetable a fixed grid. These must NOT reflow — what you see
+   has to be what prints. So the editor column stacks above them, and the page
+   itself scrolls sideways inside its own holder rather than dragging the whole
+   layout with it. */
+/* Unconditional: a scroll container costs nothing when the content already fits,
+   and this way there is no breakpoint at which an A4 page can drag the layout. */
+#docHolder,#fileHolder,#rpStage,#ttHolder,
+.rp-stage,.tt-sheet,.doc-holder,.sf-stage{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;
+}
+/* The ID sheet is a real A4 of CR80 cards; centring it made it bleed off BOTH
+   edges on a phone. Scroll it from the left instead of cropping it in half. */
+@media (max-width:900px){
+  .card-sheet{
+    display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    max-width:100%;
+  }
+  .card-sheet>*{margin-left:0}
+}
+@media (max-width:1100px){
+  .doc-layout,.sf-layout,.rp-layout,.tt-layout,.pf-layout{
+    grid-template-columns:1fr !important;
+  }
+  /* the editor panel beside them must not inherit the A4 width */
+  .doc-editor,.rp-side,.sf-side{max-width:100%;min-width:0}
+}
+
+/* ---------- sports ---------- */
+@media (max-width:640px){
+  /* the standings bar was a fixed 190px, which alone overflowed a phone */
+  .stand .bar{width:auto;flex:1;min-width:48px}
+  .stand .pts{width:46px}
+  /* results entry stacks: a five-column grid cannot fit 390px */
+  .res-row,.res-head{grid-template-columns:34px 1fr 34px !important}
+  .res-head span:nth-child(3),.res-head span:nth-child(4){display:none}
+  .res-row select,.res-row input[data-f="mark"]{grid-column:2/4}
+  .mgrid{grid-template-columns:1fr !important}
+  .mvs{padding:0;font-size:12px}
+}
+
+/* Printing must never inherit the phone layout. */
+@media print{
+  .panel,.of-card,.sheet{overflow:visible !important}
+  table{min-width:0 !important}
+}

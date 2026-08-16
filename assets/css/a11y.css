@@ -32,11 +32,13 @@
    First thing a keyboard or screen-reader user meets; invisible until
    focused, so it costs the visual design nothing. */
 .skip-link{
-  position:absolute;left:-9999px;top:0;z-index:9999;
+  /* off-screen without extending the page: a large negative left can create
+     horizontal scroll in some engines, which is exactly what we are fixing */
+  position:absolute;left:0;top:-100px;z-index:9999;
   background:#0E7C7B;color:#fff;font:600 14px/1 system-ui,sans-serif;
   padding:13px 18px;border-radius:0 0 9px 0;text-decoration:none;
 }
-.skip-link:focus{left:0}
+.skip-link:focus{top:0}
 
 /* ---------- screen-reader-only text ---------- */
 .sr-only{

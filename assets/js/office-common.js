@@ -629,6 +629,7 @@ function shell(){
           <input id="ofFile" type="file" accept=".xlsx,.xls" class="hidden">
         </div>
         <div id="ofErr" class="of-err hidden"></div>
+        <div id="ofReuse" class="wp-box hidden"></div>
         <!-- Five buttons of equal weight is five decisions. One obvious action,
              one alternative, and the rest as quiet links you find when you need them. -->
         <div class="of-actions">
@@ -702,7 +703,7 @@ function shell(){
     document.getElementById("ofApp").style.display="none";
     document.getElementById("ofLanding").style.display="flex";
     fileIn.value="";cacheClear(CFG.cacheKey);
-    refreshRosterButton();
+    refreshRosterButton();refreshReuse();
   });
 
   // ---- Shared Student Master -------------------------------------------------
@@ -718,6 +719,24 @@ function shell(){
     use(CFG.rosterToSheets(students),null,true,true); // came from the master — nothing to write back
   });
   refreshRosterButton();
+  refreshReuse();
+}
+
+// The picker itself lives in WorkbookPool so segments get the identical thing.
+function refreshReuse(){
+  const box=document.getElementById("ofReuse");
+  if(!box||!window.WorkbookPool)return;
+  WorkbookPool.injectCSS();
+  WorkbookPool.mount(box,{
+    selfKey:CFG.cacheKey,
+    onPick:r=>{
+      clearErr();
+      // adopt it under this tool's key too, so next time it opens straight up
+      use(sheetsFromBytes(r.bytes),()=>cacheSave(CFG.cacheKey,r.filename,r.bytes.slice(0)));
+    },
+    onError:err=>showErr(`<b>That workbook doesn't have what this tool needs.</b>
+      <p style="margin:6px 0 0">${esc(err.message||err)}</p>`)
+  });
 }
 
 // The roster shortcut only appears when it can actually do something: the tool must
@@ -812,7 +831,11 @@ function tabs(list,active,onPick){
 
 function boot(cfg){
   CFG=cfg;
-  const style=document.createElement("style");style.textContent=CSS;document.head.appendChild(style);
+  // Inserted FIRST, not appended: this is the base theme, so the page's own
+  // <style> and the shared responsive/a11y stylesheets must be able to override
+  // it. Appending put it last in the cascade and it silently beat them.
+  const style=document.createElement("style");style.textContent=CSS;
+  document.head.insertBefore(style,document.head.firstChild);
   shell();
   (async function restore(){
     const rec=await cacheLoad(CFG.cacheKey);
