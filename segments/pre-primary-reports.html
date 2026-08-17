@@ -301,6 +301,16 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
 
 /* ---------- PRINT ---------- */
+  .sheet-inner{transform-origin:top center}
+  /* Used only while a PDF is being captured. html2canvas photographs the live
+     DOM, so the page has to actually LOOK like print for that moment —
+     @media print does not apply to it. Mirrors the print rules below. */
+  body.pdf-export .no-print{display:none !important}
+  body.pdf-export .sheet{width:190mm;min-height:277mm;max-width:none;margin:0;
+    border:none;box-shadow:none;border-radius:0;padding:8mm 9mm;box-sizing:border-box}
+  body.pdf-export .snap-detail{max-height:none !important;opacity:1 !important;
+    overflow:visible !important;margin-top:8px !important}
+  body.pdf-export .snap-chev{display:none}
 @media print{
   @page{size:A4;margin:10mm}
   body{background:#fff}
@@ -319,6 +329,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 }
 .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 </style>
+<script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
 <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -1216,7 +1227,9 @@ function reportSheetHTML(s){
   const attRec=s.attendance;
   const noteText=esc(s.latestRemarks||s.notes||"");
   const n=AN.pointerNames.length;
-  return `<div class="sheet">
+  // .sheet-inner is what fitSheetsToPage scales; without it a long report
+  // spills onto a second page instead of shrinking onto one.
+  return `<div class="sheet"><div class="sheet-inner">
     <div class="rep-head">
       <div style="display:flex;gap:12px;align-items:center">
         <img class="rep-logo" src="${BRANDING.logoEmblem}" alt="">
@@ -1283,7 +1296,7 @@ function reportSheetHTML(s){
       <div>${esc(LABELS.sign1)}</div><div>${esc(LABELS.sign2)}</div><div>${esc(LABELS.sign3)}</div>
     </div>
     <div class="rep-foot">${esc(DATA.academy||BRANDING.name)} · Early Years Development Report · generated on this device, not stored anywhere</div>
-  </div>`;
+  </div></div>`;
 }
 
 function renderReport(){
@@ -1372,10 +1385,39 @@ function renderCertificate(){
 /* =================================================================
    PDF / PRINT HELPERS
    ================================================================= */
-function forcePrintLikeLayout(el,fn){
+/* A report longer than the page used to spill onto a second sheet or get cut.
+   Secondary, Junior College and College already scaled the content down to fit;
+   these two never did. Same approach, so all five behave alike. */
+function fitSheetsToPage(){
+  document.querySelectorAll(".sheet").forEach(sheet=>{
+    const inner=sheet.querySelector(".sheet-inner");
+    if(!inner)return;
+    inner.style.transform="scale(1)";
+    const cs=getComputedStyle(sheet);
+    const padTop=parseFloat(cs.paddingTop)||0,padBot=parseFloat(cs.paddingBottom)||0;
+    const avail=sheet.clientHeight-padTop-padBot;
+    const natural=inner.scrollHeight;
+    const scale=avail>0&&natural>avail?avail/natural:1;
+    inner.style.transformOrigin="top center";
+    inner.style.transform=`scale(${scale})`;
+  });
+}
+window.addEventListener("beforeprint",fitSheetsToPage);
+async function forcePrintLikeLayout(el,fn){
+  // fn() is async: this has to await it, or the layout is torn down while
+  // html2canvas is still drawing and the PDF captures the screen instead.
   document.body.classList.add("pdf-export");
-  fn();
-  setTimeout(()=>document.body.classList.remove("pdf-export"),50);
+  try{
+    // Give the browser two frames to actually apply the new layout before
+    // html2canvas photographs it.
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    await fn();
+  }finally{
+    document.body.classList.remove("pdf-export");
+  }
+  // Deliberately no fitSheetsToPage() here: that scales with a CSS transform,
+  // which html2canvas renders unreliably. Scaling stays on the print path,
+  // where beforeprint handles it and the browser does the rasterising.
 }
 // Tries the native share sheet; falls back to a plain download if sharing isn't available or
 // fails for any reason other than the user deliberately cancelling it (AbortError).
@@ -1387,17 +1429,30 @@ async function shareOrDownload(blob,filename,mime,title){
   }
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-  URL.revokeObjectURL(url);
+  // a.click() only QUEUES the download; revoking immediately cancels it
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
 async function shareAsPDF(el,filename,title,btnEl){
+  if(!el){alert("Nothing to share yet.");return;}
+  if(typeof html2pdf==="undefined"){
+    alert("The PDF engine hasn't loaded — it needs internet the first time.\n\nUse Print / Save as PDF instead.");return;}
   const orig=btnEl?btnEl.textContent:null;
   if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
+  // A tainted canvas cannot be exported, and on file:// every local image taints
+  // it. Give html2canvas only readable images; restore the DOM afterwards.
+  const safe=window.PdfSafe?await PdfSafe.inlineImages(el):{dropped:0,restore(){}};
   try{
     const opt={margin:0,filename,image:{type:"jpeg",quality:0.96},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};
     const worker=html2pdf().set(opt).from(el);
     const blob=await worker.outputPdf("blob");
     await shareOrDownload(blob,filename,"application/pdf",title);
-  }catch(err){console.error(err);}
+  }catch(err){
+    console.error(err);
+    alert("Could not build the PDF: "+(err&&err.message||err)+
+      "\n\nUse Print / Save as PDF instead.");
+  }
+  safe.restore();
+  if(window.PdfSafe)PdfSafe.noteDropped(safe.dropped);
   if(btnEl){btnEl.textContent=orig;btnEl.disabled=false;}
 }
 // A compact vertical "story" image (badges + best-at highlight + attendance) — sized for
@@ -1450,12 +1505,17 @@ async function shareStoryImage(s,btnEl){
         </div>
       </div>
       <div class="story-foot">${esc(DATA.academy||BRANDING.name)} · Early Years Development Report</div>`;
+    // the student photo taints the canvas just as the logo did
+    if(window.PdfSafe)await PdfSafe.inlineImages(card);
     await new Promise(r=>setTimeout(r,60)); // let layout/images settle before capture
     const canvas=await html2canvas(card,{scale:2,useCORS:true});
     const blob=await new Promise(res=>canvas.toBlob(res,"image/png"));
     if(!blob)throw new Error("Could not render image");
     await shareOrDownload(blob,slugify(s.name)+"_highlights.png","image/png","Development Highlights");
-  }catch(err){console.error(err);}
+  }catch(err){
+    console.error(err);
+    alert("Could not build the image: "+(err&&err.message||err));
+  }
   if(card)card.remove();
   if(btnEl){btnEl.textContent=orig;btnEl.disabled=false;}
 }

@@ -289,6 +289,7 @@ svg text{font-family:system-ui,sans-serif}
   .award-grid{break-inside:avoid}
 }
 </style>
+<script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
 <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -1340,6 +1341,9 @@ async function shareAsPDF(sourceEl,filename,title,btnEl){
   if(typeof html2pdf==="undefined"){alert("The PDF engine is still loading (needs internet on first load) — try again in a moment.");return;}
   const orig=btnEl?btnEl.textContent:null;
   if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
+  // A tainted canvas cannot be exported, and on file:// every local image taints
+  // it. Give html2canvas only readable images; restore the DOM afterwards.
+  const safe=window.PdfSafe?await PdfSafe.inlineImages(sourceEl):{dropped:0,restore(){}};
   try{
     const opt={margin:0,filename,image:{type:"jpeg",quality:0.95},
       html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
@@ -1358,6 +1362,8 @@ async function shareAsPDF(sourceEl,filename,title,btnEl){
   }catch(err){
     alert("Could not generate the PDF: "+err.message);
   }finally{
+    safe.restore();
+    if(window.PdfSafe)PdfSafe.noteDropped(safe.dropped);
     if(btnEl){btnEl.textContent=orig;btnEl.disabled=false;}
   }
 }
