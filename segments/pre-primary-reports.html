@@ -308,9 +308,20 @@ tbody tr.clickable:hover{background:#FAF8F2}
   body.pdf-export .no-print{display:none !important}
   body.pdf-export .sheet{width:190mm;min-height:277mm;max-width:none;margin:0;
     border:none;box-shadow:none;border-radius:0;padding:8mm 9mm;box-sizing:border-box}
-  body.pdf-export .snap-detail{max-height:none !important;opacity:1 !important;
-    overflow:visible !important;margin-top:8px !important}
+  /* Compact, uniform tiles on paper. Expanding every tile at once turned the
+     snapshot grid into ragged columns of wrapped text; the teacher's comments
+     are printed as a full-width list underneath instead. */
+  body.pdf-export .snap-detail{display:none !important}
   body.pdf-export .snap-chev{display:none}
+  body.pdf-export .snap-item,body.pdf-export .skill-tile{cursor:default}
+  body.pdf-export .print-only{display:block !important}
+
+  /* shown only on paper / in the PDF, never on screen */
+  .print-only{display:none}
+  .area-notes{margin-top:9px;border-top:1px solid var(--line);padding-top:8px;
+    display:grid;gap:4px}
+  .area-note{font-size:9.5px;line-height:1.5;color:var(--ink)}
+  .area-note b{color:var(--navy)}
 @media print{
   @page{size:A4;margin:10mm}
   body{background:#fff}
@@ -324,12 +335,17 @@ tbody tr.clickable:hover{background:#FAF8F2}
   .attend-widget,.rep-id,.panel{break-inside:avoid}
   .rep-sec{break-inside:avoid}
   .snap-item,.ring-item,.skill-tile,.skill-block,.badge-row,.spotlight{break-inside:avoid}
-  .snap-item .snap-detail{max-height:none !important;opacity:1 !important;overflow:visible !important;margin-top:8px !important}
+  /* Was: force every tile open. That made the snapshot grid ragged — see the
+     .pdf-export note above. Tiles stay compact; comments print underneath. */
+  .snap-detail{display:none !important}
   .snap-chev{display:none}
+  .print-only{display:block !important}
+  .tile-grid{break-inside:avoid}
 }
 .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
+<script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
 <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -1283,6 +1299,20 @@ function reportSheetHTML(s){
           </div>
         </div>`;
       }).join("")}</div>
+      ${(()=>{
+        /* On screen a tile opens on tap. On paper every tile was forced open at
+           once, and a sentence wrapping inside a ~30mm column left the grid
+           ragged and unreadable. So the tiles stay compact when printed, and the
+           part that is actually unique — the teacher's own comment — is listed
+           underneath where it has the full width to be read. */
+        const noted=AN.pointerNames
+          .map(pn=>({pn,c:(s.pointerStats[pn]||{}).latestComment}))
+          .filter(x=>x.c);
+        if(!noted.length)return"";
+        return `<div class="area-notes print-only">
+          ${noted.map(x=>`<div class="area-note"><b>${esc(x.pn)}:</b> ${esc(x.c)}</div>`).join("")}
+        </div>`;
+      })()}
     </div>
     <div class="rep-sec"><div class="spot-grid">
       ${spotlightHTML("strength",s,s.strengths[0])}
@@ -1311,6 +1341,7 @@ function renderReport(){
       <button class="btn btn-ghost" id="printBtn">Print / Save as PDF</button>
       <button class="btn btn-primary" id="shareBtn">Share this report</button>
       <button class="btn btn-primary" id="shareImgBtn">📱 Share as Image</button>
+      <button class="btn btn-primary" id="sharePageBtn">🔗 Send as web page</button>
       <button class="btn btn-ghost" id="certBtn">🏆 Certificate</button>
       <button class="btn btn-primary" id="shareAllBtn">Share all as PDF</button>
       <button class="btn btn-ghost" id="printAllBtn" style="margin-left:auto">Print All Students</button>
@@ -1323,6 +1354,7 @@ function renderReport(){
     forcePrintLikeLayout(sheetEl,()=>shareAsPDF(sheetEl,slugify(s.name)+"_report.pdf","Development Report",e.target));
   });
   document.getElementById("shareImgBtn").addEventListener("click",e=>shareStoryImage(s,e.target));
+  document.getElementById("sharePageBtn").addEventListener("click",e=>sharePage(s,e.target));
   document.getElementById("certBtn").addEventListener("click",()=>switchView("certificate"));
   document.getElementById("shareAllBtn").addEventListener("click",e=>{
     switchView("report-all");
@@ -1419,6 +1451,33 @@ async function forcePrintLikeLayout(el,fn){
   // which html2canvas renders unreliably. Scaling stays on the print path,
   // where beforeprint handles it and the browser does the rasterising.
 }
+/* One .html file the parent opens from WhatsApp. Unlike the PDF the tiles still
+   open on tap, it reflows on a phone, and it carries its own styles and images
+   so it keeps working offline. */
+async function sharePage(s,btnEl){
+  const orig=btnEl?btnEl.textContent:null;
+  if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
+  try{
+    if(!window.ReportPage)throw new Error("The exporter didn't load.");
+    const sheetEl=document.querySelector("#v-report .sheet");
+    const out=await ReportPage.build(sheetEl,{
+      student:s.name,
+      docTitle:"Early Years Development Report",
+      academy:DATA.academy||BRANDING.name,
+      generated:new Date().toLocaleDateString()
+    });
+    await ReportPage.shareOrDownload(out.html,slugify(s.name)+"_report.html",
+      s.name+" — Development Report");
+    if(out.dropped&&window.PdfSafe)
+      PdfSafe.toast("The page was saved without the logo — opened from a folder, the browser "+
+        "won't let it be embedded. Publish the suite to a web address to include it.");
+  }catch(err){
+    console.error(err);
+    alert("Could not build the web page: "+(err&&err.message||err));
+  }
+  if(btnEl){btnEl.textContent=orig;btnEl.disabled=false;}
+}
+
 // Tries the native share sheet; falls back to a plain download if sharing isn't available or
 // fails for any reason other than the user deliberately cancelling it (AbortError).
 async function shareOrDownload(blob,filename,mime,title){

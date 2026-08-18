@@ -290,6 +290,7 @@ svg text{font-family:system-ui,sans-serif}
 }
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
+<script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
 <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -1310,6 +1311,7 @@ function renderReport(){
       <button class="btn btn-ghost" id="printAllBtn">Print All Students</button>
       <button class="btn btn-ghost" id="printBtn">Print / Save as PDF</button>
       <button class="btn btn-primary" id="shareBtn">Share this report</button>
+      <button class="btn btn-primary" id="sharePageBtn">🔗 Send as web page</button>
       <button class="btn btn-primary" id="shareAllBtn">Share all as PDF</button>
     </div>
     ${buildReportSheetHTML(s,a,"reportSheet")}`;
@@ -1323,6 +1325,7 @@ function renderReport(){
     const sheetEl=document.getElementById("reportSheet");
     shareAsPDF(sheetEl,slugify(s.name)+"_progress_report.pdf",s.name+" — Progress Report",e.target);
   });
+  document.getElementById("sharePageBtn").addEventListener("click",e=>sharePage(s,e.target));
   document.getElementById("shareAllBtn").addEventListener("click",e=>shareAllReportsAsPDF(e.target));
 }
 function printAllReports(){
@@ -1389,6 +1392,33 @@ function forcePrintLikeLayout(sourceEl,fn){
     heads.forEach((e,i)=>e.style.display=prevHeadDisplay[i]);
   });
 }
+/* One .html file the parent opens from WhatsApp. Unlike the PDF the tiles still
+   open on tap, it reflows on a phone, and it carries its own styles and images
+   so it keeps working offline. */
+async function sharePage(s,btnEl){
+  const orig=btnEl?btnEl.textContent:null;
+  if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
+  try{
+    if(!window.ReportPage)throw new Error("The exporter didn't load.");
+    const sheetEl=document.querySelector("#reportSheet");
+    const out=await ReportPage.build(sheetEl,{
+      student:s.name,
+      docTitle:"Progress Report",
+      academy:(typeof DATA!=="undefined"&&DATA&&DATA.academy)||BRANDING.name,
+      generated:new Date().toLocaleDateString()
+    });
+    await ReportPage.shareOrDownload(out.html,slugify(s.name)+"_report.html",
+      s.name+" — "+"Progress Report");
+    if(out.dropped&&window.PdfSafe)
+      PdfSafe.toast("The page was saved without the logo — opened from a folder, the browser "+
+        "won't let it be embedded. Publish the suite to a web address to include it.");
+  }catch(err){
+    console.error(err);
+    alert("Could not build the web page: "+(err&&err.message||err));
+  }
+  if(btnEl){btnEl.textContent=orig;btnEl.disabled=false;}
+}
+
 async function shareAsPDF(sourceEl,filename,title,btnEl){
   if(!sourceEl){alert("Nothing to share yet.");return;}
   if(typeof html2pdf==="undefined"){alert("The PDF engine is still loading (needs internet on first load) — try again in a moment.");return;}

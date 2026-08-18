@@ -172,9 +172,18 @@ tbody tr.clickable:hover{background:#FAF8F2}
   body.pdf-export .no-print{display:none !important}
   body.pdf-export .sheet{width:190mm;min-height:277mm;max-width:none;margin:0;
     border:none;box-shadow:none;border-radius:0;padding:8mm 9mm;box-sizing:border-box}
-  body.pdf-export .snap-detail{max-height:none !important;opacity:1 !important;
-    overflow:visible !important;margin-top:8px !important}
+  /* Compact, uniform tiles on paper. Expanding every tile at once turned the
+     snapshot grid into ragged columns of wrapped text; the teacher's comments
+     are printed as a full-width list underneath instead. */
+  body.pdf-export .snap-detail{display:none !important}
+  body.pdf-export .print-only{display:block !important}
   body.pdf-export .snap-chev{display:none}
+  /* shown only on paper / in the PDF, never on screen */
+  .print-only{display:none}
+  .area-notes{margin-top:9px;border-top:1px solid var(--line);padding-top:8px;
+    display:grid;gap:4px}
+  .area-note{font-size:9.5px;line-height:1.5;color:var(--ink)}
+  .area-note b{color:var(--navy)}
 @media print{.spot-grid{grid-template-columns:1fr 1fr}}
 .spotlight{border-radius:10px;padding:9px 12px;border:1px solid var(--line)}
 .spotlight:last-child{margin-bottom:0}
@@ -332,12 +341,16 @@ tbody tr.clickable:hover{background:#FAF8F2}
   .rep-id,.panel{break-inside:avoid}
   .rep-sec{break-inside:avoid}
   .snap-item,.ring-item,.skill-tile,.skill-block,.badge-row,.spotlight,.attend-widget{break-inside:avoid}
-  .snap-item .snap-detail{max-height:none !important;opacity:1 !important;overflow:visible !important;margin-top:8px !important}
+  /* see the .pdf-export note above — expanding every tile made the grid ragged */
+  .snap-detail{display:none !important}
+  .print-only{display:block !important}
+  .tile-grid{break-inside:avoid}
   .snap-chev{display:none}
 }
 .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
+<script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
 <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -1199,7 +1212,18 @@ function tileGridHTML(s,names){
         ${stat.latestComment?`<p class="teacher-note-line"><b>Teacher:</b> ${esc(stat.latestComment)}</p>`:""}
       </div>
     </div>`;
-  }).join("")}</div>`;
+  }).join("")}</div>
+  ${(()=>{
+    /* On screen a tile opens on tap. On paper they were all forced open at once
+       and the wrapped text left the grid ragged, so the tiles stay compact and
+       the teacher's own comments print full width underneath. Marks are not
+       repeated here — the "Marks by test" table already carries them. */
+    const noted=names.map(n=>({n,c:(s.areaStats[n]||{}).latestComment})).filter(x=>x.c);
+    if(!noted.length)return"";
+    return `<div class="area-notes print-only">
+      ${noted.map(x=>`<div class="area-note"><b>${esc(x.n)}:</b> ${esc(x.c)}</div>`).join("")}
+    </div>`;
+  })()}`;
 }
 // One grid: subjects down, tests across. Previously this printed a separate table per
 // test, which pushed the report over a page and made it impossible to see a subject
@@ -1322,6 +1346,7 @@ function renderReport(){
       <select id="studentPick">${studentPickerHTML()}</select>
       <button class="btn btn-ghost" id="printBtn">Print / Save as PDF</button>
       <button class="btn btn-primary" id="shareBtn">Share this report</button>
+      <button class="btn btn-primary" id="sharePageBtn">🔗 Send as web page</button>
       <button class="btn btn-primary" id="shareImgBtn">📱 Share as Image</button>
       <button class="btn btn-ghost" id="certBtn">🏆 Certificate</button>
       <button class="btn btn-primary" id="shareAllBtn">Share all as PDF</button>
@@ -1334,6 +1359,7 @@ function renderReport(){
     const sheetEl=el.querySelector(".sheet");
     forcePrintLikeLayout(sheetEl,()=>shareAsPDF(sheetEl,slugify(s.name)+"_report.pdf","Progress Report",e.target));
   });
+  document.getElementById("sharePageBtn").addEventListener("click",e=>sharePage(s,e.target));
   document.getElementById("shareImgBtn").addEventListener("click",e=>shareStoryImage(s,e.target));
   document.getElementById("certBtn").addEventListener("click",()=>switchView("certificate"));
   document.getElementById("shareAllBtn").addEventListener("click",e=>{
@@ -1441,6 +1467,33 @@ async function shareOrDownload(blob,filename,mime,title){
   // a.click() only QUEUES the download; revoking immediately cancels it
   setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
+/* One .html file the parent opens from WhatsApp. Unlike the PDF the tiles still
+   open on tap, it reflows on a phone, and it carries its own styles and images
+   so it keeps working offline. */
+async function sharePage(s,btnEl){
+  const orig=btnEl?btnEl.textContent:null;
+  if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
+  try{
+    if(!window.ReportPage)throw new Error("The exporter didn't load.");
+    const sheetEl=document.querySelector("#v-report .sheet");
+    const out=await ReportPage.build(sheetEl,{
+      student:s.name,
+      docTitle:"Primary Progress Report",
+      academy:(typeof DATA!=="undefined"&&DATA&&DATA.academy)||BRANDING.name,
+      generated:new Date().toLocaleDateString()
+    });
+    await ReportPage.shareOrDownload(out.html,slugify(s.name)+"_report.html",
+      s.name+" — "+"Primary Progress Report");
+    if(out.dropped&&window.PdfSafe)
+      PdfSafe.toast("The page was saved without the logo — opened from a folder, the browser "+
+        "won't let it be embedded. Publish the suite to a web address to include it.");
+  }catch(err){
+    console.error(err);
+    alert("Could not build the web page: "+(err&&err.message||err));
+  }
+  if(btnEl){btnEl.textContent=orig;btnEl.disabled=false;}
+}
+
 async function shareAsPDF(el,filename,title,btnEl){
   if(!el){alert("Nothing to share yet.");return;}
   if(typeof html2pdf==="undefined"){
