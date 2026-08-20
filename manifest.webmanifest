@@ -1,0 +1,25 @@
+{
+  "name": "The Extra Step Academy — Report Suite",
+  "short_name": "TESA Suite",
+  "description": "Progress reports, tests, fees and parent files — all in the browser, nothing uploaded.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F5F3EE",
+  "theme_color": "#1F2A44",
+  "icons": [
+    {
+      "src": "./assets/images/tesa-emblem.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/images/tesa-logo-full.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
