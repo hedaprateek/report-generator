@@ -290,6 +290,7 @@ svg text{font-family:system-ui,sans-serif}
 }
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
+<script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -1307,6 +1308,9 @@ function renderReport(){
     <div id="report-toolbar" class="no-print">
       <label class="flab">Student</label>
       <select id="studentPick">${opts}</select>
+      <label class="flab" for="langPick">Language</label>
+      <select id="langPick">${(window.I18N?I18N.LANGS:[{code:"en",label:"English"}])
+        .map(l=>`<option value="${l.code}"${(window.I18N&&I18N.getLang())===l.code?" selected":""}>${l.label}</option>`).join("")}</select>
       ${typeFilterHTML()}${monthFilterHTML()}
       <div style="flex:1"></div>
       <button class="btn btn-ghost" id="printAllBtn">Print All Students</button>
@@ -1317,6 +1321,14 @@ function renderReport(){
     </div>
     ${buildReportSheetHTML(s,a,"reportSheet")}`;
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=e.target.value;renderReport();});
+  /* Translate the rendered sheet rather than the templates, so print, PDF and
+     the exported web page all inherit it — they are built from this DOM. */
+  const langSel=document.getElementById("langPick");
+  if(langSel)langSel.addEventListener("change",e=>{
+    if(window.I18N)I18N.setLang(e.target.value);
+    renderReport();                       // re-render gives a clean English base
+  });
+  applyReportLang();
   bindTypeFilter(el);
   document.getElementById("printBtn").addEventListener("click",()=>{
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("print-target"));
@@ -1334,6 +1346,7 @@ function printAllReports(){
   const el=document.getElementById("v-report-all");
   const sheets=a.S.filter(s=>s.avgPct!=null||s.perTest.some(p=>p.applies)).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
   el.innerHTML=sheets;
+  applyReportLang();   // all-student output must honour the chosen language
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("print-target"));
   el.classList.remove("hidden");el.classList.add("print-target");
   fitSheetsToPage();window.print();
@@ -1343,6 +1356,7 @@ async function shareAllReportsAsPDF(btnEl){
   const el=document.getElementById("v-report-all");
   const sheets=a.S.filter(s=>s.avgPct!=null||s.perTest.some(p=>p.applies)).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
   el.innerHTML=sheets;
+  applyReportLang();   // all-student output must honour the chosen language
   await shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_all_reports.pdf","All Student Reports",btnEl);
 }
 function nRanked(a){return a.ranked.length;}
@@ -1396,6 +1410,16 @@ function forcePrintLikeLayout(sourceEl,fn){
 /* One .html file the parent opens from WhatsApp. Unlike the PDF the tiles still
    open on tap, it reflows on a phone, and it carries its own styles and images
    so it keeps working offline. */
+
+/* Re-applied after every render. English is the source markup, so switching
+   back needs no reverse dictionary — the re-render already is English. */
+function applyReportLang(){
+  if(!window.I18N)return;
+  const lang=I18N.getLang();
+  document.querySelectorAll("#v-report .sheet, #v-report-all .sheet, #v-certificate .sheet, #reportSheet")
+    .forEach(el=>I18N.apply(el,lang));
+}
+
 async function sharePage(s,btnEl){
   const orig=btnEl?btnEl.textContent:null;
   if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}

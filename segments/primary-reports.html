@@ -350,6 +350,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
+<script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -1346,6 +1347,9 @@ function renderReport(){
     <div id="report-toolbar" class="no-print">
       <label class="flab">Student</label>
       <select id="studentPick">${studentPickerHTML()}</select>
+      <label class="flab" for="langPick">Language</label>
+      <select id="langPick">${(window.I18N?I18N.LANGS:[{code:"en",label:"English"}])
+        .map(l=>`<option value="${l.code}"${(window.I18N&&I18N.getLang())===l.code?" selected":""}>${l.label}</option>`).join("")}</select>
       <button class="btn btn-ghost" id="printBtn">Print / Save as PDF</button>
       <button class="btn btn-primary" id="shareBtn">Share this report</button>
       <button class="btn btn-primary" id="sharePageBtn">🔗 Send as web page</button>
@@ -1356,6 +1360,14 @@ function renderReport(){
     </div>
     ${reportSheetHTML(s)}`;
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=Number(e.target.value);renderReport();});
+  /* Translate the rendered sheet rather than the templates, so print, PDF and
+     the exported web page all inherit it — they are built from this DOM. */
+  const langSel=document.getElementById("langPick");
+  if(langSel)langSel.addEventListener("change",e=>{
+    if(window.I18N)I18N.setLang(e.target.value);
+    renderReport();                       // re-render gives a clean English base
+  });
+  applyReportLang();
   document.getElementById("printBtn").addEventListener("click",()=>window.print());
   document.getElementById("shareBtn").addEventListener("click",e=>{
     const sheetEl=el.querySelector(".sheet");
@@ -1374,9 +1386,20 @@ function renderReport(){
     window.print();
   });
 }
+
+/* Re-applied after every render. English is the source markup, so switching
+   back needs no reverse dictionary — the re-render already is English. */
+function applyReportLang(){
+  if(!window.I18N)return;
+  const lang=I18N.getLang();
+  document.querySelectorAll("#v-report .sheet, #v-report-all .sheet, #v-certificate .sheet, #reportSheet")
+    .forEach(el=>I18N.apply(el,lang));
+}
+
 function renderReportAll(){
   const el=document.getElementById("v-report-all");
   el.innerHTML=AN.S.map(s=>reportSheetHTML(s)).join("");
+  applyReportLang();          // Print All must come out in the chosen language too
 }
 
 function certificateHTML(s){
