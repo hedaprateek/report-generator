@@ -7,18 +7,22 @@
    visit and serves from that cache afterwards.
 
    Strategy, and why:
-     · pages        network-first  — an academy should get today's version when
-                                     online, and yesterday's rather than an
-                                     error when not
-     · assets       cache-first    — libraries and stylesheets are versioned by
-                                     filename and never change in place, so
-                                     hitting the network for them is waste
-     · never cached the xlsx templates? They ARE cached: a teacher downloading
-       a blank template on a dead connection is exactly the case this is for.
+     · pages    network-first          — today's version when online, yesterday's
+                                         rather than an error when not
+     · assets   stale-while-revalidate — serve the cached copy instantly, then
+                                         refresh it in the background so the next
+                                         load is current
+     · the xlsx templates are cached too: a teacher downloading a blank template
+       on a dead connection is exactly the case this exists for
 
-   Bump CACHE when anything ships, or returning devices keep the old copy.
+   Assets were originally cache-first with a "remember to bump CACHE when you
+   ship" comment. That is a trap — the first release that forgot (this one, with
+   i18n.js) left every returning device pinned to the old file and looking like
+   the deploy had failed. Nothing here should depend on a human remembering a
+   version number, so revalidation is now automatic and CACHE only exists to
+   discard a genuinely incompatible generation.
    ===================================================================== */
-const CACHE="tesa-suite-v1";
+const CACHE="tesa-suite-v2";
 
 /* Everything needed to open any tool from cold with no network. Listed
    explicitly rather than cached lazily so the FIRST offline use works, not
@@ -93,6 +97,9 @@ self.addEventListener("fetch",e=>{
 
   const url=new URL(req.url);
   if(url.origin!==self.location.origin)return;   // the live-scores relay must go to the network
+  // never cache the worker or the manifest: a stale copy of either is how a
+  // site gets permanently stuck on an old version
+  if(/\/sw\.js$|\/manifest\.webmanifest$/.test(url.pathname))return;
 
   const isPage=req.mode==="navigate"||
                (req.headers.get("accept")||"").includes("text/html");
@@ -113,14 +120,25 @@ self.addEventListener("fetch",e=>{
     return;
   }
 
+  /* Stale-while-revalidate: answer from cache immediately so the tool opens
+     instantly and works offline, but always ask the network in the background
+     and store what comes back. A shipped change therefore reaches a returning
+     device on its next load, with no version bump and nothing to remember. */
   e.respondWith((async()=>{
-    const hit=await caches.match(req);
-    if(hit)return hit;
-    try{
-      const fresh=await fetch(req);
-      const c=await caches.open(CACHE);
-      c.put(req,fresh.clone());
-      return fresh;
-    }catch(err){return Response.error();}
+    const cached=await caches.match(req);
+    const network=fetch(req).then(async res=>{
+      if(res&&res.ok){
+        const c=await caches.open(CACHE);
+        c.put(req,res.clone());
+      }
+      return res;
+    }).catch(()=>null);
+
+    if(cached){
+      e.waitUntil(network);        // refresh without making the page wait
+      return cached;
+    }
+    const fresh=await network;
+    return fresh||Response.error();
   })());
 });

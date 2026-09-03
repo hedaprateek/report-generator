@@ -30,7 +30,12 @@ function register(){
   // like /report-generator/ as well as at a domain root
   const base=location.pathname.replace(/\/[^/]*$/,"/");
   const swUrl=base.replace(/\/(segments|tools)\/$/,"/")+"sw.js";
-  navigator.serviceWorker.register(swUrl,{scope:swUrl.replace(/sw\.js$/,"")})
+  // updateViaCache:"none" — always revalidate the worker script itself, so a
+  // fixed worker can never be blocked by an HTTP-cached copy of the old one
+  navigator.serviceWorker.register(swUrl,{
+      scope:swUrl.replace(/sw\.js$/,""),
+      updateViaCache:"none"
+    })
     .then(reg=>{
       if(reg.active)markReady();
       reg.addEventListener("updatefound",()=>{
