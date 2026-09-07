@@ -291,6 +291,7 @@ svg text{font-family:system-ui,sans-serif}
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/report-sections.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -1272,6 +1273,7 @@ function renderReport(){
       <button class="btn btn-primary" id="sharePageBtn">🔗 Send as web page</button>
       <button class="btn btn-primary" id="shareAllBtn">Share all as PDF</button>
     </div>
+    <div id="secPanel" class="no-print"></div>
     ${buildReportSheetHTML(s,a,"reportSheet")}`;
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=e.target.value;renderReport();});
   /* Translate the rendered sheet rather than the templates, so print, PDF and
@@ -1281,6 +1283,7 @@ function renderReport(){
     if(window.I18N)I18N.setLang(e.target.value);
     renderReport();                       // re-render gives a clean English base
   });
+  applyReportSections();
   applyReportLang();
   document.getElementById("printBtn").addEventListener("click",()=>{
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("print-target"));
@@ -1361,6 +1364,19 @@ function forcePrintLikeLayout(sourceEl,fn){
 
 /* Re-applied after every render. English is the source markup, so switching
    back needs no reverse dictionary — the re-render already is English. */
+
+/* Sections are keyed off the English headings, so this must run BEFORE
+   applyReportLang() — after translation the keys would no longer match. */
+function applyReportSections(){
+  if(!window.ReportSections)return;
+  const SEG="college";
+  document.querySelectorAll("#v-report, #v-report-all, #v-certificate")
+    .forEach(v=>ReportSections.apply(v,SEG));
+  const holder=document.getElementById("secPanel");
+  const sheet=document.querySelector("#v-report .sheet, #reportSheet");
+  if(holder&&sheet)ReportSections.mountPanel(holder,sheet,SEG,()=>renderReport());
+}
+
 function applyReportLang(){
   if(!window.I18N)return;
   const lang=I18N.getLang();

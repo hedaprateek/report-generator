@@ -351,6 +351,8 @@ tbody tr.clickable:hover{background:#FAF8F2}
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/report-sections.js"></script>
+<script src="../assets/js/projects.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -488,6 +490,13 @@ const SAMPLE_SHEETS = {"Students":[["Roll No","Student Name","Class","Gender","D
 [4,"Ananya Rao","P","P","L","P","P","P"],
 [5,"Vivaan Desai","A","P","P","P","A","P"]
 ]
+,
+"Projects":[["Project / Activity","Status","Date","Class / Batch","What the children did"],
+ ["Solar System Model","Completed","2025-08-22","3rd A","Built the planets from clay and labelled each one."],
+ ["Class Newspaper","Completed","2025-09-12","3rd A","Wrote and illustrated a one-page class paper."],
+ ["Water Cycle Chart","Completed","2025-10-03","3rd A","Group charts showing evaporation and rain."],
+ ["Local Market Survey","Upcoming","2025-10-24","3rd A","Visiting the market to record prices and weights."],
+ ["Science Fair Entry","Upcoming","2025-11-21","3rd A","Simple working models, one per group."]]
 };
 
 /* =================================================================
@@ -1278,6 +1287,20 @@ function topicsHTML(){
     ${withTopics.map(cy=>`<p class="topics-line"><b>${esc(cy.name)}:</b> ${esc(cy.topics)}</p>`).join("")}
   </div>`;
 }
+
+/* Class-level, so it is read once from the loaded workbook rather than per
+   student. Returns "" when the sheet is absent — an academy that does not run
+   projects simply never sees the section. */
+function projectsHTML(){
+  if(!window.Projects||!LAST_SHEETS)return"";
+  try{
+    const pr=Projects.read(LAST_SHEETS,DATA&&DATA.batch);
+    if(!pr)return"";
+    Projects.injectCSS();
+    return Projects.sectionHTML(pr,{heading:"Projects & activities"});
+  }catch(e){return"";}
+}
+
 function goalsHTML(s){
   if(!s.latestGoals)return"";
   return `<div class="rep-sec"><h3>Goals for next term</h3><div class="goals-box">${esc(s.latestGoals)}</div></div>`;
@@ -1331,6 +1354,7 @@ function reportSheetHTML(s){
     </div></div>
     ${marksTableHTML(s)}
     ${goalsHTML(s)}
+    ${projectsHTML()}
     ${teacherSectionHTML(s,noteText)}
     <div class="sign">
       <div>${esc(LABELS.sign1)}</div><div>${esc(LABELS.sign2)}</div><div>${esc(LABELS.sign3)}</div>
@@ -1358,6 +1382,7 @@ function renderReport(){
       <button class="btn btn-primary" id="shareAllBtn">Share all as PDF</button>
       <button class="btn btn-ghost" id="printAllBtn" style="margin-left:auto">Print All Students</button>
     </div>
+    <div id="secPanel" class="no-print"></div>
     ${reportSheetHTML(s)}`;
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=Number(e.target.value);renderReport();});
   /* Translate the rendered sheet rather than the templates, so print, PDF and
@@ -1367,6 +1392,7 @@ function renderReport(){
     if(window.I18N)I18N.setLang(e.target.value);
     renderReport();                       // re-render gives a clean English base
   });
+  applyReportSections();
   applyReportLang();
   document.getElementById("printBtn").addEventListener("click",()=>window.print());
   document.getElementById("shareBtn").addEventListener("click",e=>{
@@ -1389,6 +1415,19 @@ function renderReport(){
 
 /* Re-applied after every render. English is the source markup, so switching
    back needs no reverse dictionary — the re-render already is English. */
+
+/* Sections are keyed off the English headings, so this must run BEFORE
+   applyReportLang() — after translation the keys would no longer match. */
+function applyReportSections(){
+  if(!window.ReportSections)return;
+  const SEG="primary";
+  document.querySelectorAll("#v-report, #v-report-all, #v-certificate")
+    .forEach(v=>ReportSections.apply(v,SEG));
+  const holder=document.getElementById("secPanel");
+  const sheet=document.querySelector("#v-report .sheet, #reportSheet");
+  if(holder&&sheet)ReportSections.mountPanel(holder,sheet,SEG,()=>renderReport());
+}
+
 function applyReportLang(){
   if(!window.I18N)return;
   const lang=I18N.getLang();

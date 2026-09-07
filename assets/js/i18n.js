@@ -100,6 +100,11 @@ const HI={
   "Subject Teacher":"विषय शिक्षक",
   "Principal":"प्राचार्य",
 
+  // --- projects ---
+  "Projects & activities":"परियोजनाएँ और गतिविधियाँ",
+  "Recently completed":"हाल ही में पूर्ण",
+  "Coming up":"आगामी",
+
   // --- the exported page's own furniture ---
   "Tap any area to see more detail.":"अधिक जानकारी के लिए किसी भी क्षेत्र पर टैप करें।"
 };
@@ -171,6 +176,11 @@ const MR={
   "Academy Head":"मुख्याध्यापक",
   "Subject Teacher":"विषय शिक्षक",
   "Principal":"मुख्याध्यापक",
+
+  // --- projects ---
+  "Projects & activities":"प्रकल्प आणि उपक्रम",
+  "Recently completed":"नुकतेच पूर्ण झालेले",
+  "Coming up":"येणारे",
 
   // --- the exported page's own furniture ---
   "Tap any area to see more detail.":"अधिक माहितीसाठी कोणत्याही भागावर टॅप करा."

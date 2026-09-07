@@ -346,6 +346,8 @@ tbody tr.clickable:hover{background:#FAF8F2}
 </style>
 <script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/report-sections.js"></script>
+<script src="../assets/js/projects.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -473,6 +475,13 @@ const SAMPLE_SHEETS = {
 ],
 "Tests":[[null,"TEST →","Rhymes & Numbers Check",null,null,null,null,null,null,null,"Alphabet Recognition",null,null,null,null,null,null],[null,"DATE →","2025-10-10",null,null,null,null,null,null,null,"2025-12-05",null,null,null,null,null,null],["Roll No","Student Name","Rhymes","Rhymes Comment","Numbers 1-20","Numbers 1-20 Comment","Alphabets","Alphabets Comment","Remarks",null,"Rhymes","Rhymes Comment","Numbers 1-20","Numbers 1-20 Comment","Alphabets","Alphabets Comment","Remarks"],[1,"Aadhya Sharma","Excellent","Sings along confidently.","Good","Counts to 10 unaided.","Excellent","Names all letters correctly.","Confident and enthusiastic throughout.",null,"Excellent","All letters instantly recognized.","Excellent","Reading simple three-letter words.","Excellent","Writes her name unaided.","Reading short words now."],[2,"Reyansh Mehta","Satisfactory","Joining in more each week.","Good","Comfortable up to number 15.","Satisfactory","Recognizes about half the alphabet.","Getting there with encouragement.",null,"Good","Most letters recognized confidently.","Satisfactory","Matching letters to sounds slowly.","Good","Attempts to write his name.","Steady progress, keep practicing at home."],[3,"Ishaan Kulkarni","Good","Knows most rhymes by heart.","Satisfactory","Counts to 10 with occasional help.","Satisfactory","Knows about a third of the alphabet.","Quiet but accurate.",null,"Satisfactory","More letters recognized than last check.","Satisfactory","Beginning to match some sounds.","Satisfactory","Copies his name with a guide.","Improving week by week."],[4,"Myra Kapoor","Excellent","Leads the class in rhyme time.","Excellent","Counts past 20 confidently.","Excellent","Reads simple three-letter words.","Outstanding all round.",null,"Excellent","Full alphabet mastered.","Excellent","Blending simple sounds already.","Excellent","Writes full name confidently.","Way ahead of the group."],[5,"Vihaan Joshi","Satisfactory","Enjoys the tunes, still learning words.","Needs Practice","Counting to 10 is still tricky.","Satisfactory","Recognizes about a third of the alphabet.","Needs regular practice at home.",null,"Satisfactory","Around half the alphabet now.","Satisfactory","Starting to match a few sounds.","Satisfactory","Traces his name with help.","Good improvement since last check."]],
 "Milestones":[["Roll No","Student Name","Holds pencil correctly","Counts to 20","Ties shoelaces","Uses scissors safely","Says full name & age","Recognizes own name in print"],[1,"Aadhya Sharma","Yes","Yes","Not Yet","Yes","Yes","Yes"],[2,"Reyansh Mehta","Yes","Not Yet","Not Yet","Not Yet","Yes","Not Yet"],[3,"Ishaan Kulkarni","Not Yet","Not Yet","Not Yet","Yes","Yes","Not Yet"],[4,"Myra Kapoor","Yes","Yes","Yes","Yes","Yes","Yes"],[5,"Vihaan Joshi","Not Yet","Not Yet","Not Yet","Not Yet","Yes","Not Yet"]]
+,
+"Projects":[["Project / Activity","Status","Date","Class / Batch","What the children did"],
+ ["My Family Tree","Completed","2025-08-14","Nursery A","Brought photos and talked about who lives at home."],
+ ["Monsoon Collage","Completed","2025-09-05","Nursery A","Tore coloured paper to make clouds and rain."],
+ ["Vegetable Printing","Completed","2025-09-26","Nursery A","Used okra and potato halves to stamp patterns."],
+ ["Diwali Lantern","Upcoming","2025-10-17","Nursery A","Making paper lanterns to take home."],
+ ["Little Gardeners","Upcoming","2025-11-07","Nursery A","Planting methi seeds and watching them sprout."]]
 };
 
 /* =================================================================
@@ -1218,6 +1227,20 @@ function milestonesHTML(s){
   }).join("");
   return `<div class="rep-sec"><h3>Milestones</h3><div class="mile-grid">${items}</div></div>`;
 }
+
+/* Class-level, so it is read once from the loaded workbook rather than per
+   student. Returns "" when the sheet is absent — an academy that does not run
+   projects simply never sees the section. */
+function projectsHTML(){
+  if(!window.Projects||!LAST_SHEETS)return"";
+  try{
+    const pr=Projects.read(LAST_SHEETS,DATA&&DATA.batch);
+    if(!pr)return"";
+    Projects.injectCSS();
+    return Projects.sectionHTML(pr,{heading:"Projects & activities"});
+  }catch(e){return"";}
+}
+
 function goalsHTML(s){
   if(!s.latestGoals)return"";
   return `<div class="rep-sec"><h3>Goals for next term</h3><div class="goals-box">${esc(s.latestGoals)}</div></div>`;
@@ -1323,6 +1346,7 @@ function reportSheetHTML(s){
     </div></div>
     ${milestonesHTML(s)}
     ${goalsHTML(s)}
+    ${projectsHTML()}
     ${skillChecksHTML(s)}
     ${teacherSectionHTML(s,noteText)}
     <div class="sign">
@@ -1352,6 +1376,7 @@ function renderReport(){
       <button class="btn btn-primary" id="shareAllBtn">Share all as PDF</button>
       <button class="btn btn-ghost" id="printAllBtn" style="margin-left:auto">Print All Students</button>
     </div>
+    <div id="secPanel" class="no-print"></div>
     ${reportSheetHTML(s)}`;
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=Number(e.target.value);renderReport();});
   document.getElementById("printBtn").addEventListener("click",()=>window.print());
@@ -1379,11 +1404,25 @@ function renderReport(){
     if(window.I18N)I18N.setLang(e.target.value);
     renderReport();                       // re-render gives a clean English base
   });
+  applyReportSections();
   applyReportLang();
 }
 
 /* Re-applied after every render. English is the source markup, so switching
    back needs no reverse dictionary — the re-render already is English. */
+
+/* Sections are keyed off the English headings, so this must run BEFORE
+   applyReportLang() — after translation the keys would no longer match. */
+function applyReportSections(){
+  if(!window.ReportSections)return;
+  const SEG="pre-primary";
+  document.querySelectorAll("#v-report, #v-report-all, #v-certificate")
+    .forEach(v=>ReportSections.apply(v,SEG));
+  const holder=document.getElementById("secPanel");
+  const sheet=document.querySelector("#v-report .sheet, #reportSheet");
+  if(holder&&sheet)ReportSections.mountPanel(holder,sheet,SEG,()=>renderReport());
+}
+
 function applyReportLang(){
   if(!window.I18N)return;
   const lang=I18N.getLang();
