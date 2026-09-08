@@ -1431,6 +1431,9 @@ function applyReportSections(){
 }
 
 function applyReportLang(){
+  // the vendor stamp lives inside the sheet so print, PDF, Print All and the
+  // exported page all inherit it; done here because this runs on every path
+  if(window.VendorFooter)VendorFooter.stampReports();
   if(!window.I18N)return;
   const lang=I18N.getLang();
   document.querySelectorAll("#v-report .sheet, #v-report-all .sheet, #v-certificate .sheet, #reportSheet")

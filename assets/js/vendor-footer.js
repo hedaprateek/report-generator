@@ -4,9 +4,16 @@
    One place so the wording and styling stay identical on every page, and a
    change of company name is a one-line edit rather than a sweep of 22 files.
 
-   Deliberately marked no-print: this is a credit on the software, not on a
-   child's report card. Printed reports and anything a parent receives are
-   left alone unless the academy asks otherwise.
+   Two separate things live here:
+
+     · the page footer   — the credit on the software itself, marked no-print
+                           because it belongs to the tool, not to the paper
+     · the report stamp  — a line INSIDE the report sheet, which the academy
+                           asked for, so it does print
+
+   The stamp goes inside .sheet rather than being drawn on top of it, because
+   everything a parent receives is built from that same DOM: print, the PDF,
+   Print All and the exported web page all inherit it with no extra work.
    ===================================================================== */
 (function(){
 "use strict";
@@ -24,15 +31,22 @@ const CSS=`
 .vendor-footer b{color:#1F2A44;font-weight:700;letter-spacing:.01em}
 .vendor-footer .vf-dot{opacity:.5;margin:0 6px}
 @media print{.vendor-footer{display:none !important}}
+
+/* The stamp on the report itself. Quiet on purpose — the academy's own
+   footer line above it is the one that should carry weight. */
+.vf-stamp{
+  margin-top:3px;font-size:8px;letter-spacing:.02em;color:#8A8F9C;
+  text-align:center;line-height:1.5;
+}
+.vf-stamp b{font-weight:700;color:#6B7180}
+@media print{.vf-stamp{color:#8A8F9C !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 `;
 
 function mount(){
   if(document.getElementById("vendorFooter"))return;
   if(!document.body)return;
 
-  const style=document.createElement("style");
-  style.textContent=CSS;
-  document.head.appendChild(style);
+  injectStyle();
 
   const f=document.createElement("footer");
   f.id="vendorFooter";
@@ -41,8 +55,40 @@ function mount(){
   document.body.appendChild(f);
 }
 
+/* Stamps every report sheet on the page. Called after each render, so
+   Print All and the all-students PDF carry it as well as the single report.
+   Idempotent: a sheet that already has one is left alone, and a re-render
+   builds fresh sheets anyway. */
+function stampReports(root){
+  const scope=root||document;
+  if(!scope.querySelectorAll)return 0;
+  injectStyle();
+  let n=0;
+  scope.querySelectorAll(".sheet").forEach(sheet=>{
+    if(sheet.querySelector(".vf-stamp"))return;
+    const stamp=document.createElement("div");
+    stamp.className="vf-stamp";
+    stamp.innerHTML="<b>"+COMPANY+"</b> · by "+AUTHOR;
+    // sit under the academy's own footer line when there is one, so the two
+    // read as a pair rather than competing
+    const foot=sheet.querySelector(".rep-foot");
+    if(foot)foot.parentNode.insertBefore(stamp,foot.nextSibling);
+    else sheet.appendChild(stamp);
+    n++;
+  });
+  return n;
+}
+
+function injectStyle(){
+  if(document.getElementById("vendorFooterCSS"))return;
+  const style=document.createElement("style");
+  style.id="vendorFooterCSS";
+  style.textContent=CSS;
+  document.head.appendChild(style);
+}
+
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);
 else mount();
 
-window.VendorFooter={COMPANY,AUTHOR,mount};
+window.VendorFooter={COMPANY,AUTHOR,mount,stampReports};
 })();
