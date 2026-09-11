@@ -589,6 +589,7 @@ async function sharePDF(el,filename,title,btnEl){
   if(typeof html2pdf==="undefined"){alert("The PDF engine is still loading (needs internet on first load) — try again in a moment.");return;}
   const orig=btnEl?btnEl.textContent:null;
   if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
+  if(window.VendorFooter)VendorFooter.stampReports(el);
   try{
     const blob=await html2pdf().set({margin:0,filename,image:{type:"jpeg",quality:.95},
       html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
@@ -819,6 +820,9 @@ function use(sheets,onOk,skipReview,noContribute){
   document.getElementById("ofApp").style.display="block";
   document.getElementById("ofPill").textContent=CFG.pill?CFG.pill(data):"";
   CFG.render(data,document.getElementById("ofMount"),sheets);
+  // the vendor credit lives inside each printable document, so it travels
+  // with print, the PDF and anything shared
+  if(window.VendorFooter)VendorFooter.stampReports();
   if(!noContribute)contributeRoster(sheets);
   if(onOk)onOk();
 }

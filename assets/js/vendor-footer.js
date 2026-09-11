@@ -55,16 +55,30 @@ function mount(){
   document.body.appendChild(f);
 }
 
-/* Stamps every report sheet on the page. Called after each render, so
-   Print All and the all-students PDF carry it as well as the single report.
-   Idempotent: a sheet that already has one is left alone, and a re-render
-   builds fresh sheets anyway. */
+/* Every printable document in the suite, by the container each tool prints.
+   They grew separate names, so the list is explicit rather than clever — a
+   new tool that prints something has to be added here, and that is easier to
+   notice than a selector quietly failing to match. */
+const PRINTABLE=[
+  ".sheet",        // segment reports and certificates
+  ".receipt",      // Fees & Dues
+  ".doc-sheet",    // Certificates / bonafide documents
+  ".card-sheet",   // ID cards, ten to a page
+  ".tt-sheet",     // Timetable
+  ".rp-stage",     // Results Pack
+  ".sf-page"       // Student File
+].join(",");
+
+/* Stamps every printable document on the page. Called after each render, so
+   Print All and the all-students PDF carry it as well as a single report.
+   Idempotent: one that already has a stamp is left alone, and a re-render
+   builds fresh nodes anyway. */
 function stampReports(root){
   const scope=root||document;
   if(!scope.querySelectorAll)return 0;
   injectStyle();
   let n=0;
-  scope.querySelectorAll(".sheet").forEach(sheet=>{
+  scope.querySelectorAll(PRINTABLE).forEach(sheet=>{
     if(sheet.querySelector(".vf-stamp"))return;
     const stamp=document.createElement("div");
     stamp.className="vf-stamp";
@@ -89,6 +103,16 @@ function injectStyle(){
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);
 else mount();
+
+/* A safety net for every print path in the suite. Tools render their
+   documents at different moments and some have no render hook at all, so
+   rather than chase each one, stamp whatever is about to go on paper.
+   Idempotent, so this costs nothing where the render already stamped.
+   (PDF export goes through html2canvas and never fires this, which is why
+   the render-time call still exists.) */
+window.addEventListener("beforeprint",function(){
+  try{stampReports();}catch(e){}
+});
 
 window.VendorFooter={COMPANY,AUTHOR,mount,stampReports};
 })();

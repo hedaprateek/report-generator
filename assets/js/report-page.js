@@ -65,6 +65,8 @@ body{background:#EFEDE6;padding:14px;
 .sheet-inner{transform:none !important}
 .no-print{display:none !important}
 .rp-hint{max-width:840px;margin:0 auto 10px;font-size:12px;color:#556074;text-align:center}
+.vf-stamp{margin-top:10px;text-align:center;font-size:9px;letter-spacing:.02em;color:#8A8F9C;line-height:1.5}
+.vf-stamp b{font-weight:700;color:#6B7180}
 .rp-foot{max-width:840px;margin:12px auto 0;font-size:11px;color:#656E82;
   text-align:center;line-height:1.6}
 /* the tiles stay tappable, so make that obvious on a touch screen */
@@ -119,6 +121,7 @@ ${SHELL_CSS}
 ${clone.outerHTML}
 <div class="rp-foot">${esc(meta.academy||"")}${meta.generated?" · "+esc(meta.generated):""}<br>
 Saved on your device — this page works offline and sends nothing anywhere.</div>
+<div class="vf-stamp"><b>Stunity Tech</b> · by Prateek</div>
 </body>
 </html>`
   };

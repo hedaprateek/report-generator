@@ -98,6 +98,8 @@ body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe
 .note{background:#E2F0EF;border-left:3px solid #0E7C7B;border-radius:8px;padding:11px 13px;
   font-size:13px;color:#22595a;line-height:1.6}
 .foot{text-align:center;font-size:10.5px;color:#656E82;margin-top:18px;line-height:1.6}
+.vf-stamp{margin-top:10px;text-align:center;font-size:9px;letter-spacing:.02em;color:#8A8F9C;line-height:1.5}
+.vf-stamp b{font-weight:700;color:#6B7180}
 .legend{font-size:10.5px;color:#656E82;margin-top:9px;line-height:1.5}
 </style></head>
 <body>
@@ -171,6 +173,7 @@ body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe
     Prepared for ${esc(d.parent||"the parent/guardian")} · ${esc(d.generated)}<br>
     ${esc(d.academy)} — this file works offline; save it and open it any time.
   </div>
+  <div class="vf-stamp"><b>Stunity Tech</b> · by Prateek</div>
 </div>
 <script>
 // Deliberately tiny and dependency-free: this has to run on an old phone forever.
