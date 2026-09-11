@@ -293,6 +293,7 @@ svg text{font-family:system-ui,sans-serif}
 <script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/report-sections.js"></script>
 <script src="../assets/js/health-block.js"></script>
+<script src="../assets/js/notes-timeline.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -416,7 +417,7 @@ svg text{font-family:system-ui,sans-serif}
 /* =================================================================
    EMBEDDED SAMPLE (June records) — goes through the same parser
    ================================================================= */
-const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample College",null,null,null,null,null,null,null,null,null],["BATCH","B.Tech CSE - Div A",null,"YEAR","2025-26",null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null],[null,"SEMESTER →","Semester 1",null,null,null,null,"Semester 2",null,null,null],[null,"DATE →","2025-11-20",null,null,null,null,"2026-05-18",null,null,null],[null,"TYPE →","End Semester",null,null,null,null,"End Semester",null,null,null],["Roll No","Student Name","Engineering Mathematics 1","Physics","Programming in C","Communication Skills",null,"Engineering Mathematics 2","Data Structures","Digital Electronics","Environmental Studies"],[1,"Aditi Rao",88,82,91,85,null,90,93,87,89],[2,"Kunal Deshmukh",68,65,70,72,null,66,64,69,71],[3,"Sanika Joshi",52,48,55,60,null,70,68,72,75],[4,"Rohan Bhosale",75,70,78,74,null,55,38,50,48],[5,"Tanvi Kulkarni",80,76,82,79,null,78,"A",81,77]],"Students":[["Roll No","Student Name","Program / Division","Gender","Parent / Guardian Name","Parent Phone","Teacher Rating","Behaviour Points","Previous CGPA","Notes","Blood Group","Height (cm)","Weight (kg)"],[1,"Aditi Rao","B.Tech CSE - Div A",null,"Aditi Family",null,9,9,8.6,"Consistently excellent, mentors juniors.","A+",170,62],[2,"Kunal Deshmukh","B.Tech CSE - Div A",null,"Kunal Family",null,6,7,null,null,"B+",162,54.5],[3,"Sanika Joshi","B.Tech CSE - Div A",null,"Sanika Family",null,7,8,null,"Great improvement this semester, keep it up.","O+",175,68],[4,"Rohan Bhosale","B.Tech CSE - Div A",null,"Rohan Family",null,5,6,null,"Needs to attend Data Structures classes regularly.","AB-",167,58.8],[5,"Tanvi Kulkarni","B.Tech CSE - Div A",null,"Tanvi Family",null,8,8,null,null,"B+",169,60.3]],"Subjects":[["Semester","Subject","Credits"],["Semester 1","Engineering Mathematics 1",4],["Semester 1","Physics",3],["Semester 1","Programming in C",4],["Semester 1","Communication Skills",2],["Semester 2","Engineering Mathematics 2",4],["Semester 2","Data Structures",4],["Semester 2","Digital Electronics",3],["Semester 2","Environmental Studies",2]],"Attendance":[[null,"SEMESTER →","Semester 1",null,null,null,null,"Semester 2",null,null,null],["Roll No","Student Name","Engineering Mathematics 1","Physics","Programming in C","Communication Skills",null,"Engineering Mathematics 2","Data Structures","Digital Electronics","Environmental Studies"],[1,"Aditi Rao",95,92,96,94,null,96,94,95,97],[2,"Kunal Deshmukh",84,81,85,83,null,82,80,84,81],[3,"Sanika Joshi",72,70,74,73,null,88,86,89,87],[4,"Rohan Bhosale",85,83,86,84,null,68,65,70,67],[5,"Tanvi Kulkarni",91,89,92,90,null,90,60,91,88]]};
+const SAMPLE_SHEETS = {"Notes":[["Date","Student Name","By","Type","Note","Share on report"],["2025-07-22","Aditi Rao","Prof. Bhagwat","Observation","Mentors two juniors in the programming lab without being asked.","Yes"],["2025-08-30","Aditi Rao","Prof. Bhagwat","Achievement","Her data-structures assignment was used as the reference solution for the batch.","Yes"],["2025-09-19","Aditi Rao","Prof. Bhagwat","Observation","Reading well beyond the syllabus in algorithms.","Yes"],["2025-09-03","Kunal Deshmukh","Prof. Bhagwat","Concern","Lab submissions consistently late; discussed a weekly plan.","Yes"],["2025-10-01","Rohan Bhosale","Prof. Bhagwat","Parent call","Spoke to guardian about Data Structures attendance.","Yes"]],"Marks":[["ACADEMY","Sample College",null,null,null,null,null,null,null,null,null],["BATCH","B.Tech CSE - Div A",null,"YEAR","2025-26",null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null],[null,"SEMESTER →","Semester 1",null,null,null,null,"Semester 2",null,null,null],[null,"DATE →","2025-11-20",null,null,null,null,"2026-05-18",null,null,null],[null,"TYPE →","End Semester",null,null,null,null,"End Semester",null,null,null],["Roll No","Student Name","Engineering Mathematics 1","Physics","Programming in C","Communication Skills",null,"Engineering Mathematics 2","Data Structures","Digital Electronics","Environmental Studies"],[1,"Aditi Rao",88,82,91,85,null,90,93,87,89],[2,"Kunal Deshmukh",68,65,70,72,null,66,64,69,71],[3,"Sanika Joshi",52,48,55,60,null,70,68,72,75],[4,"Rohan Bhosale",75,70,78,74,null,55,38,50,48],[5,"Tanvi Kulkarni",80,76,82,79,null,78,"A",81,77]],"Students":[["Roll No","Student Name","Program / Division","Gender","Parent / Guardian Name","Parent Phone","Teacher Rating","Behaviour Points","Previous CGPA","Notes","Blood Group","Height (cm)","Weight (kg)"],[1,"Aditi Rao","B.Tech CSE - Div A",null,"Aditi Family",null,9,9,8.6,"Consistently excellent, mentors juniors.","A+",170,62],[2,"Kunal Deshmukh","B.Tech CSE - Div A",null,"Kunal Family",null,6,7,null,null,"B+",162,54.5],[3,"Sanika Joshi","B.Tech CSE - Div A",null,"Sanika Family",null,7,8,null,"Great improvement this semester, keep it up.","O+",175,68],[4,"Rohan Bhosale","B.Tech CSE - Div A",null,"Rohan Family",null,5,6,null,"Needs to attend Data Structures classes regularly.","AB-",167,58.8],[5,"Tanvi Kulkarni","B.Tech CSE - Div A",null,"Tanvi Family",null,8,8,null,null,"B+",169,60.3]],"Subjects":[["Semester","Subject","Credits"],["Semester 1","Engineering Mathematics 1",4],["Semester 1","Physics",3],["Semester 1","Programming in C",4],["Semester 1","Communication Skills",2],["Semester 2","Engineering Mathematics 2",4],["Semester 2","Data Structures",4],["Semester 2","Digital Electronics",3],["Semester 2","Environmental Studies",2]],"Attendance":[[null,"SEMESTER →","Semester 1",null,null,null,null,"Semester 2",null,null,null],["Roll No","Student Name","Engineering Mathematics 1","Physics","Programming in C","Communication Skills",null,"Engineering Mathematics 2","Data Structures","Digital Electronics","Environmental Studies"],[1,"Aditi Rao",95,92,96,94,null,96,94,95,97],[2,"Kunal Deshmukh",84,81,85,83,null,82,80,84,81],[3,"Sanika Joshi",72,70,74,73,null,88,86,89,87],[4,"Rohan Bhosale",85,83,86,84,null,68,65,70,67],[5,"Tanvi Kulkarni",91,89,92,90,null,90,60,91,88]]};
 
 /* =================================================================
    PARSER
@@ -1247,6 +1248,7 @@ function buildReportSheetHTML(s,a,sheetId){
         <div class="remarks" contenteditable="true" spellcheck="false">${remark}</div>
       </div>
 
+      ${notesHTML(s)}
       ${healthHTML(s)}
 
       <div class="sign">
@@ -1374,6 +1376,16 @@ function forcePrintLikeLayout(sourceEl,fn){
 /* Reference details a parent occasionally needs. Returns "" when the workbook
    records none of them, so an academy that leaves the columns blank never
    sees an empty box. */
+function notesHTML(s){
+  if(!window.NotesTimeline||!LAST_SHEETS)return"";
+  try{
+    const entries=NotesTimeline.read(LAST_SHEETS,s.name);
+    if(!entries.length)return"";
+    NotesTimeline.injectCSS();
+    return NotesTimeline.sectionHTML(entries,{heading:"Through the term"});
+  }catch(e){return"";}
+}
+
 function healthHTML(s){
   if(!window.HealthBlock||!LAST_SHEETS)return"";
   try{

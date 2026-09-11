@@ -49,6 +49,7 @@ const PRECACHE=[
   "./assets/js/student-master.js","./assets/js/test-codec.js","./assets/js/vendor-footer.js",
   "./assets/js/workbook-pool.js","./assets/js/offline.js","./assets/js/i18n.js",
   "./assets/js/report-sections.js","./assets/js/projects.js","./assets/js/health-block.js",
+  "./assets/js/notes-timeline.js",
 
   "./assets/vendor/xlsx.full.min.js","./assets/vendor/html2pdf.bundle.min.js",
   "./assets/vendor/html2canvas.min.js","./assets/vendor/jspdf.umd.min.js",

@@ -353,6 +353,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 <script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/report-sections.js"></script>
 <script src="../assets/js/health-block.js"></script>
+<script src="../assets/js/notes-timeline.js"></script>
 <script src="../assets/js/projects.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
@@ -468,7 +469,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 /* =================================================================
    EMBEDDED SAMPLE DATA — goes through the same parser as an upload
    ================================================================= */
-const SAMPLE_SHEETS = {"Students":[["Roll No","Student Name","Class","Gender","Date of Birth","Parent / Guardian Name","Parent Phone","Photo URL","Notes","Blood Group","Height (cm)","Weight (kg)"],[1,"Aarav Shah","3rd A","M","2017-07-14","Mr. Shah","98765 55555",null,"Loves science experiments.","B+",128,26.5],[2,"Diya Nair","3rd A","F","2017-03-02","Mrs. Nair","98765 66666",null,null,"O+",124,24.8],[3,"Kabir Singh","3rd A","M","2017-05-21","Mr. Singh","98765 77777","Quiet, a strong reader.",null,"A+",131,28.2],[4,"Ananya Rao","3rd A","F","2017-01-09","Mrs. Rao","98765 88888",null,null,"AB+",126,25.9],[5,"Vivaan Desai","3rd A","M","2017-09-30","Mr. Desai","98765 99999","Energetic, needs help staying focused.",null,"O-",129,27.1]],
+const SAMPLE_SHEETS = {"Notes":[["Date","Student Name","By","Type","Note","Share on report"],["2025-07-09","Aarav Shah","Mrs. Deshpande","Observation","Set up his own experiment to test which paper absorbs most water. Unprompted.","Yes"],["2025-08-12","Aarav Shah","Mrs. Deshpande","Achievement","Came first in the class science quiz.","Yes"],["2025-09-05","Aarav Shah","Mrs. Deshpande","Concern","Rushing his written work - the thinking is ahead of the handwriting.","Yes"],["2025-09-27","Aarav Shah","Mrs. Deshpande","Parent call","Agreed with father to practise ten minutes of writing at home each evening.","Yes"],["2025-10-04","Aarav Shah","Office","Internal","Bus route change paperwork pending - staff note.","No"],["2025-08-21","Diya Nair","Mrs. Deshpande","Observation","Read aloud to the younger group and did it beautifully.","Yes"],["2025-09-18","Kabir Singh","Mrs. Deshpande","Observation","Finished the library's whole animal series this term.","Yes"]],"Students":[["Roll No","Student Name","Class","Gender","Date of Birth","Parent / Guardian Name","Parent Phone","Photo URL","Notes","Blood Group","Height (cm)","Weight (kg)"],[1,"Aarav Shah","3rd A","M","2017-07-14","Mr. Shah","98765 55555",null,"Loves science experiments.","B+",128,26.5],[2,"Diya Nair","3rd A","F","2017-03-02","Mrs. Nair","98765 66666",null,null,"O+",124,24.8],[3,"Kabir Singh","3rd A","M","2017-05-21","Mr. Singh","98765 77777","Quiet, a strong reader.",null,"A+",131,28.2],[4,"Ananya Rao","3rd A","F","2017-01-09","Mrs. Rao","98765 88888",null,null,"AB+",126,25.9],[5,"Vivaan Desai","3rd A","M","2017-09-30","Mr. Desai","98765 99999","Energetic, needs help staying focused.",null,"O-",129,27.1]],
 "Marks":[["ACADEMY","Sample Academy"],["BATCH","3rd A",null,"YEAR","2025-26"],[],[null,"TEST →","Unit Test 1",null,null,null,null,null,"Term 1",null,null,null,null],[null,"DATE →","2025-08-20",null,null,null,null,null,"2025-10-10",null,null,null,null],[null,"TYPE →","Unit Test",null,null,null,null,null,"Term Exam",null,null,null,null],[null,"MAX MARKS →",25,25,25,25,100,null,25,25,25,25,100],["Roll No","Student Name","English","Hindi","Maths","EVS","Total",null,"English","Hindi","Maths","EVS","Total"],
 [1,"Aarav Shah",19,17,21,20,77,null,22,20,23,21,86],
 [2,"Diya Nair",15,"A",18,16,49,null,17,16,19,18,70],
@@ -1356,6 +1357,7 @@ function reportSheetHTML(s){
     ${marksTableHTML(s)}
     ${goalsHTML(s)}
     ${projectsHTML()}
+    ${notesHTML(s)}
     ${healthHTML(s)}
     ${teacherSectionHTML(s,noteText)}
     <div class="sign">
@@ -1424,6 +1426,16 @@ function renderReport(){
 /* Reference details a parent occasionally needs. Returns "" when the workbook
    records none of them, so an academy that leaves the columns blank never
    sees an empty box. */
+function notesHTML(s){
+  if(!window.NotesTimeline||!LAST_SHEETS)return"";
+  try{
+    const entries=NotesTimeline.read(LAST_SHEETS,s.name);
+    if(!entries.length)return"";
+    NotesTimeline.injectCSS();
+    return NotesTimeline.sectionHTML(entries,{heading:"Through the term"});
+  }catch(e){return"";}
+}
+
 function healthHTML(s){
   if(!window.HealthBlock||!LAST_SHEETS)return"";
   try{

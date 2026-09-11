@@ -115,6 +115,13 @@ const HI={
   "Recently completed":"हाल ही में पूर्ण",
   "Coming up":"आगामी",
 
+  // --- notes timeline (the Type column is teacher-typed, so the common ones) ---
+  "Through the term":"पूरे सत्र में",
+  "Observation":"अवलोकन",
+  "Parent call":"अभिभावक से बातचीत",
+  "Achievement":"उपलब्धि",
+  "Concern":"चिंता",
+
   // --- the exported page's own furniture ---
   "Tap any area to see more detail.":"अधिक जानकारी के लिए किसी भी क्षेत्र पर टैप करें।"
 };
@@ -201,6 +208,13 @@ const MR={
   "Projects & activities":"प्रकल्प आणि उपक्रम",
   "Recently completed":"नुकतेच पूर्ण झालेले",
   "Coming up":"येणारे",
+
+  // --- notes timeline (the Type column is teacher-typed, so the common ones) ---
+  "Through the term":"सत्रभर",
+  "Observation":"निरीक्षण",
+  "Parent call":"पालकांशी संवाद",
+  "Achievement":"यश",
+  "Concern":"काळजी",
 
   // --- the exported page's own furniture ---
   "Tap any area to see more detail.":"अधिक माहितीसाठी कोणत्याही भागावर टॅप करा."
