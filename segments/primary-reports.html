@@ -352,6 +352,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 <script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/report-sections.js"></script>
+<script src="../assets/js/health-block.js"></script>
 <script src="../assets/js/projects.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
@@ -467,7 +468,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 /* =================================================================
    EMBEDDED SAMPLE DATA — goes through the same parser as an upload
    ================================================================= */
-const SAMPLE_SHEETS = {"Students":[["Roll No","Student Name","Class","Gender","Date of Birth","Parent / Guardian Name","Parent Phone","Photo URL","Notes"],[1,"Aarav Shah","3rd A","M","2017-07-14","Mr. Shah","98765 55555",null,"Loves science experiments."],[2,"Diya Nair","3rd A","F","2017-03-02","Mrs. Nair","98765 66666",null,null],[3,"Kabir Singh","3rd A","M","2017-05-21","Mr. Singh","98765 77777","Quiet, a strong reader."],[4,"Ananya Rao","3rd A","F","2017-01-09","Mrs. Rao","98765 88888",null],[5,"Vivaan Desai","3rd A","M","2017-09-30","Mr. Desai","98765 99999","Energetic, needs help staying focused."]],
+const SAMPLE_SHEETS = {"Students":[["Roll No","Student Name","Class","Gender","Date of Birth","Parent / Guardian Name","Parent Phone","Photo URL","Notes","Blood Group","Height (cm)","Weight (kg)"],[1,"Aarav Shah","3rd A","M","2017-07-14","Mr. Shah","98765 55555",null,"Loves science experiments.","B+",128,26.5],[2,"Diya Nair","3rd A","F","2017-03-02","Mrs. Nair","98765 66666",null,null,"O+",124,24.8],[3,"Kabir Singh","3rd A","M","2017-05-21","Mr. Singh","98765 77777","Quiet, a strong reader.",null,"A+",131,28.2],[4,"Ananya Rao","3rd A","F","2017-01-09","Mrs. Rao","98765 88888",null,null,"AB+",126,25.9],[5,"Vivaan Desai","3rd A","M","2017-09-30","Mr. Desai","98765 99999","Energetic, needs help staying focused.",null,"O-",129,27.1]],
 "Marks":[["ACADEMY","Sample Academy"],["BATCH","3rd A",null,"YEAR","2025-26"],[],[null,"TEST →","Unit Test 1",null,null,null,null,null,"Term 1",null,null,null,null],[null,"DATE →","2025-08-20",null,null,null,null,null,"2025-10-10",null,null,null,null],[null,"TYPE →","Unit Test",null,null,null,null,null,"Term Exam",null,null,null,null],[null,"MAX MARKS →",25,25,25,25,100,null,25,25,25,25,100],["Roll No","Student Name","English","Hindi","Maths","EVS","Total",null,"English","Hindi","Maths","EVS","Total"],
 [1,"Aarav Shah",19,17,21,20,77,null,22,20,23,21,86],
 [2,"Diya Nair",15,"A",18,16,49,null,17,16,19,18,70],
@@ -1355,6 +1356,7 @@ function reportSheetHTML(s){
     ${marksTableHTML(s)}
     ${goalsHTML(s)}
     ${projectsHTML()}
+    ${healthHTML(s)}
     ${teacherSectionHTML(s,noteText)}
     <div class="sign">
       <div>${esc(LABELS.sign1)}</div><div>${esc(LABELS.sign2)}</div><div>${esc(LABELS.sign3)}</div>
@@ -1418,6 +1420,20 @@ function renderReport(){
 
 /* Sections are keyed off the English headings, so this must run BEFORE
    applyReportLang() — after translation the keys would no longer match. */
+
+/* Reference details a parent occasionally needs. Returns "" when the workbook
+   records none of them, so an academy that leaves the columns blank never
+   sees an empty box. */
+function healthHTML(s){
+  if(!window.HealthBlock||!LAST_SHEETS)return"";
+  try{
+    const items=HealthBlock.read(LAST_SHEETS,s.name);
+    if(!items.length)return"";
+    HealthBlock.injectCSS();
+    return HealthBlock.sectionHTML(items,{heading:"Physical & health"});
+  }catch(e){return"";}
+}
+
 function applyReportSections(){
   if(!window.ReportSections)return;
   const SEG="primary";

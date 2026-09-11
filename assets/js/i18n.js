@@ -100,6 +100,16 @@ const HI={
   "Subject Teacher":"विषय शिक्षक",
   "Principal":"प्राचार्य",
 
+  // --- physical & health ---
+  "Physical & health":"शारीरिक और स्वास्थ्य",
+  "Height":"ऊँचाई",
+  "Weight":"वज़न",
+  "Blood group":"रक्त समूह",
+  "Vision":"दृष्टि",
+  "Allergies":"एलर्जी",
+  "House":"सदन",
+  "Date of birth":"जन्म तिथि",
+
   // --- projects ---
   "Projects & activities":"परियोजनाएँ और गतिविधियाँ",
   "Recently completed":"हाल ही में पूर्ण",
@@ -176,6 +186,16 @@ const MR={
   "Academy Head":"मुख्याध्यापक",
   "Subject Teacher":"विषय शिक्षक",
   "Principal":"मुख्याध्यापक",
+
+  // --- physical & health ---
+  "Physical & health":"शारीरिक व आरोग्य",
+  "Height":"उंची",
+  "Weight":"वजन",
+  "Blood group":"रक्तगट",
+  "Vision":"दृष्टी",
+  "Allergies":"ॲलर्जी",
+  "House":"सदन",
+  "Date of birth":"जन्मतारीख",
 
   // --- projects ---
   "Projects & activities":"प्रकल्प आणि उपक्रम",

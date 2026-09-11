@@ -292,6 +292,7 @@ svg text{font-family:system-ui,sans-serif}
 <script src="../assets/js/pdf-safe.js"></script>
 <script src="../assets/js/i18n.js"></script>
 <script src="../assets/js/report-sections.js"></script>
+<script src="../assets/js/health-block.js"></script>
 <script src="../assets/js/report-page.js"></script>
 <script src="../assets/js/workbook-pool.js"></script>
 <link rel="stylesheet" href="../assets/css/a11y.css">
@@ -414,7 +415,7 @@ svg text{font-family:system-ui,sans-serif}
 /* =================================================================
    EMBEDDED SAMPLE (June records) — goes through the same parser
    ================================================================= */
-const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample Academy",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],["BATCH","12th Science",null,"YEAR","2025-26",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,"TEST →","CET-1",null,null,null,null,"JEE-1",null,null,null,null,"CET-2",null,null,null,null,"JEE-2",null,null,null,null,"Unit",null,null,null,null],[null,"DATE →","2025-06-20",null,null,null,null,"2025-06-22",null,null,null,null,"2025-06-27",null,null,null,null,"2025-06-29",null,null,null,null,"2025-06-29",null,null,null,null],[null,"TYPE →","CET",null,null,null,null,"JEE",null,null,null,null,"CET",null,null,null,null,"JEE",null,null,null,null,"unit tests",null,null,null,null],[null,"MAX MARKS →",50,50,100,200,null,100,100,100,300,null,50,50,100,200,null,100,100,100,300,null,100,100,100,100,300],["Roll No","Student Name","Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Biology","Maths","Total"],[1,"Ronak Rathi",35,38,52,125,null,48,26,25,99,null,33,45,36,114,null,30,84,22,136,null,30,84,"-",22,136],[2,"Shreyash Kanire",24,21,28,73,null,48,36,6,90,null,"A","A","A",0,null,3,35,3,41,null,3,35,"-",3,41],[3,"Veer Patil",16,22,30,68,null,43,30,2,75,null,19,28,38,85,null,3,38,8,49,null,3,38,38,8,87],[4,"Parth Joshi",35,25,22,82,null,34,14,2,50,null,23,25,32,80,null,1,68,1,70,null,1,68,68,"-",137],[5,"Adveta Teke","A","A","A",0,null,"A","A","A",0,null,21,32,30,83,null,12,105,5,122,null,12,105,105,5,227]],"Students":[["Roll No","Student Name","Batch","Gender","Parent / Guardian Name","Parent Phone","Teacher Rating","Behaviour Points","Notes"],[1,"Ronak Rathi","12th Science","M","Rathi Family",987654321,8,9,"Good job, needs improvement."],[2,"Shreyash Kanire","12th Science","M","Kanire Family",null,6,7,null],[3,"Veer Patil","12th Science","M","Patil Family",null,7,8,null],[4,"Parth Joshi","12th Science","M","Joshi Family",null,6,6,null],[5,"Adveta Teke","12th Science","F","Teke Family",null,9,9,null]],"Attendance":[["Roll No","Student Name","2025-06-20","2025-06-22","2025-06-24","2025-06-27","2025-06-29"],[1,"Ronak Rathi","P","P","P","P","P"],[2,"Shreyash Kanire","P","P","P","A","P"],[3,"Veer Patil","P","P","P","P","P"],[4,"Parth Joshi","P","P","L","P","P"],[5,"Adveta Teke","A","A","P","P","P"],[null,null,null,null,null,null,null],[null,null,null,null,null,null,null],[null,"Mark each day as  P (present) · A (absent) · L (leave).  Add a new dated column for every class day.",null,null,null,null,null]]};
+const SAMPLE_SHEETS = {"Marks":[["ACADEMY","Sample Academy",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],["BATCH","12th Science",null,"YEAR","2025-26",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,"TEST →","CET-1",null,null,null,null,"JEE-1",null,null,null,null,"CET-2",null,null,null,null,"JEE-2",null,null,null,null,"Unit",null,null,null,null],[null,"DATE →","2025-06-20",null,null,null,null,"2025-06-22",null,null,null,null,"2025-06-27",null,null,null,null,"2025-06-29",null,null,null,null,"2025-06-29",null,null,null,null],[null,"TYPE →","CET",null,null,null,null,"JEE",null,null,null,null,"CET",null,null,null,null,"JEE",null,null,null,null,"unit tests",null,null,null,null],[null,"MAX MARKS →",50,50,100,200,null,100,100,100,300,null,50,50,100,200,null,100,100,100,300,null,100,100,100,100,300],["Roll No","Student Name","Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Maths","Total",null,"Physics","Chemistry","Biology","Maths","Total"],[1,"Ronak Rathi",35,38,52,125,null,48,26,25,99,null,33,45,36,114,null,30,84,22,136,null,30,84,"-",22,136],[2,"Shreyash Kanire",24,21,28,73,null,48,36,6,90,null,"A","A","A",0,null,3,35,3,41,null,3,35,"-",3,41],[3,"Veer Patil",16,22,30,68,null,43,30,2,75,null,19,28,38,85,null,3,38,8,49,null,3,38,38,8,87],[4,"Parth Joshi",35,25,22,82,null,34,14,2,50,null,23,25,32,80,null,1,68,1,70,null,1,68,68,"-",137],[5,"Adveta Teke","A","A","A",0,null,"A","A","A",0,null,21,32,30,83,null,12,105,5,122,null,12,105,105,5,227]],"Students":[["Roll No","Student Name","Batch","Gender","Parent / Guardian Name","Parent Phone","Teacher Rating","Behaviour Points","Notes","Blood Group","Height (cm)","Weight (kg)"],[1,"Ronak Rathi","12th Science","M","Rathi Family",987654321,8,9,"Good job, needs improvement.","O+",168,58],[2,"Shreyash Kanire","12th Science","M","Kanire Family",null,6,7,null,"A+",160,52.5],[3,"Veer Patil","12th Science","M","Patil Family",null,7,8,null,"B+",172,63.1],[4,"Parth Joshi","12th Science","M","Joshi Family",null,6,6,null,"AB+",164,55.4],[5,"Adveta Teke","12th Science","F","Teke Family",null,9,9,null,"O-",166,57.2]],"Attendance":[["Roll No","Student Name","2025-06-20","2025-06-22","2025-06-24","2025-06-27","2025-06-29"],[1,"Ronak Rathi","P","P","P","P","P"],[2,"Shreyash Kanire","P","P","P","A","P"],[3,"Veer Patil","P","P","P","P","P"],[4,"Parth Joshi","P","P","L","P","P"],[5,"Adveta Teke","A","A","P","P","P"],[null,null,null,null,null,null,null],[null,null,null,null,null,null,null],[null,"Mark each day as  P (present) · A (absent) · L (leave).  Add a new dated column for every class day.",null,null,null,null,null]]};
 
 /* =================================================================
    PARSER
@@ -1291,6 +1292,8 @@ function buildReportSheetHTML(s,a,sheetId){
         <div class="remarks" contenteditable="true" spellcheck="false">${remark}</div>
       </div>
 
+      ${healthHTML(s)}
+
       <div class="sign">
         <div>${esc(LABELS.sign1)}</div><div>${esc(LABELS.sign2)}</div><div>${esc(LABELS.sign3)}</div>
       </div>
@@ -1419,6 +1422,20 @@ function forcePrintLikeLayout(sourceEl,fn){
 
 /* Sections are keyed off the English headings, so this must run BEFORE
    applyReportLang() — after translation the keys would no longer match. */
+
+/* Reference details a parent occasionally needs. Returns "" when the workbook
+   records none of them, so an academy that leaves the columns blank never
+   sees an empty box. */
+function healthHTML(s){
+  if(!window.HealthBlock||!LAST_SHEETS)return"";
+  try{
+    const items=HealthBlock.read(LAST_SHEETS,s.name);
+    if(!items.length)return"";
+    HealthBlock.injectCSS();
+    return HealthBlock.sectionHTML(items,{heading:"Physical & health"});
+  }catch(e){return"";}
+}
+
 function applyReportSections(){
   if(!window.ReportSections)return;
   const SEG="junior-college";
