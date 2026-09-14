@@ -39,7 +39,7 @@ const PRECACHE=[
   "./tools/at-risk-radar.html","./tools/results-pack.html","./tools/student-file.html",
   "./tools/parent-file.html","./tools/test-builder.html","./tools/test-evaluator.html",
   "./tools/omr-designer.html","./tools/omr-scanner.html","./tools/sports-scoreboard.html",
-  "./tools/backup-restore.html",
+  "./tools/backup-restore.html","./tools/qr-codes.html",
 
   "./assets/css/a11y.css","./assets/css/responsive.css",
   "./assets/js/a11y.js","./assets/js/backup.js","./assets/js/data-grid.js",
@@ -49,7 +49,7 @@ const PRECACHE=[
   "./assets/js/student-master.js","./assets/js/test-codec.js","./assets/js/vendor-footer.js",
   "./assets/js/workbook-pool.js","./assets/js/offline.js","./assets/js/i18n.js",
   "./assets/js/report-sections.js","./assets/js/projects.js","./assets/js/health-block.js",
-  "./assets/js/notes-timeline.js",
+  "./assets/js/notes-timeline.js","./assets/js/qr-encode.js",
 
   "./assets/vendor/xlsx.full.min.js","./assets/vendor/html2pdf.bundle.min.js",
   "./assets/vendor/html2canvas.min.js","./assets/vendor/jspdf.umd.min.js",

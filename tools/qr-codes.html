@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Codes</title>
+<script src="../assets/js/qr-encode.js"></script>
+<style>
+:root{
+  --navy:#1F2A44; --ink:#2B2F3A; --paper:#F5F3EE; --card:#FFFFFF;
+  --teal:#0E7C7B; --teal-soft:#E2F0EF; --amber:#C9791B; --amber-soft:#FBEEDC;
+  --line:#E4E0D6; --line2:#D8D3C6; --mut:#556074; --mut2:#656E82;
+  --b1:#B4472F; --b1s:#F6E3DD; --b5:#1F7A4D; --b5s:#DEEEE4; --gold:#C9A227;
+  --shadow:0 1px 2px rgba(31,42,68,.04),0 6px 20px rgba(31,42,68,.06);
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;font-variant-numeric:tabular-nums;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line2);
+  border-radius:9px;background:var(--card);color:var(--ink);width:100%}
+textarea{line-height:1.6;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{
+  outline:2px solid var(--teal);outline-offset:2px}
+
+/* ---------- top bar ---------- */
+.qr-top{display:flex;align-items:center;gap:12px;background:var(--card);
+  border-bottom:1px solid var(--line);padding:10px 18px;position:sticky;top:0;z-index:20}
+.qr-top img{height:30px;width:30px;object-fit:contain;border-radius:7px}
+.qr-brand b{display:block;font-family:Georgia,serif;font-size:14.5px;color:var(--navy);line-height:1.2}
+.qr-brand span{font-size:11px;color:var(--mut)}
+.qr-top-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.mini-btn{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:6px 11px;
+  font-size:12px;color:var(--navy);text-decoration:none;display:inline-block}
+.mini-btn:hover{background:var(--teal-soft);border-color:var(--teal)}
+
+.wrap{max-width:1080px;margin:0 auto;padding:18px 18px 40px}
+.lede{margin:0 0 16px;font-size:13px;color:var(--mut);line-height:1.6;max-width:66ch}
+.lede b{color:var(--navy)}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{background:var(--card);border:1px solid var(--line2);border-radius:9px;
+  padding:8px 15px;font-size:13px;color:var(--mut)}
+.tabs button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+
+/* ---------- layout ---------- */
+.cols{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:16px 17px;box-shadow:var(--shadow)}
+.panel h2{margin:0 0 3px;font-family:Georgia,serif;font-size:15px;color:var(--navy);font-weight:600}
+.panel .sub{margin:0 0 13px;font-size:12px;color:var(--mut);line-height:1.5}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+  margin-bottom:4px;letter-spacing:.02em}
+.field .hint{font-size:11px;color:var(--mut);margin-top:4px;line-height:1.45}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+/* ---------- kind chips ---------- */
+.kinds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.kinds button{background:var(--card);border:1px solid var(--line2);border-radius:20px;
+  padding:6px 13px;font-size:12px;color:var(--mut)}
+.kinds button[aria-pressed="true"]{background:var(--teal-soft);border-color:var(--teal);
+  color:#0B5C5B;font-weight:700}
+
+/* ---------- preview ---------- */
+.prev{position:sticky;top:70px}
+.prev-box{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:16px;text-align:center;box-shadow:var(--shadow)}
+.prev-box canvas{max-width:100%;height:auto;image-rendering:pixelated;border-radius:6px}
+.prev-empty{color:var(--mut);font-size:12.5px;padding:48px 10px;line-height:1.6}
+.meta{margin-top:11px;font-size:11px;color:var(--mut);line-height:1.6}
+.meta b{color:var(--navy)}
+.payload{margin-top:9px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:var(--mut2);
+  background:#FCFBF7;border:1px solid var(--line);border-radius:7px;padding:7px 9px;
+  word-break:break-all;text-align:left;max-height:88px;overflow:auto}
+.acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.btn{border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:600;border:1px solid var(--line2);
+  background:var(--card);color:var(--navy)}
+.btn:hover{background:var(--teal-soft);border-color:var(--teal)}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn-primary:hover{background:#0B5C5B;border-color:#0B5C5B;color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.warn{margin-top:11px;background:var(--amber-soft);border:1px solid #E7C68F;border-left:3px solid var(--amber);
+  border-radius:8px;padding:9px 11px;font-size:11.5px;color:#7A4A12;line-height:1.5;text-align:left}
+.err{margin-top:11px;background:var(--b1s);border:1px solid #E8B49A;border-left:3px solid var(--b1);
+  border-radius:8px;padding:9px 11px;font-size:11.5px;color:#7A3323;line-height:1.5;text-align:left}
+.hidden{display:none !important}
+
+/* ---------- batch ---------- */
+.card-sheet{background:#fff;padding:10mm;border:1px solid var(--line);border-radius:10px;
+  margin-top:16px;box-shadow:var(--shadow)}
+.qr-grid{display:grid;gap:8mm}
+.qr-cell{text-align:center;break-inside:avoid;page-break-inside:avoid}
+.qr-cell svg{width:100%;height:auto;max-width:44mm}
+.qr-cell .cap{margin-top:3px;font-size:10px;color:var(--navy);font-weight:700;line-height:1.3;
+  word-break:break-word}
+.qr-cell .sub{font-size:8.5px;color:var(--mut);word-break:break-all;line-height:1.3}
+.qr-cell.bad{border:1px dashed var(--b1);border-radius:8px;padding:6px;color:#7A3323;font-size:10px}
+
+@media (max-width:880px){
+  .cols{grid-template-columns:1fr}
+  .prev{position:static}
+}
+@media (max-width:520px){
+  .wrap{padding:14px 14px 32px}
+  .row2{grid-template-columns:1fr}
+}
+@media print{
+  @page{size:A4;margin:10mm}
+  .qr-top,.tabs,.lede,.no-print,.panel{display:none !important}
+  .wrap{max-width:none;padding:0;margin:0}
+  .card-sheet{border:none;box-shadow:none;border-radius:0;padding:0;margin:0}
+  .qr-cell{break-inside:avoid}
+}
+</style>
+<link rel="stylesheet" href="../assets/css/a11y.css">
+<link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+<header class="qr-top">
+  <img id="qrLogo" src="../assets/images/tesa-emblem.png" alt="" onerror="this.style.display='none'">
+  <div class="qr-brand"><b id="qrBrand">The Extra Step Academy</b><span>QR Codes</span></div>
+  <div class="qr-top-right">
+    <a class="mini-btn" href="../index.html" title="Back to the hub">⌂ Home</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="lede">Turn a link, a phone number, a payment request or any text into a QR code.
+     The code is <b>built here on this device</b> — nothing is sent anywhere to be turned into a
+     picture, so a parent's number or a report link never leaves your machine.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-one"   aria-selected="true"  aria-controls="p-one">One code</button>
+    <button role="tab" id="tab-many"  aria-selected="false" aria-controls="p-many">A sheet of codes</button>
+  </div>
+
+  <!-- ------------------------------------------------ one code -->
+  <section id="p-one" role="tabpanel" aria-labelledby="tab-one">
+    <div class="cols">
+      <div class="panel">
+        <h2>What goes in the code</h2>
+        <p class="sub">Pick what you are sharing — the right prefix is added for you, so the phone
+           opens the dialler, WhatsApp or the payment app instead of showing raw text.</p>
+        <div class="kinds" id="qrKinds" role="group" aria-label="Type of QR code"></div>
+        <div id="qrFields"></div>
+      </div>
+
+      <div class="prev">
+        <div class="prev-box">
+          <div id="qrStage"><div class="prev-empty">Fill in the field to see the code.</div></div>
+          <div class="meta" id="qrMeta" aria-live="polite"></div>
+          <div class="payload hidden" id="qrPayload"></div>
+          <div class="acts no-print">
+            <button class="btn btn-primary" id="btnPng" disabled>Download PNG</button>
+            <button class="btn" id="btnSvg" disabled>SVG</button>
+            <button class="btn" id="btnCopy" disabled>Copy</button>
+          </div>
+          <div class="err hidden" id="qrErr"></div>
+        </div>
+
+        <div class="panel" style="margin-top:14px">
+          <h2>How it looks</h2>
+          <div class="row2">
+            <div class="field">
+              <label for="qrEc">Error correction</label>
+              <select id="qrEc">
+                <option value="L">L — smallest</option>
+                <option value="M" selected>M — normal</option>
+                <option value="Q">Q — tougher</option>
+                <option value="H">H — survives damage</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="qrScale">Size</label>
+              <select id="qrScale">
+                <option value="4">Small</option>
+                <option value="8" selected>Medium</option>
+                <option value="14">Large</option>
+                <option value="22">Poster</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="qrDark">Code colour</label>
+              <input type="color" id="qrDark" value="#1F2A44">
+            </div>
+            <div class="field">
+              <label for="qrLight">Background</label>
+              <input type="color" id="qrLight" value="#FFFFFF">
+            </div>
+          </div>
+          <p class="hint" style="font-size:11px;color:var(--mut);margin:2px 0 0;line-height:1.5">
+            Dark code on a light background, always — inverted codes fail on many phones.
+            Higher error correction makes the code denser but lets it scan when creased or printed small.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------ many codes -->
+  <section id="p-many" role="tabpanel" aria-labelledby="tab-many" hidden>
+    <div class="panel no-print">
+      <h2>A sheet of codes</h2>
+      <p class="sub">One per line. Add a label after a <code>|</code> or a tab — paste straight from
+         Excel and the second column becomes the caption. Useful for a QR per student, per classroom
+         door, or per fee link.</p>
+      <div class="field">
+        <label for="qrBatch">Lines</label>
+        <textarea id="qrBatch" rows="8" spellcheck="false"
+          placeholder="https://example.com/report/aarav | Aarav Shah&#10;https://example.com/report/diya | Diya Nair"></textarea>
+        <div class="hint">Up to 200 lines. Blank lines are skipped.</div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="qrCols">Codes per row</label>
+          <select id="qrCols">
+            <option value="2">2</option><option value="3">3</option>
+            <option value="4" selected>4</option><option value="5">5</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="qrBatchEc">Error correction</label>
+          <select id="qrBatchEc">
+            <option value="L">L — smallest</option>
+            <option value="M" selected>M — normal</option>
+            <option value="Q">Q — tougher</option>
+            <option value="H">H — survives damage</option>
+          </select>
+        </div>
+      </div>
+      <div class="acts">
+        <button class="btn btn-primary" id="btnBuild">Build the sheet</button>
+        <button class="btn" id="btnPrint" disabled>Print</button>
+      </div>
+      <div class="err hidden" id="qrBatchErr"></div>
+    </div>
+    <div id="qrSheet" class="card-sheet hidden"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* =====================================================================
+   The QR tool. All the encoding lives in assets/js/qr-encode.js; this file
+   is only about turning what a teacher types into the right payload string
+   and putting the result on screen, on paper or in a file.
+
+   Deliberately no logo in the middle of the code. Two reasons, both real:
+   drawing a local image onto a canvas taints it, and toDataURL() then
+   throws on file:// — this project has already been bitten by exactly that
+   — and covering the centre eats into the error correction the code needs
+   to survive being printed and photographed.
+   ===================================================================== */
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Branding, if the academy has set its own. Read defensively: this page works
+   perfectly well with the defaults and must never fail over a bad JSON blob. */
+(function branding(){
+  try{
+    const b=JSON.parse(localStorage.getItem("spdBrandingOverrides_v1")||"{}");
+    if(b.name)$("qrBrand").textContent=b.name;
+    if(b.logoEmblem)$("qrLogo").src=b.logoEmblem;
+  }catch(e){/* defaults are fine */}
+})();
+
+/* ---------------------------------------------------------------- kinds */
+/* Each kind knows its fields and how to fold them into one payload string.
+   The prefixes are what make a phone DO something rather than show text. */
+/* Wi-Fi payloads must escape the colon — it separates the field tags. */
+const wifiEsc=s=>String(s||"").replace(/([\\;,":])/g,"\\$1");
+/* MECARD must not. Escaping it turns https://a.in into https\://a.in, which
+   scanners hand to the phone verbatim, and a visibly broken URL is worse than
+   the theoretical ambiguity that escaping would avoid. */
+const cardEsc=s=>String(s||"").replace(/([\\;,])/g,"\\$1");
+const digits=s=>String(s||"").replace(/[^\d+]/g,"");
+
+const KINDS=[
+  {id:"link",label:"Link or text",
+   fields:[{k:"text",label:"Link or any text",type:"textarea",rows:3,
+            ph:"https://hedaprateek.github.io/report-generator/"}],
+   build:v=>v.text||""},
+
+  {id:"phone",label:"Phone",
+   fields:[{k:"num",label:"Phone number",ph:"+91 98765 43210"}],
+   build:v=>v.num?"tel:"+digits(v.num):""},
+
+  {id:"whatsapp",label:"WhatsApp",
+   fields:[{k:"num",label:"Number with country code",ph:"+91 98765 43210"},
+           {k:"msg",label:"Message to prefill (optional)",type:"textarea",rows:2,
+            ph:"Namaste, regarding admission…"}],
+   build:v=>{
+     const n=digits(v.num).replace(/^\+/,"");
+     if(!n)return"";
+     return"https://wa.me/"+n+(v.msg?"?text="+encodeURIComponent(v.msg):"");
+   }},
+
+  {id:"upi",label:"UPI payment",
+   fields:[{k:"vpa",label:"UPI ID",ph:"academy@okicici"},
+           {k:"name",label:"Payee name",ph:"The Extra Step Academy"},
+           {k:"amt",label:"Amount in ₹ (optional)",ph:"18000"},
+           {k:"note",label:"Note (optional)",ph:"Term 1 fees"}],
+   build:v=>{
+     if(!v.vpa)return"";
+     let s="upi://pay?pa="+encodeURIComponent(v.vpa);
+     if(v.name)s+="&pn="+encodeURIComponent(v.name);
+     if(v.amt&&isFinite(parseFloat(v.amt)))s+="&am="+encodeURIComponent(parseFloat(v.amt).toFixed(2));
+     if(v.note)s+="&tn="+encodeURIComponent(v.note);
+     return s+"&cu=INR";
+   },
+   note:"Leave the amount blank to let the parent type it. Always send one test payment of ₹1 before printing these."},
+
+  {id:"email",label:"Email",
+   fields:[{k:"to",label:"Email address",ph:"office@academy.in"},
+           {k:"subj",label:"Subject (optional)",ph:"Admission enquiry"},
+           {k:"body",label:"Message (optional)",type:"textarea",rows:2}],
+   build:v=>{
+     if(!v.to)return"";
+     const q=[];
+     if(v.subj)q.push("subject="+encodeURIComponent(v.subj));
+     if(v.body)q.push("body="+encodeURIComponent(v.body));
+     return"mailto:"+v.to+(q.length?"?"+q.join("&"):"");
+   }},
+
+  {id:"sms",label:"SMS",
+   fields:[{k:"num",label:"Phone number",ph:"+91 98765 43210"},
+           {k:"msg",label:"Message (optional)",type:"textarea",rows:2}],
+   build:v=>v.num?("sms:"+digits(v.num)+(v.msg?"?body="+encodeURIComponent(v.msg):"")):""},
+
+  {id:"wifi",label:"Wi-Fi",
+   fields:[{k:"ssid",label:"Network name",ph:"TESA-Staff"},
+           {k:"pass",label:"Password",ph:"leave blank if open"},
+           {k:"enc",label:"Security",type:"select",opts:[["WPA","WPA / WPA2"],["WEP","WEP"],["nopass","Open"]]},
+           {k:"hidden",label:"Hidden network",type:"select",opts:[["","No"],["true","Yes"]]}],
+   build:v=>{
+     if(!v.ssid)return"";
+     const enc=v.enc||"WPA";
+     return"WIFI:T:"+enc+";S:"+wifiEsc(v.ssid)+";"+
+            (enc!=="nopass"&&v.pass?"P:"+wifiEsc(v.pass)+";":"")+
+            (v.hidden==="true"?"H:true;":"")+";";
+   },
+   note:"Staff room and guest networks only. A QR of the Wi-Fi password is as public as the wall it is stuck to."},
+
+  {id:"contact",label:"Contact",
+   fields:[{k:"name",label:"Name",ph:"The Extra Step Academy"},
+           {k:"tel",label:"Phone",ph:"+91 98765 43210"},
+           {k:"email",label:"Email (optional)",ph:"office@academy.in"},
+           {k:"url",label:"Website (optional)",ph:"https://…"},
+           {k:"adr",label:"Address (optional)",ph:"Ichalkaranji, Maharashtra"}],
+   build:v=>{
+     if(!v.name&&!v.tel)return"";
+     let s="MECARD:";
+     if(v.name)s+="N:"+cardEsc(v.name)+";";
+     if(v.tel)s+="TEL:"+digits(v.tel)+";";
+     if(v.email)s+="EMAIL:"+cardEsc(v.email)+";";
+     if(v.url)s+="URL:"+cardEsc(v.url)+";";
+     if(v.adr)s+="ADR:"+cardEsc(v.adr)+";";
+     return s+";";
+   }}
+];
+
+let curKind=KINDS[0],values={},lastQR=null;
+
+function paintKinds(){
+  $("qrKinds").innerHTML=KINDS.map(k=>
+    `<button type="button" data-kind="${k.id}" aria-pressed="${k.id===curKind.id}">${esc(k.label)}</button>`).join("");
+  $("qrKinds").querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>{
+    curKind=KINDS.find(k=>k.id===b.dataset.kind);
+    values={};
+    paintKinds();paintFields();render();
+  }));
+}
+
+function paintFields(){
+  const html=curKind.fields.map(f=>{
+    const id="f_"+f.k;
+    let input;
+    if(f.type==="textarea")
+      input=`<textarea id="${id}" rows="${f.rows||3}" spellcheck="false" placeholder="${esc(f.ph||"")}"></textarea>`;
+    else if(f.type==="select")
+      input=`<select id="${id}">${f.opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>`;
+    else
+      input=`<input id="${id}" type="text" placeholder="${esc(f.ph||"")}" autocomplete="off">`;
+    return `<div class="field"><label for="${id}">${esc(f.label)}</label>${input}</div>`;
+  }).join("");
+  $("qrFields").innerHTML=html+(curKind.note?`<div class="warn">${esc(curKind.note)}</div>`:"");
+  curKind.fields.forEach(f=>{
+    const el=$("f_"+f.k);
+    if(!el)return;
+    if(values[f.k]!=null)el.value=values[f.k];
+    el.addEventListener("input",()=>{values[f.k]=el.value;render();});
+    el.addEventListener("change",()=>{values[f.k]=el.value;render();});
+  });
+}
+
+/* --------------------------------------------------------------- render */
+function render(){
+  const text=curKind.build(values)||"";
+  const stage=$("qrStage"),meta=$("qrMeta"),err=$("qrErr"),pay=$("qrPayload");
+  err.classList.add("hidden");
+  ["btnPng","btnSvg","btnCopy"].forEach(b=>$(b).disabled=true);
+
+  if(!text){
+    lastQR=null;
+    stage.innerHTML='<div class="prev-empty">Fill in the field to see the code.</div>';
+    meta.textContent="";pay.classList.add("hidden");
+    return;
+  }
+  let qr;
+  try{
+    qr=QREncode.make(text,{ec:$("qrEc").value});
+  }catch(e){
+    lastQR=null;
+    stage.innerHTML='<div class="prev-empty">—</div>';
+    meta.textContent="";pay.classList.add("hidden");
+    err.textContent=e.message;err.classList.remove("hidden");
+    return;
+  }
+  lastQR=qr;
+  const scale=+$("qrScale").value;
+  stage.innerHTML="";
+  const cv=document.createElement("canvas");
+  cv.setAttribute("role","img");
+  cv.setAttribute("aria-label","QR code for "+text.slice(0,60));
+  stage.appendChild(cv);
+  QREncode.toCanvas(qr,cv,{scale,margin:4,dark:$("qrDark").value,light:$("qrLight").value});
+
+  const cap=QREncode.capacity(qr.version,qr.ec,qr.mode);
+  const used=qr.mode==="byte"?new TextEncoder().encode(text).length:text.length;
+  meta.innerHTML=`<b>Version ${qr.version}</b> · ${qr.size}×${qr.size} modules · ${esc(qr.mode)} mode`+
+    `<br>${used} of ${cap} characters used at level ${esc(qr.ec)}`;
+  pay.textContent=text;pay.classList.remove("hidden");
+  ["btnPng","btnSvg","btnCopy"].forEach(b=>$(b).disabled=false);
+}
+
+["qrEc","qrScale","qrDark","qrLight"].forEach(id=>$(id).addEventListener("change",render));
+
+/* ------------------------------------------------------------ downloads */
+function filenameFor(ext){
+  const base=(curKind.id==="link"?"qr-code":"qr-"+curKind.id);
+  return base+"-"+new Date().toISOString().slice(0,10)+"."+ext;
+}
+function saveBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  // the revoke has to wait: Safari and Firefox cancel an in-flight download
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+
+$("btnPng").addEventListener("click",()=>{
+  if(!lastQR)return;
+  const cv=document.createElement("canvas");
+  // export at a good print size regardless of the on-screen preview
+  QREncode.toCanvas(lastQR,cv,{scale:Math.max(10,+$("qrScale").value),margin:4,
+    dark:$("qrDark").value,light:$("qrLight").value});
+  cv.toBlob(b=>{if(b)saveBlob(b,filenameFor("png"));},"image/png");
+});
+
+$("btnSvg").addEventListener("click",()=>{
+  if(!lastQR)return;
+  const svg=QREncode.toSVG(lastQR,{scale:+$("qrScale").value,margin:4,
+    dark:$("qrDark").value,light:$("qrLight").value,label:"QR code"});
+  saveBlob(new Blob([svg],{type:"image/svg+xml"}),filenameFor("svg"));
+});
+
+$("btnCopy").addEventListener("click",async()=>{
+  if(!lastQR)return;
+  const btn=$("btnCopy"),orig=btn.textContent;
+  const cv=document.createElement("canvas");
+  QREncode.toCanvas(lastQR,cv,{scale:Math.max(10,+$("qrScale").value),margin:4,
+    dark:$("qrDark").value,light:$("qrLight").value});
+  try{
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+    await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+    btn.textContent="Copied";
+  }catch(e){
+    // clipboard images are blocked on file:// in most browsers — say so plainly
+    btn.textContent="Use Download";
+  }
+  setTimeout(()=>{btn.textContent=orig;},1600);
+});
+
+/* ----------------------------------------------------------------- tabs */
+function showTab(which){
+  const one=which==="one";
+  $("tab-one").setAttribute("aria-selected",String(one));
+  $("tab-many").setAttribute("aria-selected",String(!one));
+  $("p-one").hidden=!one;
+  $("p-many").hidden=one;
+}
+$("tab-one").addEventListener("click",()=>showTab("one"));
+$("tab-many").addEventListener("click",()=>showTab("many"));
+
+/* ---------------------------------------------------------------- batch */
+/* A line is "content | label", or "content<TAB>label" so a two-column paste
+   out of Excel works without the teacher reformatting anything. */
+function parseLines(raw){
+  return String(raw||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(line=>{
+    let content=line,label="";
+    const tab=line.indexOf("\t"),bar=line.indexOf("|");
+    const at=tab>=0?tab:bar;
+    if(at>=0){content=line.slice(0,at).trim();label=line.slice(at+1).trim();}
+    return{content,label};
+  }).filter(r=>r.content);
+}
+
+$("btnBuild").addEventListener("click",()=>{
+  const err=$("qrBatchErr"),sheet=$("qrSheet");
+  err.classList.add("hidden");
+  const rows=parseLines($("qrBatch").value);
+  if(!rows.length){
+    err.textContent="Nothing to build yet — paste one link or line of text per row.";
+    err.classList.remove("hidden");
+    sheet.classList.add("hidden");$("btnPrint").disabled=true;
+    return;
+  }
+  if(rows.length>200){
+    err.textContent="That is "+rows.length+" lines. Build 200 at a time so the page stays responsive.";
+    err.classList.remove("hidden");
+    sheet.classList.add("hidden");$("btnPrint").disabled=true;
+    return;
+  }
+  const ec=$("qrBatchEc").value,cols=+$("qrCols").value;
+  let failed=0;
+  const cells=rows.map(r=>{
+    let svg;
+    try{
+      svg=QREncode.toSVG(QREncode.make(r.content,{ec}),{scale:4,margin:3,label:r.label||r.content});
+    }catch(e){
+      failed++;
+      return `<div class="qr-cell bad">Too long to encode:<br>${esc(r.content.slice(0,40))}…</div>`;
+    }
+    return `<div class="qr-cell">${svg}`+
+      (r.label?`<div class="cap">${esc(r.label)}</div>`:"")+
+      `<div class="sub">${esc(r.content.length>46?r.content.slice(0,46)+"…":r.content)}</div></div>`;
+  }).join("");
+
+  sheet.innerHTML=`<div class="qr-grid" style="grid-template-columns:repeat(${cols},1fr)">${cells}</div>`;
+  sheet.classList.remove("hidden");
+  $("btnPrint").disabled=false;
+  if(failed){
+    err.textContent=failed+" of "+rows.length+" lines were too long for a QR code at level "+ec+
+      ". Shorten them, or drop to level L.";
+    err.classList.remove("hidden");
+  }
+  // let the footer stamp the new sheet before anyone prints it
+  if(window.VendorFooter&&window.VendorFooter.stampReports)window.VendorFooter.stampReports();
+});
+
+$("btnPrint").addEventListener("click",()=>window.print());
+
+/* ----------------------------------------------------------------- boot */
+paintKinds();paintFields();render();
+</script>
+
+<script src="../assets/js/a11y.js" defer></script>
+<script src="../assets/js/vendor-footer.js" defer></script>
+<script src="../assets/js/offline.js" defer></script>
+</body>
+</html>
