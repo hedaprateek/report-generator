@@ -149,7 +149,7 @@ function readExistingBlocks(aoa,hr,meta){
     const cols=[];let cc=c;
     while(cc<header.length){
       const hk=O.keyName(header[cc]);
-      if(hk===""){break;}
+      if(hk===""){if(meta.max>=0&&O.norm(maxRow[cc])!==""){cc++;continue;}break;}
       if(hk==="total"||hk==="grand total"||hk==="overall"){cc++;break;}
       cols.push(cc);cc++;
     }

@@ -324,6 +324,7 @@ svg text{font-family:system-ui,sans-serif}
       <div id="uploadError" class="upload-err hidden"></div>
       <div class="land-actions">
         <button class="btn btn-primary" id="pick">Choose file</button>
+        <a class="btn btn-ghost" href="../assets/templates/junior-college/Student_Progress_Template.xlsx" download>Download Excel template</a>
         <button class="btn btn-ghost" id="demo">Explore with sample data</button>
         <button class="btn btn-ghost" id="manualEntry">Type data in manually</button>
       </div>
@@ -331,7 +332,7 @@ svg text{font-family:system-ui,sans-serif}
       <div class="land-note">
         <div>
           <h3>Uses the fill-in template</h3>
-          <p>The workbook has Students, Marks and Attendance sheets. Absent = <b>A</b>, never 0. Add a column block per weekly test.</p>
+          <p>Start with four subjects per test. To add another, copy a subject column, right-click the last subject column in the same test and choose <b>Insert Copied Cells</b>. Rename it and replace the copied marks. No password is needed. Absent = <b>A</b>, never 0.</p>
         </div>
         <div>
           <h3>Private by design</h3>
@@ -356,6 +357,7 @@ svg text{font-family:system-ui,sans-serif}
     <div class="top-right">
       <select id="batchPick" class="mini-select hidden" title="Switch batch"></select>
       <span class="pill" id="dataPill"></span>
+      <a class="mini-btn" href="../assets/templates/junior-college/Student_Progress_Template.xlsx" download>Download template</a>
       <button class="mini-btn" id="editDataBtn" title="View or edit the data behind these reports">✎ Edit data</button>
       <button class="mini-btn" id="settingsBtn" title="Customize branding & labels">⚙ Settings</button>
       <button class="mini-btn" id="reload">New file</button>
@@ -529,7 +531,8 @@ function parseMarks(aoa,warnings){
     while(cc<header.length){
       const hk=keyName(header[cc]);
       if(hk==="total"||hk==="grand total"||hk==="overall"){totalCol=cc;cc++;break;}
-      if(hk===""){break;}
+      // Unused paste slots have a maximum of zero, and belong to this test.
+      if(hk===""){if(rMax>=0&&norm(maxRow[cc])!==""){cc++;continue;}break;}
       subjCols.push(cc);cc++;
     }
     if(subjCols.length){

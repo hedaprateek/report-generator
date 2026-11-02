@@ -814,7 +814,8 @@ function parseMarks(aoa,warnings){
     while(cc<header.length){
       const hk=keyName(header[cc]);
       if(hk==="total"||hk==="grand total"||hk==="overall"){totalCol=cc;cc++;break;}
-      if(hk===""){break;}
+      // Unused paste slots have a maximum of zero, and belong to this test.
+      if(hk===""){if(rMax>=0&&norm(maxRow[cc])!==""){cc++;continue;}break;}
       subjCols.push(cc);cc++;
     }
     if(subjCols.length){

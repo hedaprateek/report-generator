@@ -6,8 +6,7 @@
 
    Two separate things live here:
 
-     · the page footer   — the credit on the software itself, marked no-print
-                           because it belongs to the tool, not to the paper
+     · the page footer   — the standard studio credit, with a print footer
      · the report stamp  — a line INSIDE the report sheet, which the academy
                            asked for, so it does print
 
@@ -22,15 +21,30 @@ const COMPANY="Stunity Tech";
 const AUTHOR="Prateek";
 
 const CSS=`
-.vendor-footer{
-  margin:34px auto 0;padding:16px 20px 22px;max-width:1180px;
-  border-top:1px solid rgba(31,42,68,.10);
-  font:12px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  color:#656E82;text-align:center;
+.stunity-credit{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin:26px auto 34px;padding:20px 16px 0;max-width:1180px;
+  border-top:1px solid var(--line-soft,rgba(128,128,128,.22));
+  font-family:var(--mono,ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace);
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;line-height:1.5;
+  color:var(--muted,#6b7280);
 }
-.vendor-footer b{color:#1F2A44;font-weight:700;letter-spacing:.01em}
-.vendor-footer .vf-dot{opacity:.5;margin:0 6px}
-@media print{.vendor-footer{display:none !important}}
+.stunity-credit .sc-dot{width:6px;height:6px;border-radius:50%;flex:none;
+  background:var(--shade,currentColor);opacity:.75}
+.stunity-credit b{font-weight:500;color:var(--ink,inherit)}
+.stunity-credit[data-print-only]{display:none}
+@media print{
+  @page{margin-bottom:24mm}
+  .stunity-credit,.stunity-credit[data-print-only]{
+    display:flex!important;position:fixed;left:0;right:0;bottom:-16mm;
+    margin:0;padding:3mm 0 0;max-width:none;
+    border-top:.2mm solid #c9c9c9;background:#fff;color:#5b5b5b;
+    font-size:7.5pt;letter-spacing:.14em;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .stunity-credit b{color:#111}
+  .stunity-credit .sc-dot{background:#8a8a8a}
+}
 
 /* The stamp on the report itself. Quiet on purpose — the academy's own
    footer line above it is the one that should carry weight. */
@@ -43,15 +57,15 @@ const CSS=`
 `;
 
 function mount(){
-  if(document.getElementById("vendorFooter"))return;
+  if(document.getElementById("stunityCredit"))return;
   if(!document.body)return;
 
   injectStyle();
 
-  const f=document.createElement("footer");
-  f.id="vendorFooter";
-  f.className="vendor-footer no-print";
-  f.innerHTML='<b>'+COMPANY+'</b><span class="vf-dot">·</span>by '+AUTHOR;
+  const f=document.createElement("div");
+  f.id="stunityCredit";
+  f.className="stunity-credit";
+  f.innerHTML='<span class="sc-dot"></span><span>'+COMPANY+' — by <b>'+AUTHOR+'</b></span>';
   document.body.appendChild(f);
 }
 

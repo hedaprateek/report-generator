@@ -528,7 +528,8 @@ function parseSemesterBlocks(aoa,{wantDate=false,wantType=false}={}){
     if(keyName(header[c])===""){c++;continue;}
     const subjCols=[];let cc=c;
     while(cc<header.length){
-      if(keyName(header[cc])===""){break;}
+      // Reserved subject cells retain semester metadata when their heading is blank.
+      if(keyName(header[cc])===""){if(norm(semRow[cc])!==""){cc++;continue;}break;}
       subjCols.push(cc);cc++;
     }
     if(subjCols.length){
