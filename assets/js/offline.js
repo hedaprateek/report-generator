@@ -13,6 +13,7 @@
    ===================================================================== */
 (function(){
 "use strict";
+if(new URLSearchParams(location.search).has('showcase'))return;
 
 const READY_KEY="spdOfflineReady_v1";
 

@@ -29,6 +29,8 @@ const LAST_KEY="spdLastBackup_v1";
 const MASTER_DB="spdStudentMaster_v1",MASTER_STORE="roster";
 const CACHE_DB="spdWorkbookCache_v1",CACHE_STORE="workbooks",PHOTO_STORE="photoOverrides";
 const LOCAL_KEYS=["spdBrandingOverrides_v1","tesaMeet_v1","pfSent_v1"];
+LOCAL_KEYS.push('spdAcademyProfile_v1','spdReportLang_v1','tesa-template-colour','spdMarketingSettings_v1','spdToolPreferences_v1:results-pack');
+for(const segment of ['pre-primary','primary','secondary','junior-college','college'])LOCAL_KEYS.push('spdSegmentSettings_v1:'+segment,'spdReportSections_v1:'+segment);
 
 /* ------------------------------------------------------------ encoding */
 // Chunked: String.fromCharCode.apply blows the call stack somewhere around a
@@ -194,19 +196,23 @@ async function restore(snap,opts){
   if(err)throw new Error(err);
   const done={roster:0,workbooks:0,photos:0,local:0};
 
-  if((snap.roster||[]).length){
+  if(opts.replace||(snap.roster||[]).length){
     const db=await openDb(MASTER_DB,1,[MASTER_STORE]);
     if(opts.replace)await clearStore(db,MASTER_STORE);
-    done.roster=await writeStore(db,MASTER_STORE,snap.roster);
+    done.roster=await writeStore(db,MASTER_STORE,snap.roster||[]);
     db.close();
   }
-  if((snap.workbooks||[]).length||(snap.photos||[]).length){
+  if(opts.replace||(snap.workbooks||[]).length||(snap.photos||[]).length){
     const db=await openDb(CACHE_DB,2,[CACHE_STORE,PHOTO_STORE]);
     if(opts.replace){await clearStore(db,CACHE_STORE);await clearStore(db,PHOTO_STORE);}
     done.workbooks=await writeStore(db,CACHE_STORE,(snap.workbooks||[]).map(decodeRow));
     done.photos=await writeStore(db,PHOTO_STORE,(snap.photos||[]).map(decodeRow));
     db.close();
   }
+  if(opts.replace)LOCAL_KEYS.forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  // Older backups contain the legacy branding key only. A newer profile
+  // must not hide the academy name/logo the user chose to restore.
+  if(snap.local?.spdBrandingOverrides_v1&&!snap.local?.spdAcademyProfile_v1){try{localStorage.removeItem('spdAcademyProfile_v1');}catch(e){}}
   Object.keys(snap.local||{}).forEach(k=>{
     if(LOCAL_KEYS.indexOf(k)<0)return;          // never write a key we don't own
     try{localStorage.setItem(k,snap.local[k]);done.local++;}catch(e){}

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Certificates &amp; Documents</title>
+<script src="../assets/js/academy-settings.js"></script>
 <script src="../assets/vendor/xlsx.full.min.js"></script>
 <script src="../assets/vendor/html2pdf.bundle.min.js"></script>
 <script src="../assets/js/data-grid.js"></script>
@@ -133,7 +134,7 @@ function parse(sheets){
 }
 
 let D=null,MOUNT=null,KIND="bonafide",CUR=null,YEAR="2025-26",PURPOSE="submission to the concerned authority",
-    REF="",PLACE="Ichalkaranji",BODY=null;
+    REF="",PLACE=AcademySettings.profile().address||"",BODY=null;
 const O=()=>OFFICE;
 
 // Gender is optional on the roster; when it's absent we deliberately use they/them

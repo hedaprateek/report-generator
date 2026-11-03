@@ -161,6 +161,7 @@ const DEFAULT_BRANDING={
 };
 const BRANDING_KEY="spdBrandingOverrides_v1"; // shared with every segment app
 function loadBranding(){
+  if(window.AcademySettings)return AcademySettings.profile();
   let saved={};
   try{saved=JSON.parse(localStorage.getItem(BRANDING_KEY)||"{}")||{};}catch(e){saved={};}
   return{name:saved.name||DEFAULT_BRANDING.name,
@@ -168,6 +169,12 @@ function loadBranding(){
     logoEmblem:saved.logoEmblem||DEFAULT_BRANDING.logoEmblem};
 }
 let BRANDING=loadBranding();
+window.addEventListener('academy-settings-changed',()=>{
+  BRANDING=loadBranding();
+  const full=document.getElementById('ofLandLogo'),emblem=document.getElementById('ofTopLogo'),name=document.getElementById('ofBrandName');
+  if(full)full.src=BRANDING.logoFull;if(emblem)emblem.src=BRANDING.logoEmblem;if(name)name.textContent=BRANDING.name;
+  if(DATA&&CFG){CFG.render(DATA,document.getElementById('ofMount'),SHEETS);if(window.VendorFooter)VendorFooter.stampReports();}
+});
 
 /* ------------------------------------------------------------- utilities */
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
@@ -544,7 +551,7 @@ async function cacheSave(key,filename,bytes){
       tx.objectStore(CACHE_STORE).put({filename,savedAt:Date.now(),bytes},key);
       tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});
     db.close();
-  }catch(e){/* storage unavailable — just won't auto-restore next time */}
+  }catch(e){if(window.AcademySettings)AcademySettings.failure('Could not save this workbook in the browser. Download a copy to keep your changes.');}
 }
 async function cacheLoad(key){
   try{const db=await dbOpen();
@@ -607,7 +614,8 @@ async function sharePDF(el,filename,title,btnEl){
 }
 
 /* ------------------------------------------------------------------ boot */
-let CFG=null,SHEETS=null,DATA=null;
+let CFG=null,SHEETS=null,DATA=null,IS_DEMO=false,USER_STARTED=false;
+function workbookBytes(sheets){const book=XLSX.utils.book_new();Object.entries(sheets).forEach(([name,rows])=>XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(rows),name));return XLSX.write(book,{type:'array',bookType:'xlsx'});}
 
 function shell(){
   document.body.innerHTML=`
@@ -677,7 +685,7 @@ function shell(){
   ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag");}));
   drop.addEventListener("drop",e=>{if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
 
-  document.getElementById("ofDemo").addEventListener("click",()=>{clearErr();use(CFG.sampleSheets,null,false,true);});
+  document.getElementById("ofDemo").addEventListener("click",()=>{USER_STARTED=true;IS_DEMO=true;clearErr();use(CFG.sampleSheets,null,false,true,false);});
   document.getElementById("ofManual").addEventListener("click",()=>{
     clearErr();
     SPDGrid.open(SPDGrid.blankFrom(CFG.sampleSheets),{
@@ -685,7 +693,7 @@ function shell(){
       subtitle:CFG.manualHint||"Fill the rows below, then continue. You can also download it as an Excel file to keep for next time.",
       applyLabel:"Continue",
       filename:slugify(BRANDING.name)+"_"+slugify(CFG.title)+".xlsx",
-      onApply:edited=>use(edited)
+      onApply:edited=>{IS_DEMO=false;USER_STARTED=true;use(edited);}
     });
   });
   document.getElementById("ofEditData").addEventListener("click",()=>{
@@ -693,14 +701,14 @@ function shell(){
     SPDGrid.open(SHEETS,{
       title:"Edit data",subtitle:"Change any value and continue — the documents rebuild instantly.",
       applyLabel:"Rebuild",filename:slugify(BRANDING.name)+"_"+slugify(CFG.title)+".xlsx",
-      onApply:edited=>use(edited)
+      onApply:edited=>use(edited,null,false,IS_DEMO,!IS_DEMO)
     });
   });
   document.getElementById("ofReload").addEventListener("click",()=>{
     SHEETS=null;DATA=null;
     document.getElementById("ofApp").style.display="none";
     document.getElementById("ofLanding").style.display="flex";
-    fileIn.value="";cacheClear(CFG.cacheKey);
+    fileIn.value="";USER_STARTED=true;
     refreshRosterButton();refreshReuse();
   });
 
@@ -714,6 +722,7 @@ function shell(){
     clearErr();
     const{students}=await SPDRoster.load();
     if(!students.length)return;
+    IS_DEMO=false;USER_STARTED=true;
     use(CFG.rosterToSheets(students),null,true,true); // came from the master — nothing to write back
   });
   refreshRosterButton();
@@ -730,7 +739,8 @@ function refreshReuse(){
     onPick:r=>{
       clearErr();
       // adopt it under this tool's key too, so next time it opens straight up
-      use(sheetsFromBytes(r.bytes),()=>cacheSave(CFG.cacheKey,r.filename,r.bytes.slice(0)));
+      USER_STARTED=true;IS_DEMO=false;
+      use(sheetsFromBytes(r.bytes),saved=>cacheSave(CFG.cacheKey,r.filename,workbookBytes(saved)));
     },
     onError:err=>showErr(`<b>That workbook doesn't have what this tool needs.</b>
       <p style="margin:6px 0 0">${esc(err.message||err)}</p>`)
@@ -772,13 +782,15 @@ function showErr(html){const b=document.getElementById("ofErr");b.innerHTML=html
 function clearErr(){document.getElementById("ofErr").classList.add("hidden");}
 
 function readFile(file){
+  USER_STARTED=true;
   clearErr();
   const rd=new FileReader();
   rd.onload=e=>{
     const bytes=e.target.result;
     try{
       const sheets=sheetsFromBytes(bytes);
-      use(sheets,()=>cacheSave(CFG.cacheKey,file.name,bytes.slice(0)));
+      IS_DEMO=false;
+      use(sheets,saved=>cacheSave(CFG.cacheKey,file.name,workbookBytes(saved)));
     }catch(err){
       showErr(`<b>Could not read this file.</b><p style="margin:6px 0 0">${esc(err.message)}. Make sure it's an .xlsx saved from the template.</p>`);
     }
@@ -792,7 +804,7 @@ function readFile(file){
 // noContribute: sample data and roster-sourced data must never write back into the
 // master, or one click on "Explore with sample data" would put fictional children on
 // the academy's real roster.
-function use(sheets,onOk,skipReview,noContribute){
+function use(sheets,onOk,skipReview,noContribute,persist=true){
   let data;
   try{data=CFG.parse(sheets);}
   catch(err){
@@ -808,7 +820,7 @@ function use(sheets,onOk,skipReview,noContribute){
       title:"Check this before we print anything",
       subtitle:"We spotted a few things that are usually typos. Fix anything that's wrong, or continue if it's intentional.",
       issues,filename:slugify(BRANDING.name)+"_"+slugify(CFG.title)+".xlsx",
-      onApply:edited=>use(edited,onOk,true,noContribute)
+      onApply:edited=>use(edited,onOk,true,noContribute,persist)
     });
     return;
   }
@@ -821,7 +833,11 @@ function use(sheets,onOk,skipReview,noContribute){
   // with print, the PDF and anything shared
   if(window.VendorFooter)VendorFooter.stampReports();
   if(!noContribute)contributeRoster(sheets);
-  if(onOk)onOk();
+  if(onOk)onOk(sheets);
+  else if(persist){
+    try{cacheSave(CFG.cacheKey,slugify(BRANDING.name)+'_'+slugify(CFG.title)+'.xlsx',workbookBytes(sheets));}
+    catch(err){if(window.AcademySettings)AcademySettings.failure('Could not save the edited workbook. Download a copy to keep your changes.');}
+  }
 }
 
 function tabs(list,active,onPick){
@@ -840,13 +856,13 @@ function boot(cfg){
   shell();
   (async function restore(){
     const rec=await cacheLoad(CFG.cacheKey);
-    if(!rec)return;
-    try{use(sheetsFromBytes(rec.bytes),null,true);}catch(e){cacheClear(CFG.cacheKey);}
+    if(!rec||USER_STARTED)return;
+    try{use(sheetsFromBytes(rec.bytes),null,true,false,false);}catch(e){if(window.AcademySettings)AcademySettings.failure('Your saved workbook is still available in Backup & Restore, but could not be reopened here.');}
   })();
 }
 
 window.OFFICE={
-  boot,tabs,use:(s)=>use(s),
+  boot,tabs,use:(s)=>use(s,null,false,IS_DEMO,!IS_DEMO),
   get branding(){return BRANDING;},
   get sheets(){return SHEETS;},
   esc,norm,keyName,toNum,slugify,

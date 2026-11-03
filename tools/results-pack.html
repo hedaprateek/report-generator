@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Results Pack</title>
+<script src="../assets/js/academy-settings.js"></script>
 <script src="../assets/vendor/xlsx.full.min.js"></script>
 <script src="../assets/vendor/html2pdf.bundle.min.js"></script>
 <script src="../assets/vendor/html2canvas.min.js"></script>
@@ -138,8 +139,10 @@ function parse(sheets){
 }
 
 let D=null,MOUNT=null,VIEW="poster";
-let CFG={headline:"Our Results Speak",sub:"Batch of 2025-26",tag:"Excellence in Competitive Exam Coaching",
-  topN:5,accent:"#1F2A44",accent2:"#0E7C7B",unit:"%",footer:"Admissions open · Ichalkaranji"};
+let CFG={headline:"Our Results Speak",sub:"Student achievement snapshot",tag:"Progress worth celebrating",
+  topN:5,accent:"#1F2A44",accent2:"#0E7C7B",unit:"%",footer:['Admissions open',AcademySettings.profile().address].filter(Boolean).join(' · ')};
+if(window.AcademySettings)Object.assign(CFG,AcademySettings.read('spdToolPreferences_v1:results-pack',{}));
+function savePrefs(){try{AcademySettings.write('spdToolPreferences_v1:results-pack',{...CFG,view:VIEW});}catch(err){AcademySettings.failure('Could not save the Results Pack preferences on this device.');}}
 const O=()=>OFFICE;
 
 function initials(n){const p=OFFICE.norm(n).split(/\s+/).filter(Boolean);return((p[0]||"")[0]||"")+((p[1]||"")[0]||"");}
@@ -270,13 +273,13 @@ function sideHTML(){
 }
 function wireSide(){
   const bind=(id,k)=>{const el=document.getElementById(id);
-    if(el)el.addEventListener("input",e=>{CFG[k]=e.target.value;paintStage();});};
+    if(el)el.addEventListener("input",e=>{CFG[k]=e.target.value;paintStage();savePrefs();});};
   bind("cHead","headline");bind("cSub","sub");bind("cTag","tag");bind("cFoot","footer");
   bind("cAcc","accent");bind("cAcc2","accent2");
   const t=document.getElementById("cTop");
-  if(t)t.addEventListener("change",e=>{CFG.topN=Number(e.target.value);paintStage();});
+  if(t)t.addEventListener("change",e=>{CFG.topN=Number(e.target.value);paintStage();savePrefs();});
   const u=document.getElementById("cUnit");
-  if(u)u.addEventListener("change",e=>{CFG.unit=e.target.value;paintStage();});
+  if(u)u.addEventListener("change",e=>{CFG.unit=e.target.value;paintStage();savePrefs();});
 }
 function paintStage(){
   const stage=document.getElementById("rpStage");
@@ -311,7 +314,7 @@ function render(){
       </div>
     </div>`;
   paintStage();wireSide();
-  document.getElementById("rView").addEventListener("change",e=>{VIEW=e.target.value;render();});
+  document.getElementById("rView").addEventListener("change",e=>{VIEW=e.target.value;render();savePrefs();});
   const p=document.getElementById("rPrint");
   if(p&&!p.disabled)p.addEventListener("click",()=>o.printView("v-rp"));
   const sh=document.getElementById("rShare");
@@ -331,7 +334,7 @@ OFFICE.boot({
   sampleSheets:SAMPLE_SHEETS,
   pill:d=>`${d.rows.length} students · top ${d.stats.top.toFixed(1)}%`,
   parse,
-  render:(data,mount)=>{D=data;MOUNT=mount;VIEW="poster";render();}
+  render:(data,mount)=>{D=data;MOUNT=mount;VIEW=AcademySettings.read('spdToolPreferences_v1:results-pack',{}).view==='story'?'story':'poster';render();}
 });
 </script>
 </body>

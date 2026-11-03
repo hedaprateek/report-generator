@@ -117,6 +117,7 @@ a{color:inherit;text-decoration:none}
 <link rel="apple-touch-icon" href="assets/images/tesa-emblem.png">
 <link rel="stylesheet" href="assets/css/a11y.css">
 <link rel="stylesheet" href="assets/css/responsive.css">
+<script src="assets/js/academy-settings.js"></script>
 <script src="assets/js/a11y.js" defer></script>
 <script src="assets/js/vendor-footer.js" defer></script>
 <script src="assets/js/a4-print.js" defer></script>
@@ -135,13 +136,17 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <div class="wrap">
+  <div class="setup" style="margin-bottom:22px">
+    <div class="setup-main"><h2 data-academy-name>The Extra Step Academy</h2><p>One academy profile for this browser. Your settings and latest workbooks are remembered on this device.</p><a class="roster" href="settings.html"><span class="ic">⚙</span><span><b>Academy settings</b><span>Name, logo, contact details and saved work</span></span></a></div>
+    <div class="setup-side"><h2>Show the tool to another academy</h2><p>Sample reports and shareable snapshots for every segment.</p><a class="roster" href="marketing.html"><span class="ic">▧</span><span><b>Marketing demos</b><span>Download a segment demo pack</span></span></a></div>
+  </div>
 
   <!-- ---------- setup ---------- -->
   <div class="setup">
     <div class="setup-main">
       <h2><span class="step">1</span>Download the workbook for your class</h2>
       <p>Roster, marks, attendance, fees, timetable and teacher notes in a single file.
-         Nothing is compulsory — delete any sheet you don't use.</p>
+         Fill only the sheets you use; optional sections can stay blank.</p>
       <div class="dl">
         <a href="assets/templates/master/TESA_Master_Pre_Primary.xlsx" download>Pre-Primary</a>
         <a href="assets/templates/master/TESA_Master_Primary.xlsx" download>Primary</a>
@@ -152,7 +157,7 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="setup-side">
       <h2><span class="step">2</span>Then keep it up to date</h2>
-      <p>No column blocks to copy — both write back into your workbook.</p>
+      <p>Update records in the app and download a revised workbook when you need one.</p>
       <a class="roster" href="tools/marks-entry.html" style="margin-bottom:9px">
         <span class="ic">✍️</span>
         <span><b>Enter Marks</b><span>Add a test in three steps</span></span>
@@ -369,7 +374,7 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <div class="foot">
-    The Extra Step Academy · every tool runs in your browser<br>
+    <span data-academy-name>The Extra Step Academy</span> · every tool runs in your browser<br>
     Your files are read on this device only — nothing is uploaded anywhere.
   </div>
 </div>

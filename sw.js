@@ -28,7 +28,7 @@ const CACHE="tesa-suite-v2";
    explicitly rather than cached lazily so the FIRST offline use works, not
    just the second. */
 const PRECACHE=[
-  "./","./index.html","./parent.html",
+  "./","./index.html","./parent.html","./settings.html","./marketing.html",
 
   "./segments/pre-primary-reports.html","./segments/primary-reports.html",
   "./segments/secondary-reports.html","./segments/junior-college-reports.html",
@@ -42,7 +42,7 @@ const PRECACHE=[
   "./tools/backup-restore.html","./tools/qr-codes.html",
 
   "./assets/css/a11y.css","./assets/css/responsive.css",
-  "./assets/js/a11y.js","./assets/js/a4-print.js","./assets/js/template-themes.js","./assets/js/backup.js","./assets/js/data-grid.js",
+  "./assets/js/a11y.js","./assets/js/a4-print.js","./assets/js/academy-settings.js","./assets/js/showcase-bridge.js","./assets/js/marketing-studio.js","./assets/js/template-themes.js","./assets/js/backup.js","./assets/js/data-grid.js",
   "./assets/js/live-relay.js","./assets/js/office-common.js","./assets/js/omr-vision.js",
   "./assets/js/parent-link.js","./assets/js/parent-report.js","./assets/js/pdf-safe.js",
   "./assets/js/question-parser.js","./assets/js/report-page.js","./assets/js/revision-plan.js",

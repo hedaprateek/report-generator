@@ -104,6 +104,7 @@ function stampReports(root){
     else sheet.appendChild(stamp);
     n++;
   });
+  if(window.AcademySettings)AcademySettings.decorate(scope);
   return n;
 }
 

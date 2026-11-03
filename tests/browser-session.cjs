@@ -1,0 +1,20 @@
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
+const root=path.join(__dirname,'..');
+module.exports=async function run(name,check){
+ const out=path.resolve(root,'../.scratch/'+name);fs.mkdirSync(out,{recursive:true});let browser,socket,seq=0;const pending=new Map(),errors=[];const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+ const server=http.createServer((req,res)=>{const file=path.resolve(root,decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'index.html');if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(err,b)=>{if(err){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png'})[path.extname(file)]||'application/octet-stream');res.end(b);});});
+ function send(method,params={}){return new Promise((resolve,reject)=>{const id=++seq,t=setTimeout(()=>{pending.delete(id);reject(Error('Timed out '+method))},120000);pending.set(id,{resolve:v=>{clearTimeout(t);resolve(v)},reject:e=>{clearTimeout(t);reject(e)}});socket.send(JSON.stringify({id,method,params}));});}
+ async function evaluate(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
+ async function until(expression,seconds=30){for(let i=0;i<seconds*10;i++){if(await evaluate(`(()=>{try{return (${expression})}catch{return false}})()`))return;await sleep(100)}throw Error('Timed out '+expression);}
+ const watchdog=setTimeout(()=>{browser?.kill();server.close();server.closeAllConnections();process.exit(1)},360000);watchdog.unref();
+ try{
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,profile=path.join(out,'profile-'+Date.now());
+  browser=spawn(process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--disable-gpu','--disable-extensions','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore',windowsHide:true});
+  let targets;for(let i=0;i<100;i++){try{const port=fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];targets=await(await fetch('http://127.0.0.1:'+port+'/json')).json();break}catch{}await sleep(100)}assert.ok(targets,'Chrome started');
+  socket=new WebSocket(targets.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);if(p)m.error?p.reject(m.error):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);};
+  await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setBypassServiceWorker',{bypass:true});await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:out});await send('Emulation.setDeviceMetricsOverride',{width:1300,height:1000,deviceScaleFactor:1,mobile:false});
+  async function navigate(relative){await send('Page.navigate',{url:base+relative});await until('document.readyState==="complete"');}
+  async function screenshot(file){const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,file+'.png'),Buffer.from(r.data,'base64'));}
+  await check({root,out,base,send,evaluate,until,navigate,screenshot,sleep,errors});assert.deepEqual(errors,[],'no unhandled browser exceptions');
+ }catch(err){try{console.error(await evaluate(`JSON.stringify({status:document.getElementById('demoStatus')?.textContent,url:location.href,frame:document.getElementById('demoFrame')?.src})`));console.error(JSON.stringify(errors));}catch{}throw err;}finally{clearTimeout(watchdog);socket?.close();browser?.kill();server.close();server.closeAllConnections();}
+};

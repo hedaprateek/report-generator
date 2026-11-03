@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Secondary School Progress Dashboard</title>
+<script src="../assets/js/academy-settings.js"></script>
 <script src="../assets/vendor/xlsx.full.min.js"></script>
 <script src="../assets/vendor/html2pdf.bundle.min.js"></script>
 <script src="../assets/js/data-grid.js"></script>
@@ -301,6 +302,7 @@ svg text{font-family:system-ui,sans-serif}
 <script src="../assets/js/a11y.js" defer></script>
 <script src="../assets/js/vendor-footer.js" defer></script>
 <script src="../assets/js/a4-print.js" defer></script>
+<script src="../assets/js/showcase-bridge.js" defer></script>
 <script src="../assets/js/template-themes.js" defer></script>
 <script src="../assets/js/offline.js" defer></script>
 </head>
@@ -368,7 +370,7 @@ svg text{font-family:system-ui,sans-serif}
   <div id="settingsModal" class="modal-wrap hidden">
     <div class="modal-card">
       <h3>Customize branding &amp; labels</h3>
-      <p class="sub">Set your logo and academy name, and rename the wording used on reports, overview and printouts. Branding is saved on this device; labels apply for this session.</p>
+      <p class="sub">Set your logo and academy name, and rename the wording used on reports, overview and printouts. Academy details are shared across the site. Report wording is remembered for this segment in this browser.</p>
       <p class="sub" style="margin:0 0 8px;font-weight:700;color:var(--navy);text-transform:uppercase;font-size:11px;letter-spacing:.05em">Branding</p>
       <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">
         <img id="brandingLogoPreview" alt="" style="height:52px;width:auto;max-width:130px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:#F6F5F0">
@@ -378,7 +380,7 @@ svg text{font-family:system-ui,sans-serif}
           <button type="button" class="btn btn-ghost" id="brandingLogoReset" style="padding:6px 12px;font-size:12px">Reset to TESA logo</button>
         </div>
       </div>
-      <label>Default academy name<input id="brandingName" type="text" placeholder="Used when the workbook doesn't set an ACADEMY name"></label>
+      <label>Academy name<input id="brandingName" type="text" placeholder="Used across this academy’s reports and tools"></label>
       <p class="sub" style="margin:16px 0 6px">Report wording</p>
       <label>Remarks section heading<input id="lbl-remarksHeading" type="text"></label>
       <label>Teacher note heading<input id="lbl-teacherNoteHeading" type="text"></label>
@@ -401,7 +403,8 @@ svg text{font-family:system-ui,sans-serif}
         <label>Band 1<input id="lbl-band1" type="text"></label>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-ghost" id="settingsReset">Reset to defaults</button>
+        <button class="btn btn-ghost" id="settingsReset">Reset report wording</button>
+        <button class="btn btn-ghost" id="settingsCancel">Cancel</button>
         <button class="btn btn-primary" id="settingsSave">Save</button>
       </div>
     </div>
@@ -434,25 +437,8 @@ const DEFAULT_BRANDING={
   logoEmblem:"../assets/images/tesa-emblem.png"
 };
 const BRANDING_KEY="spdBrandingOverrides_v1";
-function loadBranding(){
-  let saved={};
-  try{saved=JSON.parse(localStorage.getItem(BRANDING_KEY)||"{}")||{};}catch(e){saved={};}
-  return{
-    name:saved.name||DEFAULT_BRANDING.name,
-    logoFull:saved.logoFull||DEFAULT_BRANDING.logoFull,
-    logoEmblem:saved.logoEmblem||DEFAULT_BRANDING.logoEmblem
-  };
-}
-function saveBranding(){
-  const overrides={};
-  if(BRANDING.name!==DEFAULT_BRANDING.name)overrides.name=BRANDING.name;
-  if(BRANDING.logoFull!==DEFAULT_BRANDING.logoFull)overrides.logoFull=BRANDING.logoFull;
-  if(BRANDING.logoEmblem!==DEFAULT_BRANDING.logoEmblem)overrides.logoEmblem=BRANDING.logoEmblem;
-  try{
-    if(Object.keys(overrides).length)localStorage.setItem(BRANDING_KEY,JSON.stringify(overrides));
-    else localStorage.removeItem(BRANDING_KEY);
-  }catch(e){/* storage unavailable/full — override just won't persist across reloads */}
-}
+function loadBranding(){return window.AcademySettings?AcademySettings.profile():{...DEFAULT_BRANDING};}
+function saveBranding(){if(window.AcademySettings)AcademySettings.saveProfile(BRANDING);}
 let BRANDING=loadBranding();
 function isAbsent(v){if(v==null||v==="")return false;const s=String(v).trim().toUpperCase();return s==="A"||s==="AB"||s==="ABS"||s==="ABSENT";}
 function cellState(v){
@@ -879,7 +865,7 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","
    STATE + RENDER
    ================================================================= */
 let DATA=null, AN=null, FILTER={type:"__all",month:"__all"}, curStudent=null, BATCHES=[], CURRENT_BATCH=0;
-const LABELS={
+const DEFAULT_LABELS={
   remarksHeading:"AI Evaluation",
   teacherNoteHeading:"Teacher’s Note",
   sign1:"Class Teacher", sign2:"Academy Head", sign3:"Parent / Guardian",
@@ -887,6 +873,7 @@ const LABELS={
   showAttention:true,
   band5:"Strong", band4:"Good", band3:"Fair", band2:"Watch", band1:"Concern"
 };
+const LABELS={...DEFAULT_LABELS,...(window.AcademySettings?AcademySettings.loadLabels('secondary',DEFAULT_LABELS):{})};
 
 function fmtPct(v,d=0){return v==null?"—":v.toFixed(d)+"%";}
 
@@ -951,7 +938,7 @@ function renderOverview(){
       <div><div class="eyebrow">Holistic view</div><h2>Academy Overview</h2></div>
       <div class="filters">${typeFilterHTML()}${monthFilterHTML()}<button class="btn btn-ghost" id="printOverview">Print / Save as PDF</button><button class="btn btn-primary" id="shareOverview">Share (WhatsApp / Email)</button></div>
     </div>
-    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Academy Overview</div></div>
+    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(BRANDING.name)}</div><div class="doc">Academy Overview</div></div>
       <div class="meta">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>Generated ${new Date().toLocaleDateString()}</div></div>
     ${LABELS.overviewBanner?`<div class="ov-banner">${esc(LABELS.overviewBanner)}</div>`:""}
     ${warnHTML}
@@ -1023,7 +1010,7 @@ function renderOverview(){
   bindTypeFilter(el);
   const pb=document.getElementById("printOverview");if(pb)pb.addEventListener("click",()=>printView("v-overview"));
   document.getElementById("shareOverview").addEventListener("click",e=>{
-    forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_overview.pdf","Academy Overview",e.target));
+    forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(BRANDING.name)+"_overview.pdf","Academy Overview",e.target));
   });
 }
 
@@ -1048,7 +1035,7 @@ function renderRankings(){
       <div><div class="eyebrow">Best students</div><h2>Rankings & Ratings</h2></div>
       <div class="filters">${typeFilterHTML()}${monthFilterHTML()}<button class="btn btn-ghost" id="printRankings">Print / Save as PDF</button><button class="btn btn-primary" id="shareRankings">Share (WhatsApp / Email)</button></div>
     </div>
-    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Rankings & Ratings</div></div>
+    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(BRANDING.name)}</div><div class="doc">Rankings & Ratings</div></div>
       <div class="meta">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>Generated ${new Date().toLocaleDateString()}</div></div>
     <div class="panel" style="padding:8px 6px">
       <table>
@@ -1071,7 +1058,7 @@ function renderRankings(){
   bindTypeFilter(el);
   const pb=document.getElementById("printRankings");if(pb)pb.addEventListener("click",()=>printView("v-rankings"));
   document.getElementById("shareRankings").addEventListener("click",e=>{
-    forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_rankings.pdf","Rankings & Ratings",e.target));
+    forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(BRANDING.name)+"_rankings.pdf","Rankings & Ratings",e.target));
   });
 }
 
@@ -1126,7 +1113,7 @@ function renderAwards(){
       <div><div class="eyebrow">Recognition</div><h2>Awards</h2></div>
       <div class="filters">${typeFilterHTML()}${monthFilterHTML()}<button class="btn btn-ghost" id="printAwards">Print / Save as PDF</button><button class="btn btn-primary" id="shareAwards">Share (WhatsApp / Email)</button></div>
     </div>
-    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Awards</div></div>
+    <div class="print-head"><img src="${BRANDING.logoEmblem}" alt=""><div><div class="acad">${esc(BRANDING.name)}</div><div class="doc">Awards</div></div>
       <div class="meta">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>Generated ${new Date().toLocaleDateString()}</div></div>
 
     <div class="award-grid">${awardCards}</div>
@@ -1155,7 +1142,7 @@ function renderAwards(){
 
   document.getElementById("printAwards").addEventListener("click",()=>printView("v-awards"));
   document.getElementById("shareAwards").addEventListener("click",e=>{
-    forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_awards.pdf","Awards",e.target));
+    forcePrintLikeLayout(el,()=>shareAsPDF(el,slugify(BRANDING.name)+"_awards.pdf","Awards",e.target));
   });
   bindTypeFilter(el);
   document.getElementById("addAward").addEventListener("click",()=>{
@@ -1235,7 +1222,7 @@ function buildReportSheetHTML(s,a,sheetId){
       <div class="rep-head">
         <div style="display:flex;align-items:center;gap:12px">
           <img class="rep-logo" src="${BRANDING.logoEmblem}" alt="">
-          <div><div class="acad">${esc(DATA.academy||BRANDING.name)}</div><div class="doc">Student Progress Report</div></div>
+          <div><div class="acad">${esc(BRANDING.name)}</div><div class="doc">Student Progress Report</div></div>
         </div>
         <div class="period">${esc(DATA.batch||"")}${DATA.year?" · "+esc(DATA.year):""}<br>${a.tests.length} tests${FILTER.type!=="__all"?" · "+esc(FILTER.type):""}${FILTER.month!=="__all"?" · "+esc(monthLabelOf(FILTER.month)):""}<br>Generated ${new Date().toLocaleDateString()}</div>
       </div>
@@ -1370,7 +1357,7 @@ async function shareAllReportsAsPDF(btnEl){
   const sheets=a.S.filter(s=>s.avgPct!=null||s.perTest.some(p=>p.applies)).map((s,i)=>buildReportSheetHTML(s,a,"allSheet"+i)).join("");
   el.innerHTML=sheets;
   applyReportLang();   // all-student output must honour the chosen language
-  await shareAsPDF(el,slugify(DATA.academy||BRANDING.name)+"_all_reports.pdf","All Student Reports",btnEl);
+  await shareAsPDF(el,slugify(BRANDING.name)+"_all_reports.pdf","All Student Reports",btnEl);
 }
 function nRanked(a){return a.ranked.length;}
 function autoRemark(s,a,strong,weak){
@@ -1482,7 +1469,7 @@ async function sharePage(s,btnEl){
     const out=await ReportPage.build(sheetEl,{
       student:s.name,
       docTitle:"Progress Report",
-      academy:(typeof DATA!=="undefined"&&DATA&&DATA.academy)||BRANDING.name,
+      academy:BRANDING.name,
       generated:new Date().toLocaleDateString()
     });
     await ReportPage.shareOrDownload(out.html,slugify(s.name)+"_report.html",
@@ -1569,15 +1556,18 @@ function wbCacheOpen(){
     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
   });
 }
+let WORKBOOK_IS_DEMO=false,WORKBOOK_USER_STARTED=false,LAST_WORKBOOK_NAME="";
 async function wbCacheSave(filename,bytes){
+  if(window.AcademySettings?.showcase)return;LAST_WORKBOOK_NAME=filename;
   try{const db=await wbCacheOpen();
     await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readwrite");
       tx.objectStore(WB_CACHE_STORE).put({filename,savedAt:Date.now(),bytes},WB_CACHE_KEY);
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
     db.close();
-  }catch(e){/* storage unavailable/full — app still works, just won't auto-restore next time */}
+  }catch(e){if(window.AcademySettings)AcademySettings.failure('Could not save this workbook on the device. Download a copy to keep your changes.');}
 }
 async function wbCacheLoad(){
+  if(window.AcademySettings?.showcase)return null;
   try{const db=await wbCacheOpen();
     const rec=await new Promise((resolve,reject)=>{const tx=db.transaction(WB_CACHE_STORE,"readonly");
       const req=tx.objectStore(WB_CACHE_STORE).get(WB_CACHE_KEY);
@@ -1592,6 +1582,16 @@ async function wbCacheClear(){
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
     db.close();
   }catch(e){/* ignore */}
+}
+function acceptedWorkbook(filename,sheets){
+ WORKBOOK_IS_DEMO=false;LAST_SHEETS=sheets;
+ const wb=XLSX.utils.book_new();Object.entries(sheets).forEach(([name,rows])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),name));
+ wbCacheSave(filename,XLSX.write(wb,{type:'array',bookType:'xlsx'}));
+ if(window.SPDRoster&&!window.AcademySettings?.showcase)SPDRoster.merge(SPDRoster.fromSheets(sheets));
+}
+function cacheEditedWorkbook(sheets){
+ if(WORKBOOK_IS_DEMO||window.AcademySettings?.showcase)return;
+ try{acceptedWorkbook(LAST_WORKBOOK_NAME||slugify(BRANDING.name)+'_secondary.xlsx',sheets);}catch(err){AcademySettings.failure('Could not save the edited workbook on this device. Download a copy to keep your changes.');}
 }
 function showRestoredToast(filename){
   const old=document.getElementById("shareToast");if(old)old.remove();
@@ -1617,7 +1617,7 @@ function boot(batches){
 }
 function loadBatch(i){
   CURRENT_BATCH=i;DATA=BATCHES[i].data;FILTER={type:"__all",month:"__all"};applyFilter();
-  document.getElementById("brandName").textContent=DATA.academy||BRANDING.name;
+  document.getElementById("brandName").textContent=BRANDING.name;
   document.getElementById("brandSub").textContent=(BATCHES[i].label||DATA.batch||"Secondary School");
   document.getElementById("dataPill").textContent=`${DATA.marks.length} students · ${DATA.tests.length} tests`;
   const bp=document.getElementById("batchPick");
@@ -1646,18 +1646,18 @@ function parseWorkbookBytes(bytes){
 }
 // Only interrupt the teacher when something actually looks off — a clean workbook
 // goes straight to the dashboard, exactly as it did before.
-function bootWithReview(batches,sheets){
+function bootWithReview(batches,sheets,onReady){
   const parserWarnings=batches.reduce((a,b)=>a.concat(b.data.warnings||[]),[]);
   const issues=(window.SPDGrid?SPDGrid.audit(sheets,parserWarnings):[]);
-  if(!issues.length){boot(batches);return;}
+  if(!issues.length){LAST_SHEETS=sheets;boot(batches);if(onReady)onReady(sheets);return;}
   SPDGrid.open(sheets,{
     title:"Check this before we build the reports",
     subtitle:"We spotted a few things that are usually typos. Fix anything that's wrong, or continue if it's intentional.",
     issues,
-    filename:slugify(DATA&&DATA.academy||BRANDING.name)+"_data.xlsx",
+    filename:slugify(BRANDING.name)+"_data.xlsx",
     onApply:edited=>{
       LAST_SHEETS=edited;
-      try{boot(detectBatches(edited));}
+      try{boot(detectBatches(edited));if(onReady)onReady(edited);else cacheEditedWorkbook(edited);}
       catch(err){showUploadError(`<b>Could not use the edited data.</b> <p style="margin:6px 0 0">${esc(err.message)}</p>`);}
     }
   });
@@ -1673,10 +1673,8 @@ function refreshWorkbookPool(){
     selfKey:WB_CACHE_KEY,
     onPick:r=>{
       clearUploadError();
-      const batches=parseWorkbookBytes(r.bytes);   // throws if it doesn't fit this segment
-      bootWithReview(batches,LAST_SHEETS);
-      wbCacheSave(r.filename,r.bytes.slice(0));
-      if(window.SPDRoster)SPDRoster.merge(SPDRoster.fromSheets(LAST_SHEETS));
+      const previousSheets=LAST_SHEETS;const batches=parseWorkbookBytes(r.bytes);const pendingSheets=LAST_SHEETS;LAST_SHEETS=previousSheets;WORKBOOK_USER_STARTED=true;   // throws if it doesn't fit this segment
+      bootWithReview(batches,pendingSheets,accepted=>acceptedWorkbook(r.filename,accepted));
     },
     onError:err=>showUploadError(err&&err.code==="NO_TESTS"
       ? '<b>That workbook has no test data this dashboard can read.</b>'
@@ -1685,15 +1683,14 @@ function refreshWorkbookPool(){
 }
 
 function readFile(file){
+  WORKBOOK_USER_STARTED=true;
   clearUploadError();
   const rd=new FileReader();
   rd.onload=e=>{
     const bytes=e.target.result;
     try{
-      const batches=parseWorkbookBytes(bytes);
-      bootWithReview(batches,LAST_SHEETS);
-      wbCacheSave(file.name,bytes.slice(0));
-      if(window.SPDRoster)SPDRoster.merge(SPDRoster.fromSheets(LAST_SHEETS)); // top up the shared roster
+      const previousSheets=LAST_SHEETS;const batches=parseWorkbookBytes(bytes);const pendingSheets=LAST_SHEETS;LAST_SHEETS=previousSheets;
+      bootWithReview(batches,pendingSheets,accepted=>acceptedWorkbook(file.name,accepted));
     }catch(err){
       if(err.code==="NO_TESTS"){
         showUploadError(`<b>No tests were found in the Marks sheet.</b>
@@ -1715,7 +1712,7 @@ fileIn.addEventListener("change",e=>{if(e.target.files[0])readFile(e.target.file
 ["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("drag");}));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("drag");}));
 drop.addEventListener("drop",e=>{if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
-document.getElementById("demo").addEventListener("click",()=>{clearUploadError();LAST_SHEETS=SAMPLE_SHEETS;boot(detectBatches(SAMPLE_SHEETS));});
+document.getElementById("demo").addEventListener("click",()=>{WORKBOOK_IS_DEMO=true;WORKBOOK_USER_STARTED=true;clearUploadError();LAST_SHEETS=SAMPLE_SHEETS;boot(detectBatches(SAMPLE_SHEETS));});
 refreshWorkbookPool();
 document.getElementById("batchPick").addEventListener("change",e=>loadBatch(Number(e.target.value)));
 // Manual entry: reuse the sample workbook purely as scaffolding — same sheets, same
@@ -1735,7 +1732,7 @@ document.getElementById("manualEntry").addEventListener("click",()=>{
           showUploadError(`<b>No test data yet.</b> <p style="margin:6px 0 0">Add at least one student row with marks, then try again.</p>`);
           return;
         }
-        boot(batches);
+        WORKBOOK_IS_DEMO=false;WORKBOOK_USER_STARTED=true;boot(batches);cacheEditedWorkbook(edited);
       }catch(err){showUploadError(`<b>Could not use that data.</b> <p style="margin:6px 0 0">${esc(err.message)}</p>`);}
     }
   });
@@ -1746,82 +1743,50 @@ document.getElementById("editDataBtn").addEventListener("click",()=>{
     title:"Edit data",
     subtitle:"Change any value and continue — the reports rebuild instantly. Nothing is saved back to your original file.",
     applyLabel:"Rebuild reports",
-    filename:slugify(DATA&&DATA.academy||BRANDING.name)+"_data.xlsx",
+    filename:slugify(BRANDING.name)+"_data.xlsx",
     onApply:edited=>{
       LAST_SHEETS=edited;
-      try{boot(detectBatches(edited));}
+      try{boot(detectBatches(edited));cacheEditedWorkbook(edited);}
       catch(err){alert("Could not use the edited data: "+err.message);}
     }
   });
 });
+let settingsDraft=null,labelsDraft=null;
 function applyBranding(){
-  document.getElementById("landingLogo").src=BRANDING.logoFull;
-  document.getElementById("landingLogo").alt=BRANDING.name+" logo";
-  document.getElementById("topLogo").src=BRANDING.logoEmblem;
-  if(DATA){
-    document.getElementById("brandName").textContent=DATA.academy||BRANDING.name;
-    const active=document.querySelector(".tab.active");if(active)switchView(active.dataset.view);
-  }
+ document.getElementById('landingLogo').src=BRANDING.logoFull;document.getElementById('landingLogo').alt=BRANDING.name+' logo';document.getElementById('topLogo').src=BRANDING.logoEmblem;
+ if(DATA){document.getElementById('brandName').textContent=BRANDING.name;const active=document.querySelector('.tab.active');if(active)switchView(active.dataset.view);}
 }
-function openSettings(){
-  Object.keys(LABELS).forEach(k=>{
-    const inp=document.getElementById("lbl-"+k);if(!inp)return;
-    if(inp.type==="checkbox")inp.checked=!!LABELS[k];else inp.value=LABELS[k];
-  });
-  document.getElementById("brandingName").value=BRANDING.name;
-  document.getElementById("brandingLogoPreview").src=BRANDING.logoFull;
-  document.getElementById("settingsModal").classList.remove("hidden");
+function fillSettings(){
+ Object.keys(LABELS).forEach(k=>{const inp=document.getElementById('lbl-'+k);if(!inp)return;if(inp.type==='checkbox')inp.checked=!!labelsDraft[k];else inp.value=labelsDraft[k];});
+ document.getElementById('brandingName').value=settingsDraft.name;document.getElementById('brandingLogoPreview').src=settingsDraft.logoFull;
 }
-function closeSettings(){document.getElementById("settingsModal").classList.add("hidden");}
-document.getElementById("settingsBtn").addEventListener("click",openSettings);
-document.getElementById("settingsModal").addEventListener("click",e=>{if(e.target.id==="settingsModal")closeSettings();});
-document.getElementById("brandingLogoPick").addEventListener("click",()=>document.getElementById("brandingLogoFile").click());
-document.getElementById("brandingLogoFile").addEventListener("change",e=>{
-  const f=e.target.files[0];if(!f)return;
-  const rd=new FileReader();
-  rd.onload=ev=>{
-    BRANDING.logoFull=ev.target.result;BRANDING.logoEmblem=ev.target.result;
-    saveBranding();applyBranding();
-    document.getElementById("brandingLogoPreview").src=BRANDING.logoFull;
-  };
-  rd.readAsDataURL(f);
+function openSettings(){settingsDraft={...BRANDING};labelsDraft={...LABELS};fillSettings();document.getElementById('settingsModal').classList.remove('hidden');document.getElementById('brandingName').focus();}
+function closeSettings(){document.getElementById('settingsModal').classList.add('hidden');settingsDraft=null;labelsDraft=null;document.getElementById('settingsBtn').focus();}
+document.getElementById('settingsBtn').addEventListener('click',openSettings);
+document.getElementById('settingsCancel').addEventListener('click',closeSettings);
+document.getElementById('settingsModal').addEventListener('click',e=>{if(e.target.id==='settingsModal')closeSettings();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&settingsDraft)closeSettings();});
+document.getElementById('brandingLogoPick').addEventListener('click',()=>document.getElementById('brandingLogoFile').click());
+document.getElementById('brandingLogoFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const data=await AcademySettings.resizeLogo(f);if(!settingsDraft)return;settingsDraft.logoFull=data;settingsDraft.logoEmblem=data;document.getElementById('brandingLogoPreview').src=data;}catch(err){AcademySettings.failure(err.message);}e.target.value='';});
+document.getElementById('brandingLogoReset').addEventListener('click',()=>{settingsDraft.logoFull=AcademySettings.defaults.logoFull;settingsDraft.logoEmblem=AcademySettings.defaults.logoEmblem;document.getElementById('brandingLogoPreview').src=settingsDraft.logoFull;});
+document.getElementById('settingsSave').addEventListener('click',()=>{
+ const next={...LABELS};Object.keys(next).forEach(k=>{const inp=document.getElementById('lbl-'+k);if(!inp)return;if(inp.type==='checkbox')next[k]=inp.checked;else if(k==='overviewBanner'||inp.value.trim())next[k]=inp.value.trim();});
+ settingsDraft.name=document.getElementById('brandingName').value.trim()||AcademySettings.defaults.name;
+ try{AcademySettings.saveLabels('secondary',next);AcademySettings.saveProfile(settingsDraft);Object.assign(LABELS,next);BRANDING=AcademySettings.profile();closeSettings();applyBranding();AcademySettings.requestPersistence();}catch(err){AcademySettings.failure(err.message);}
 });
-document.getElementById("brandingLogoReset").addEventListener("click",()=>{
-  BRANDING.logoFull=DEFAULT_BRANDING.logoFull;BRANDING.logoEmblem=DEFAULT_BRANDING.logoEmblem;
-  saveBranding();applyBranding();
-  document.getElementById("brandingLogoPreview").src=BRANDING.logoFull;
-});
-document.getElementById("settingsSave").addEventListener("click",()=>{
-  Object.keys(LABELS).forEach(k=>{
-    const inp=document.getElementById("lbl-"+k);if(!inp)return;
-    if(inp.type==="checkbox")LABELS[k]=inp.checked;
-    else if(k==="overviewBanner")LABELS[k]=inp.value.trim(); // allowed to be cleared
-    else if(inp.value.trim())LABELS[k]=inp.value.trim();
-  });
-  const nameInp=document.getElementById("brandingName");
-  BRANDING.name=nameInp.value.trim()||DEFAULT_BRANDING.name;
-  saveBranding();
-  closeSettings();
-  applyBranding();
-});
-document.getElementById("settingsReset").addEventListener("click",()=>{
-  LABELS.remarksHeading="AI Evaluation";LABELS.teacherNoteHeading="Teacher’s Note";
-  LABELS.sign1="Class Teacher";LABELS.sign2="Academy Head";LABELS.sign3="Parent / Guardian";
-  LABELS.overviewBanner="";LABELS.showAttention=true;
-  LABELS.band5="Strong";LABELS.band4="Good";LABELS.band3="Fair";LABELS.band2="Watch";LABELS.band1="Concern";
-  openSettings();
-});
-document.getElementById("reload").addEventListener("click",()=>{DATA=null;document.getElementById("app").style.display="none";document.getElementById("landing").style.display="flex";fileIn.value="";wbCacheClear();});
+document.getElementById('settingsReset').addEventListener('click',()=>{labelsDraft={...DEFAULT_LABELS};fillSettings();});
+window.addEventListener('academy-settings-changed',()=>{BRANDING=AcademySettings.profile();applyBranding();});
+
 applyBranding();
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>switchView(t.dataset.view)));
 (async function tryRestoreLastWorkbook(){
   const rec=await wbCacheLoad();
-  if(!rec)return;
+  if(!rec||WORKBOOK_USER_STARTED)return;LAST_WORKBOOK_NAME=rec.filename;
   try{
     const batches=parseWorkbookBytes(rec.bytes);
     boot(batches);
     showRestoredToast(rec.filename);
-  }catch(e){wbCacheClear();}
+  }catch(e){if(window.AcademySettings)AcademySettings.failure("Your cached workbook is still saved but could not be reopened. Choose another file or use Backup & Restore.");}
 })();
 </script>
 </body>

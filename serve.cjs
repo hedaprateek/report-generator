@@ -10,7 +10,7 @@ const server = http.createServer((req,res) => {
   let file;
   try {file = decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1) || 'index.html';}
   catch {res.writeHead(400).end();return;}
-  const allowed = /^(?:index\.html|parent\.html|sw\.js|manifest\.webmanifest|(?:assets|segments|tools)\/.+)$/;
+  const allowed = /^(?:(?:index|parent|settings|marketing)\.html|sw\.js|manifest\.webmanifest|(?:assets|segments|tools)\/.+)$/;
   const absolute = path.resolve(__dirname,file);
   if (!allowed.test(file) || !absolute.startsWith(__dirname+path.sep) || file.includes('\\')) {res.writeHead(404).end();return;}
   fs.readFile(absolute,(err,bytes) => {

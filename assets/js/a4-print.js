@@ -1,7 +1,8 @@
 /* A fixed A4 frame with a header, an adaptive middle and a bottom footer.
    Native printing and downloaded PDFs use the same measured layout. */
-(function installA4Print(){
+(function installA4Print(context){
 "use strict";
+const window=context||globalThis.window,document=window.document;
 if(window.A4Print)return;
 const DOCS=".sheet,.receipt,.doc-sheet,.card-sheet,.tt-sheet,.sf-page,.rp-stage";
 const script=document.currentScript;
@@ -134,6 +135,7 @@ function fit(records){
 }
 function prepare(){
  if(exporting)return [];
+ if(document.body?.dataset.printPreview==='image')return [];
  style();
  if(state)return fit(state);
  if(window.VendorFooter)window.VendorFooter.stampReports();
@@ -181,7 +183,7 @@ async function loadLibraries(){
  })));
  await libraries;
 }
-async function pdf(root){
+async function pdf(root,asImage=false){
  await loadLibraries();
  if(document.fonts)await document.fonts.ready;
  if(window.VendorFooter)window.VendorFooter.stampReports(root);
@@ -200,6 +202,7 @@ async function pdf(root){
    await Promise.all([...page.querySelectorAll("img")].map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;})));
    fit([record]);
    const canvas=await window.html2canvas(paper,{scale:2,useCORS:true,backgroundColor:"#fff",windowWidth:1100,scrollX:0,scrollY:0});
+   if(asImage){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));canvas.width=canvas.height=1;return blob;}
    if(i)doc.addPage("a4","portrait");
    doc.addImage(canvas.toDataURL("image/jpeg",.96),"JPEG",0,0,210,297);
    canvas.width=canvas.height=1;paper.remove();
@@ -208,7 +211,7 @@ async function pdf(root){
  }finally{holder.remove();exporting=false;}
 }
 function scriptTag(){return "<script>("+installA4Print.toString()+")();</"+"script>";}
-window.A4Print={prepare,restore,fit:prepare,pdf,scriptTag};
+window.A4Print={prepare,restore,fit:prepare,pdf,image:root=>pdf(root,true),scriptTag,inFrame:target=>{installA4Print(target);return target.A4Print;}};
 style();
 window.addEventListener("beforeprint",prepare);
 window.addEventListener("afterprint",restore);
