@@ -80,5 +80,8 @@ async function screen(){await evaluate('A4Print.restore()');await send('Emulatio
  await evaluate(fs.readFileSync(path.join(root,'assets/js/parent-report.js'),'utf8'));
  const parent=await evaluate(`ParentReport.render({student:'A4 Parent Check',academy:'Sample Academy',batch:'Class 5',overall:82,tests:[],topics:[],subjects:[{name:'English',avg:82,cls:75}],generated:'Today',note:'Complete report with a bottom footer.'})`);
  await send('Page.navigate',{url:'data:text/html;base64,'+Buffer.from(parent).toString('base64')});await until('!!window.A4Print');await geometry();await nativePDF('parent-offline',1);await screen();
+ await send('Page.navigate',{url:base+'/parent.html'});await until('!!window.ParentLink&&!!window.A4Print');
+ const fragment=await evaluate(`ParentLink.encode({student:'Linked Sample',academy:'Generic Academy',batch:'Class 5',overall:82,tests:[],topics:[],subjects:[{name:'English',avg:82,cls:75}],generated:'Today'})`);
+ await send('Page.navigate',{url:'about:blank'});await send('Page.navigate',{url:base+'/parent.html#'+fragment});await until('!!document.querySelector(".hero")&&!!window.A4Print');assert.ok(await evaluate(`document.querySelector('.hero img').src.startsWith('data:image/svg+xml')`),'another academy uses its own initials');await geometry();await nativePDF('parent-link',1);await screen();
  assert.deepEqual(errors,[]);console.log(process.env.A4_EXTRAS_ONLY?'PASS short reports and offline parent reports':'PASS all five segments, long content, batch printing, summaries, office documents, direct PDFs and offline exported HTML');
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>{clearTimeout(watchdog);socket?.close();browser?.kill();server.close();server.closeAllConnections()});

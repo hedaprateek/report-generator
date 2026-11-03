@@ -28,6 +28,12 @@ const CACHE="tesa-suite-v2";
    explicitly rather than cached lazily so the FIRST offline use works, not
    just the second. */
 const PRECACHE=[
+  // New APIs must bypass old script URLs in an already-installed worker.
+  "./assets/js/a4-print.js?v=academy-1",
+  "./assets/js/backup.js?v=academy-1",
+  "./assets/js/office-common.js?v=academy-1",
+  "./assets/js/offline.js?v=academy-1",
+  "./assets/js/vendor-footer.js?v=academy-1",
   "./","./index.html","./parent.html","./settings.html","./marketing.html",
 
   "./segments/pre-primary-reports.html","./segments/primary-reports.html",
