@@ -1,4 +1,5 @@
 # Integration check against desktop Excel, using disposable workbook copies.
+param([switch]$IncludeColourVariants)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $output=Join-Path (Split-Path $root -Parent) '.scratch/report-subject-copy'
@@ -8,12 +9,22 @@ $excel.Visible=$false;$excel.DisplayAlerts=$false;$excel.EnableEvents=$false
 $excel.AskToUpdateLinks=$false;$excel.AutomationSecurity=3
 $results=[Collections.Generic.List[object]]::new()
 try {
+    $inputs=[Collections.Generic.List[object]]::new()
     foreach($file in Get-ChildItem (Join-Path $root 'assets/templates') -Recurse -Filter '*.xlsx') {
         $relative=$file.FullName.Substring((Join-Path $root 'assets/templates').Length+1)
-        $bytesBook=$null
         if($relative -notmatch '(Primary_Progress|Student_Progress|College_Progress|Master_(Primary|Secondary|Junior_College|College))'){continue}
-        $copy=Join-Path $output ($relative -replace '[\\/]','-')
-        Copy-Item -LiteralPath $file.FullName -Destination $copy -Force
+        $inputs.Add(@{source=$relative;file=$file.FullName;theme=$null})
+        if($IncludeColourVariants){foreach($theme in @('ocean','forest','plum')){
+            $variant=Join-Path (Split-Path $root -Parent) ('.scratch/report-template-colours/'+$theme+'-'+($relative -replace '[\\/]','-'))
+            if(!(Test-Path -LiteralPath $variant)){throw "Missing colour variant: $variant"}
+            $inputs.Add(@{source=$relative;file=$variant;theme=$theme})
+        }}
+    }
+    foreach($inputFile in $inputs){
+        $relative=$inputFile.source
+        $prefix=if($inputFile.theme){$inputFile.theme+'-'}else{''}
+        $copy=Join-Path $output ($prefix+($relative -replace '[\\/]','-'))
+        Copy-Item -LiteralPath $inputFile.file -Destination $copy -Force
         $book=$excel.Workbooks.Open($copy,0,$false)
         try {
             $sheet=$book.Worksheets.Item('Marks');$values=$sheet.Range('A1:AZ30').Value2
@@ -40,8 +51,8 @@ try {
             try{$sheet.Cells.Item($hr,2).Value2='Broken header'}catch{$blocked=$true}
             if(!$blocked){throw 'Fixed heading could be overwritten'}
             $book.Save()
-            $results.Add(@{source=$relative;copy=$copy;header=$hr;totalBefore=$before})
-            Write-Output "Excel copy, insert, edit, totals and locked header verified: $relative"
+            $results.Add(@{source=$relative;theme=$inputFile.theme;copy=$copy;header=$hr;totalBefore=$before})
+            Write-Output "Excel copy, insert, edit, totals and locked header verified: $prefix$relative"
         } finally {$book.Close($false)}
     }
     $results | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $output 'results.json') -Encoding UTF8

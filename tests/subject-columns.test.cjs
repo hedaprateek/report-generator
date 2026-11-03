@@ -33,7 +33,7 @@ for(const [segment,file]of cases)test(file+': four subjects, protected labels an
 const nativeResults=path.join(root,'../.scratch/report-subject-copy/results.json');
 if(fs.existsSync(nativeResults))for(const result of JSON.parse(fs.readFileSync(nativeResults,'utf8').replace(/^\uFEFF/,''))){
  const match=cases.find(([,f])=>f.replaceAll('/','\\')===result.source);
- if(match)test(result.source+': Excel-saved copied subject works in the report',()=>{
+ if(match)test(result.source+(result.theme?' ('+result.theme+')':'')+': Excel-saved copied subject works in the report',()=>{
    const {data}=parse(match[0],fs.readFileSync(result.copy)),blocks=data.tests||data.semesters;
    assert.equal(blocks[0].subjects.length,5);assert.equal(blocks[1].subjects.length,4);
    assert.equal(blocks[0].subjects[3].name,'Computer Science');
