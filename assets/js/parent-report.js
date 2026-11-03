@@ -100,6 +100,9 @@ body{background:#F5F3EE;color:#2B2F3A;font-family:system-ui,-apple-system,"Segoe
 .foot{text-align:center;font-size:10.5px;color:#656E82;margin-top:18px;line-height:1.6}
 .vf-stamp{margin-top:10px;text-align:center;font-size:9px;letter-spacing:.02em;color:#8A8F9C;line-height:1.5}
 .vf-stamp b{font-weight:700;color:#6B7180}
+.stunity-credit{display:flex;align-items:center;justify-content:center;gap:10px;margin:26px auto 34px;padding:20px 16px 0;max-width:1180px;border-top:1px solid #ddd;font-family:ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;line-height:1.5;color:#6b7280}
+.stunity-credit .sc-dot{width:6px;height:6px;border-radius:50%;flex:none;background:currentColor;opacity:.75}
+.stunity-credit b{font-weight:500}
 .legend{font-size:10.5px;color:#656E82;margin-top:9px;line-height:1.5}
 </style></head>
 <body>
@@ -185,6 +188,8 @@ document.querySelectorAll('.wkh').forEach(function(h){
 });
 var first=document.querySelector('.wk');if(first)first.classList.add('open');
 <\/script>
+<div class="stunity-credit" id="stunityCredit"><span class="sc-dot"></span><span>Stunity Tech — by <b>Prateek</b></span></div>
+${window.A4Print?window.A4Print.scriptTag():""}
 </body></html>`;
 }
 

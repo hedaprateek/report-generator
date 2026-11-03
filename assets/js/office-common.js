@@ -591,10 +591,7 @@ async function sharePDF(el,filename,title,btnEl){
   if(btnEl){btnEl.textContent="Preparing…";btnEl.disabled=true;}
   if(window.VendorFooter)VendorFooter.stampReports(el);
   try{
-    const blob=await html2pdf().set({margin:0,filename,image:{type:"jpeg",quality:.95},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
-      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
-      pagebreak:{mode:["css"],before:".page-break"}}).from(el).outputPdf("blob");
+    const blob=await A4Print.pdf(el);
     const file=new File([blob],filename,{type:"application/pdf"});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{await navigator.share({files:[file],title,text:title});return;}

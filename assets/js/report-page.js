@@ -121,7 +121,8 @@ ${SHELL_CSS}
 ${clone.outerHTML}
 <div class="rp-foot">${esc(meta.academy||"")}${meta.generated?" · "+esc(meta.generated):""}<br>
 Saved on your device — this page works offline and sends nothing anywhere.</div>
-<div class="vf-stamp"><b>Stunity Tech</b> · by Prateek</div>
+<div class="stunity-credit" id="stunityCredit"><span class="sc-dot"></span><span>Stunity Tech — by <b>Prateek</b></span></div>
+${window.A4Print?window.A4Print.scriptTag():""}
 </body>
 </html>`
   };

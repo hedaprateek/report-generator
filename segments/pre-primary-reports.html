@@ -356,6 +356,7 @@ tbody tr.clickable:hover{background:#FAF8F2}
 <link rel="stylesheet" href="../assets/css/responsive.css">
 <script src="../assets/js/a11y.js" defer></script>
 <script src="../assets/js/vendor-footer.js" defer></script>
+<script src="../assets/js/a4-print.js" defer></script>
 <script src="../assets/js/offline.js" defer></script>
 </head>
 <body>
@@ -1271,8 +1272,7 @@ function reportSheetHTML(s){
   const attRec=s.attendance;
   const noteText=esc(s.latestRemarks||s.notes||"");
   const n=AN.pointerNames.length;
-  // .sheet-inner is what fitSheetsToPage scales; without it a long report
-  // spills onto a second page instead of shrinking onto one.
+  // The shared A4 layout reflows this content between the header and footer.
   return `<div class="sheet"><div class="sheet-inner">
     <div class="rep-head">
       <div style="display:flex;gap:12px;align-items:center">
@@ -1512,24 +1512,11 @@ function renderCertificate(){
 /* =================================================================
    PDF / PRINT HELPERS
    ================================================================= */
-/* A report longer than the page used to spill onto a second sheet or get cut.
-   Secondary, Junior College and College already scaled the content down to fit;
-   these two never did. Same approach, so all five behave alike. */
+/* Shared page geometry for every report and print path. */
 function fitSheetsToPage(){
-  document.querySelectorAll(".sheet").forEach(sheet=>{
-    const inner=sheet.querySelector(".sheet-inner");
-    if(!inner)return;
-    inner.style.transform="scale(1)";
-    const cs=getComputedStyle(sheet);
-    const padTop=parseFloat(cs.paddingTop)||0,padBot=parseFloat(cs.paddingBottom)||0;
-    const avail=sheet.clientHeight-padTop-padBot;
-    const natural=inner.scrollHeight;
-    const scale=avail>0&&natural>avail?avail/natural:1;
-    inner.style.transformOrigin="top center";
-    inner.style.transform=`scale(${scale})`;
-  });
+  if(window.A4Print)A4Print.prepare();
 }
-window.addEventListener("beforeprint",fitSheetsToPage);
+
 async function forcePrintLikeLayout(el,fn){
   // fn() is async: this has to await it, or the layout is torn down while
   // html2canvas is still drawing and the PDF captures the screen instead.
@@ -1542,9 +1529,7 @@ async function forcePrintLikeLayout(el,fn){
   }finally{
     document.body.classList.remove("pdf-export");
   }
-  // Deliberately no fitSheetsToPage() here: that scales with a CSS transform,
-  // which html2canvas renders unreliably. Scaling stays on the print path,
-  // where beforeprint handles it and the browser does the rasterising.
+  // A4Print.pdf measures its isolated clone after these print styles apply.
 }
 /* One .html file the parent opens from WhatsApp. Unlike the PDF the tiles still
    open on tap, it reflows on a phone, and it carries its own styles and images
@@ -1596,9 +1581,7 @@ async function shareAsPDF(el,filename,title,btnEl){
   // it. Give html2canvas only readable images; restore the DOM afterwards.
   const safe=window.PdfSafe?await PdfSafe.inlineImages(el):{dropped:0,restore(){}};
   try{
-    const opt={margin:0,filename,image:{type:"jpeg",quality:0.96},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};
-    const worker=html2pdf().set(opt).from(el);
-    const blob=await worker.outputPdf("blob");
+    const blob=await A4Print.pdf(el);
     await shareOrDownload(blob,filename,"application/pdf",title);
   }catch(err){
     console.error(err);

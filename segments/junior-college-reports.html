@@ -300,6 +300,7 @@ svg text{font-family:system-ui,sans-serif}
 <link rel="stylesheet" href="../assets/css/responsive.css">
 <script src="../assets/js/a11y.js" defer></script>
 <script src="../assets/js/vendor-footer.js" defer></script>
+<script src="../assets/js/a4-print.js" defer></script>
 <script src="../assets/js/offline.js" defer></script>
 </head>
 <body>
@@ -1504,11 +1505,7 @@ async function shareAsPDF(sourceEl,filename,title,btnEl){
   // it. Give html2canvas only readable images; restore the DOM afterwards.
   const safe=window.PdfSafe?await PdfSafe.inlineImages(sourceEl):{dropped:0,restore(){}};
   try{
-    const opt={margin:0,filename,image:{type:"jpeg",quality:0.95},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},
-      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
-      pagebreak:{mode:["css"],before:".sheet"}};
-    const blob=await html2pdf().set(opt).from(sourceEl).outputPdf("blob");
+    const blob=await A4Print.pdf(sourceEl);
     const file=new File([blob],filename,{type:"application/pdf"});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{await navigator.share({files:[file],title,text:title});return;}
@@ -1527,20 +1524,9 @@ async function shareAsPDF(sourceEl,filename,title,btnEl){
   }
 }
 function fitSheetsToPage(){
-  document.querySelectorAll(".sheet").forEach(sheet=>{
-    const inner=sheet.querySelector(".sheet-inner");
-    if(!inner)return;
-    inner.style.transform="scale(1)";
-    const cs=getComputedStyle(sheet);
-    const padTop=parseFloat(cs.paddingTop)||0,padBot=parseFloat(cs.paddingBottom)||0;
-    const avail=sheet.clientHeight-padTop-padBot;
-    const natural=inner.scrollHeight;
-    const scale=avail>0&&natural>avail?avail/natural:1;
-    inner.style.transformOrigin="top center";
-    inner.style.transform=`scale(${scale})`;
-  });
+  if(window.A4Print)A4Print.prepare();
 }
-window.addEventListener("beforeprint",fitSheetsToPage);
+
 function printView(id){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("print-target"));
   const t=document.getElementById(id);t.classList.remove("hidden");t.classList.add("print-target");
