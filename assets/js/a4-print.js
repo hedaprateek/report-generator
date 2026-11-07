@@ -1,10 +1,12 @@
 /* A fixed A4 frame with a header, an adaptive middle and a bottom footer.
-   Native printing and downloaded PDFs use the same measured layout. */
+   Native printing and downloaded PDFs use the same measured layout.
+   Downloads embed lossless 300-DPI pages to keep small type and rules sharp. */
 (function installA4Print(context){
 "use strict";
 const window=context||globalThis.window,document=window.document;
 if(window.A4Print)return;
 const DOCS=".sheet,.receipt,.doc-sheet,.card-sheet,.tt-sheet,.sf-page,.rp-stage";
+const EXPORT_DPI=300,CSS_DPI=96;
 const script=document.currentScript;
 const vendorBase=script&&script.src?new URL("../vendor/",script.src).href:null;
 const CSS=`
@@ -202,12 +204,18 @@ async function pdf(root,asImage=false,options={}){
    const record=wrap(page,false);
    await Promise.all([...page.querySelectorAll("img")].map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;})));
    fit([record]);
-   const canvas=await window.html2canvas(paper,{scale:2,useCORS:true,backgroundColor:"#fff",windowWidth:1100,scrollX:0,scrollY:0});
+   // A CSS pixel is 1/96 inch. An explicit scale guarantees print resolution
+   // even on low-DPI screens; JPEG adds avoidable artefacts around fine text.
+   const canvas=await window.html2canvas(paper,{scale:EXPORT_DPI/CSS_DPI,useCORS:true,backgroundColor:"#fff",windowWidth:1100,scrollX:0,scrollY:0});
    if(asImage){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));canvas.width=canvas.height=1;return blob;}
    if(i)doc.addPage("a4","portrait");
-   const jpeg=canvas.toDataURL("image/jpeg",.96);
-   doc.addImage(jpeg,"JPEG",0,0,210,297);
-   if(options.split){const single=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});single.addImage(jpeg,'JPEG',0,0,210,297);individual.push(single.output('blob'));}
+   const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!png)throw Error('The high-resolution report image could not be created. Please try again.');
+   const bytes=new Uint8Array(await png.arrayBuffer());
+   // FAST controls lossless deflate speed, not image quality. Reuse the exact
+   // same pixels for both the individual PDF and the combined print file.
+   doc.addImage(bytes,"PNG",0,0,210,297,undefined,'FAST');
+   if(options.split){const single=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});single.addImage(bytes,'PNG',0,0,210,297,undefined,'FAST');individual.push(single.output('blob'));}
    canvas.width=canvas.height=1;paper.remove();
    options.onPage?.(i+1,pages.length);
   }

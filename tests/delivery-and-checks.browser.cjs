@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),X=require('../assets/vendor/xlsx.full.min.js'),run=require('./browser-session.cjs');
 const pages=b=>(b.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length;
+function sharpPDF(bytes){const text=bytes.toString('latin1');assert.doesNotMatch(text,/\/Filter \/DCTDecode/,'report pages avoid lossy JPEG');const sizes=[...text.matchAll(/\/Subtype \/Image\s*\/Width (\d+)\s*\/Height (\d+)/g)];assert.ok(sizes.some(m=>Number(m[1])>=2480&&Number(m[2])>=3507),'PDF contains a 300-DPI A4 page');}
 function unzip(bytes){const zip=X.CFB.read(bytes,{type:'buffer'});return new Map(zip.FullPaths.map((n,i)=>[n.replace('Root Entry/',''),zip.FileIndex[i]]).filter(([,v])=>v.type===2&&!v.name.includes('Sh33tJ5')).map(([n,v])=>[n,Buffer.from(v.content)]));}
 run('report-delivery-checks',async({out,evaluate:e,until,navigate,screenshot,sleep,send})=>{
  const templates={'pre-primary':'pre-primary/Pre_Primary_Evaluation_Template.xlsx',primary:'primary/Primary_Progress_Template.xlsx',secondary:'secondary/Student_Progress_Template.xlsx','junior-college':'junior-college/Student_Progress_Template.xlsx',college:'college/College_Progress_Template.xlsx'};
@@ -21,8 +22,9 @@ run('report-delivery-checks',async({out,evaluate:e,until,navigate,screenshot,sle
   let file;for(let i=0;i<80;i++){file=fs.readdirSync(out).find(n=>n.includes('_'+segment+'_')&&n.endsWith('_report-pack.zip'));if(file)break;await sleep(100);}assert.ok(file,'ZIP downloaded');
   const entries=unzip(fs.readFileSync(path.join(out,file))),students=[...entries.keys()].filter(n=>n.startsWith('students/'));
   assert.equal(students.length,2);assert.equal(new Set(students).size,2);
-  for(const student of students)assert.equal(pages(entries.get(student)),1,'single A4 PDF: '+student);
+  for(const student of students){assert.equal(pages(entries.get(student)),1,'single A4 PDF: '+student);sharpPDF(entries.get(student));}
   assert.equal(pages(entries.get('all-student-reports.pdf')),2,'one combined A4 page per student');assert.equal(pages(entries.get('class-summary.pdf')),1);
+  sharpPDF(entries.get('all-student-reports.pdf'));sharpPDF(entries.get('class-summary.pdf'));
   assert.match(entries.get('report-index.csv').toString(),/PDF file/);for(const student of students)assert.ok(entries.get('report-index.csv').toString().includes(student));
   assert.match(entries.get('READ-ME.txt').toString(),/Send each family only their own student's PDF/);
   fs.writeFileSync(path.join(out,segment+'-summary.pdf'),entries.get('class-summary.pdf'));fs.writeFileSync(path.join(out,segment+'-student.pdf'),entries.get(students[0]));

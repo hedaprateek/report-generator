@@ -28,6 +28,7 @@ const CACHE="tesa-suite-v2";
    explicitly rather than cached lazily so the FIRST offline use works, not
    just the second. */
 const PRECACHE=[
+  "./assets/js/a4-print.js?v=quality-1",
   "./assets/js/workbook-checks.js?v=checks-1",
   "./assets/js/data-grid.js?v=checks-1",
   "./assets/js/delivery-pack.js?v=delivery-1",
