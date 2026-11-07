@@ -183,7 +183,7 @@ async function loadLibraries(){
  })));
  await libraries;
 }
-async function pdf(root,asImage=false){
+async function pdf(root,asImage=false,options={}){
  await loadLibraries();
  if(document.fonts)await document.fonts.ready;
  if(window.VendorFooter)window.VendorFooter.stampReports(root);
@@ -192,8 +192,9 @@ async function pdf(root,asImage=false){
  exporting=true;
  try{
   const sourcePages=documents(root),pages=sourcePages.length?sourcePages:[root];
-  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait",compress:true});
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait",compress:true}),individual=[];
   for(let i=0;i<pages.length;i++){
+   if(options.cancelled?.())throw new Error('Export cancelled. No incomplete pack was downloaded.');
    const paper=document.createElement("div");paper.className="a4-paper";
    const page=pages[i].cloneNode(true);page.classList.remove("hidden","print-target");
    page.querySelectorAll(".no-print").forEach(node=>node.remove());
@@ -204,14 +205,17 @@ async function pdf(root,asImage=false){
    const canvas=await window.html2canvas(paper,{scale:2,useCORS:true,backgroundColor:"#fff",windowWidth:1100,scrollX:0,scrollY:0});
    if(asImage){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));canvas.width=canvas.height=1;return blob;}
    if(i)doc.addPage("a4","portrait");
-   doc.addImage(canvas.toDataURL("image/jpeg",.96),"JPEG",0,0,210,297);
+   const jpeg=canvas.toDataURL("image/jpeg",.96);
+   doc.addImage(jpeg,"JPEG",0,0,210,297);
+   if(options.split){const single=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});single.addImage(jpeg,'JPEG',0,0,210,297);individual.push(single.output('blob'));}
    canvas.width=canvas.height=1;paper.remove();
+   options.onPage?.(i+1,pages.length);
   }
-  return doc.output("blob");
+  return options.split?{combined:doc.output('blob'),individual}:doc.output("blob");
  }finally{holder.remove();exporting=false;}
 }
 function scriptTag(){return "<script>("+installA4Print.toString()+")();</"+"script>";}
-window.A4Print={prepare,restore,fit:prepare,pdf,image:root=>pdf(root,true),scriptTag,inFrame:target=>{installA4Print(target);return target.A4Print;}};
+window.A4Print={prepare,restore,fit:prepare,pdf,bundle:(root,options)=>pdf(root,false,{...options,split:true}),image:root=>pdf(root,true),scriptTag,inFrame:target=>{installA4Print(target);return target.A4Print;}};
 style();
 window.addEventListener("beforeprint",prepare);
 window.addEventListener("afterprint",restore);

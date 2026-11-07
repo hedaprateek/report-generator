@@ -58,6 +58,7 @@ const CSS = `
 .spdg-btn-primary:hover{filter:brightness(1.07)}
 .spdg-btn-ghost{background:transparent;color:#1F2A44;border:1px solid #D8D3C6}
 .spdg-btn-ghost:hover{background:#F0EEE7}
+.spdg-btn:disabled{opacity:.45;cursor:default}
 .spdg-hint{font-size:11.5px;color:#656E82}
 @media(max-width:700px){.spdg-head,.spdg-tabs,.spdg-body,.spdg-foot{padding-left:14px;padding-right:14px}}
 `;
@@ -95,6 +96,7 @@ function findNameCol(aoa,hr){
 // for every caller to remember — forgetting produced a screen full of false alarms.
 const KNOWN_LEDGERS=["charges","payments","notes","timetable","homework","milestones"];
 function audit(sheets,parserWarnings,opts){
+  if(window.WorkbookChecks)return WorkbookChecks.audit(sheets,parserWarnings,opts);
   opts=opts||{};
   const issues=[];
   const declaredLedgers=(opts.ledgerSheets||[]).map(keyName).concat(KNOWN_LEDGERS);
@@ -175,27 +177,31 @@ function blankFrom(sampleSheets,blankRows){
 
 /* ---------------- the overlay ---------------- */
 let state=null;
+let checkTimer=null;
 
 function ensureOverlay(){
   let el=document.getElementById("spdGridOverlay");
   if(el)return el;
   injectCSS();
   el=document.createElement("div");
-  el.id="spdGridOverlay";el.className="hidden";
+  el.id="spdGridOverlay";el.className="hidden";el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','spdgTitle');
   el.innerHTML=`
     <div class="spdg-card">
       <div class="spdg-head">
         <h3 id="spdgTitle"></h3>
         <p id="spdgSub"></p>
-        <div id="spdgIssues" class="spdg-issues" style="display:none"></div>
+        <div id="spdgIssues" class="spdg-issues" style="display:none" aria-live="polite"></div>
       </div>
       <div class="spdg-tabs" id="spdgTabs"></div>
       <div class="spdg-body" id="spdgBody"></div>
       <div class="spdg-foot">
         <button class="spdg-btn spdg-btn-ghost" id="spdgAddRow">+ Add row</button>
-        <span class="spdg-hint">Click any cell to edit. Changes stay on this device.</span>
+        <span class="spdg-hint">Fix errors before continuing. Blank marks are not zero or absent.</span>
         <span class="spdg-spacer"></span>
         <button class="spdg-btn spdg-btn-ghost" id="spdgExport">Download as Excel</button>
+        <button class="spdg-btn spdg-btn-ghost" id="spdgCheck">Recheck</button>
+        <button class="spdg-btn spdg-btn-ghost" id="spdgProblems">Download problems · CSV</button>
+        <button class="spdg-btn spdg-btn-ghost" id="spdgProblemsExcel">Problems in Excel</button>
         <button class="spdg-btn spdg-btn-ghost" id="spdgCancel">Cancel</button>
         <button class="spdg-btn spdg-btn-primary" id="spdgApply">Looks good — continue</button>
       </div>
@@ -205,6 +211,13 @@ function ensureOverlay(){
   el.addEventListener("click",e=>{if(e.target===el)close();});
   document.getElementById("spdgAddRow").addEventListener("click",addRow);
   document.getElementById("spdgExport").addEventListener("click",exportXlsx);
+  document.getElementById("spdgCheck").addEventListener("click",()=>recheck());
+  document.getElementById("spdgProblems").addEventListener("click",exportProblems);
+  document.getElementById("spdgProblemsExcel").addEventListener("click",()=>{
+    recheck();if(!state||!window.WorkbookChecks||!window.XLSX)return;
+    XLSX.writeFile(WorkbookChecks.reviewWorkbook(state.sheets,state.issues,XLSX),state.filename.replace(/\.[^.]+$/,'')+'_review.xlsx');
+  });
+  document.getElementById('spdgBody').addEventListener('input',()=>{clearTimeout(checkTimer);document.getElementById('spdgApply').disabled=true;checkTimer=setTimeout(()=>recheck(),450);});
   document.getElementById("spdgCancel").addEventListener("click",close);
   document.getElementById("spdgApply").addEventListener("click",apply);
   document.addEventListener("keydown",e=>{
@@ -217,13 +230,15 @@ function open(sheets,opts){
   opts=opts||{};
   ensureOverlay();
   const names=Object.keys(sheets||{});
-  const issues=opts.issues||[];
+  const issues=opts.issues||audit(sheets,[]);
   // land on the sheet that actually has a problem, not whichever happens to be first
   const firstFlagged=(issues.find(i=>i.sheet&&names.indexOf(i.sheet)>=0)||{}).sheet;
   state={
     sheets:JSON.parse(JSON.stringify(sheets||{})), // edit a copy; caller's data is untouched until Apply
     active:firstFlagged||names[0]||null,
     issues,
+    validate:opts.validate||((edited)=>audit(edited,[],opts.auditOptions)),
+    previousFocus:document.activeElement,
     onApply:opts.onApply||null,
     filename:opts.filename||"Progress_Data.xlsx"
   };
@@ -233,22 +248,47 @@ function open(sheets,opts){
   document.getElementById("spdgApply").textContent=opts.applyLabel||"Looks good — continue";
   renderIssues();renderTabs();renderTable();
   document.getElementById("spdGridOverlay").classList.remove("hidden");
+  document.getElementById('spdgCancel').focus();
 }
 function close(){
+  clearTimeout(checkTimer);
   const el=document.getElementById("spdGridOverlay");
   if(el)el.classList.add("hidden");
+  const focus=state?.previousFocus;
   state=null;
+  focus?.focus();
 }
 
 function renderIssues(){
   const box=document.getElementById("spdgIssues");
   const list=state.issues||[];
-  if(!list.length){box.style.display="none";box.innerHTML="";return;}
+  const errors=list.filter(i=>i.level==='error').length;
+  document.getElementById('spdgApply').disabled=errors>0;
+  document.getElementById('spdgProblems').disabled=!list.length;
+  document.getElementById('spdgProblemsExcel').disabled=!list.length;
+  if(!list.length){box.style.display="block";box.innerHTML='<h4>✓ No problems found by these checks</h4><p style="margin:0;font-size:11px">Review your entries before continuing.</p>';return;}
   box.style.display="block";
-  const shown=list.slice(0,8);
-  box.innerHTML=`<h4>⚠ ${list.length} thing${list.length>1?"s":""} worth checking</h4>
-    <ul>${shown.map(i=>`<li>${esc(i.msg)}</li>`).join("")}
-    ${list.length>shown.length?`<li>…and ${list.length-shown.length} more</li>`:""}</ul>`;
+  box.innerHTML=`<h4>${errors} error${errors===1?'':'s'} · ${list.length-errors} warning${list.length-errors===1?'':'s'}</h4><p style="margin:0 0 8px;font-size:11px">Errors must be corrected. Review warnings; intentional blanks or permitted negative marks can remain.</p>
+    <ul>${list.map((i,n)=>`<li><b>${i.level==='error'?'Error':'Warning'}</b> ${i.sheet&&i.row!=null&&i.col!=null?`<button type="button" data-issue="${n}" style="border:0;background:none;text-decoration:underline;color:inherit;cursor:pointer;font:inherit;padding:0">${esc(i.sheet)}!${esc(i.cell||colLabel(i.col)+(i.row+1))}</button> · `:''}${esc(i.problem||i.msg||i.message||'Review this entry')}${i.value!==undefined?` <b>Value:</b> ${esc(i.value===''?'(blank)':i.value)}`:''}${i.fix?` <b>Correction:</b> ${esc(i.fix)}`:''}</li>`).join('')}</ul>`;
+  box.querySelectorAll('[data-issue]').forEach(b=>b.addEventListener('click',()=>{
+    commitVisible();const issue=state.issues[Number(b.dataset.issue)];state.active=issue.sheet;renderTabs();renderTable();
+    const cell=document.querySelector(`#spdgBody [data-r="${issue.row}"][data-c="${issue.col}"]`);cell?.scrollIntoView({block:'center',inline:'center'});cell?.focus();
+  }));
+}
+
+function recheck(commit=true){
+  clearTimeout(checkTimer);if(!state)return;if(commit)commitVisible();
+  try{state.issues=state.validate(state.sheets)||[];}catch(err){state.issues=[{level:'error',problem:err.message,fix:'Restore the worksheet structure and recheck.'}];}
+  renderIssues();renderTabs();
+  document.querySelectorAll('#spdgBody .spdg-cell').forEach(cell=>{
+    const issue=state.issues.find(i=>i.sheet===state.active&&i.row===Number(cell.dataset.r)&&i.col===Number(cell.dataset.c));
+    cell.classList.toggle('spdg-flag',!!issue);cell.title=issue?.msg||issue?.problem||'';
+  });
+}
+function exportProblems(){
+  recheck();if(!state||!window.WorkbookChecks)return;
+  const blob=new Blob([WorkbookChecks.csv(state.issues)],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=state.filename.replace(/\.[^.]+$/,'')+'_problems.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 
 function renderTabs(){
@@ -259,7 +299,7 @@ function renderTabs(){
     return `<button class="spdg-tab ${n===state.active?"on":""}" data-sheet="${esc(n)}">${esc(n)}${flagged?'<span class="spdg-dot"></span>':""}</button>`;
   }).join("");
   tabs.querySelectorAll(".spdg-tab").forEach(b=>b.addEventListener("click",()=>{
-    commitVisible();state.active=b.dataset.sheet;renderTabs();renderTable();
+    recheck();state.active=b.dataset.sheet;renderTabs();renderTable();
   }));
 }
 
@@ -271,7 +311,7 @@ function renderTable(){
   const width=Math.max(1,...aoa.map(r=>(r||[]).length));
   const hr=findHeaderRow(aoa);
   const flagSet={};
-  (state.issues||[]).forEach(i=>{if(i.sheet===name&&i.row!=null&&i.col!=null)flagSet[i.row+":"+i.col]=1;});
+  (state.issues||[]).forEach(i=>{if(i.sheet===name&&i.row!=null&&i.col!=null)flagSet[i.row+":"+i.col]=i;});
 
   let html=`<table class="spdg-table"><thead><tr><th class="spdg-rowhead"></th>`;
   for(let c=0;c<width;c++)html+=`<th>${colLabel(c)}</th>`;
@@ -283,7 +323,7 @@ function renderTable(){
     for(let c=0;c<width;c++){
       const v=row[c]==null?"":row[c];
       const cls="spdg-cell"+(flagSet[r+":"+c]?" spdg-flag":"")+(isData?"":" spdg-meta");
-      html+=`<td><div class="${cls}" contenteditable="true" spellcheck="false" data-r="${r}" data-c="${c}">${esc(v)}</div></td>`;
+      html+=`<td><div class="${cls}" title="${esc(flagSet[r+':'+c]?.msg||'')}" contenteditable="true" spellcheck="false" data-r="${r}" data-c="${c}">${esc(v)}</div></td>`;
     }
     html+=`<td>${isData?`<button class="spdg-del" data-del="${r}" title="Delete this row">✕</button>`:""}</td></tr>`;
   });
@@ -292,8 +332,7 @@ function renderTable(){
   body.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{
     commitVisible();
     state.sheets[name].splice(Number(b.dataset.del),1);
-    state.issues=(state.issues||[]).filter(i=>i.sheet!==name);
-    renderTabs();renderTable();
+    recheck(false);renderTable();
   }));
 }
 
@@ -317,7 +356,7 @@ function addRow(){
   if(!aoa)return;
   const width=Math.max(1,...aoa.map(r=>(r||[]).length));
   aoa.push(new Array(width).fill(null));
-  renderTable();
+  recheck();renderTable();
   const body=document.getElementById("spdgBody");
   body.scrollTop=body.scrollHeight;
 }
@@ -334,7 +373,8 @@ function exportXlsx(){
 }
 
 function apply(){
-  commitVisible();
+  recheck();
+  if(state.issues.some(i=>i.level==='error'))return;
   const sheets=state.sheets,cb=state.onApply;
   close();
   if(cb)cb(sheets);

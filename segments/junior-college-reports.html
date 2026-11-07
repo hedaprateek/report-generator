@@ -7,7 +7,7 @@
 <script src="../assets/js/academy-settings.js"></script>
 <script src="../assets/vendor/xlsx.full.min.js"></script>
 <script src="../assets/vendor/html2pdf.bundle.min.js"></script>
-<script src="../assets/js/data-grid.js"></script>
+<script src="../assets/js/workbook-checks.js?v=checks-1"></script><script src="../assets/js/data-grid.js?v=checks-1"></script><script src="../assets/js/delivery-pack.js?v=delivery-1"></script>
 <script src="../assets/js/student-master.js"></script>
 <style>
 :root{
@@ -301,7 +301,7 @@ svg text{font-family:system-ui,sans-serif}
 <link rel="stylesheet" href="../assets/css/responsive.css">
 <script src="../assets/js/a11y.js" defer></script>
 <script src="../assets/js/vendor-footer.js?v=academy-1" defer></script>
-<script src="../assets/js/a4-print.js?v=academy-1" defer></script>
+<script src="../assets/js/a4-print.js?v=delivery-1" defer></script>
 <script src="../assets/js/showcase-bridge.js" defer></script>
 <script src="../assets/js/template-themes.js" defer></script>
 <script src="../assets/js/offline.js?v=academy-1" defer></script>
@@ -1295,6 +1295,24 @@ function buildReportSheetHTML(s,a,sheetId){
     </div>
     </div>`;
 }
+function checkWorkbook(edited){
+  const batches=detectBatches(edited),issues=SPDGrid.audit(edited,batches.flatMap(b=>b.data.warnings||[]));
+  if(!batches.some(b=>(b.data.tests||b.data.semesters||b.data.cycles||[]).length)&&!issues.some(i=>i.level==='error')){
+    const sheet=Object.keys(edited).find(n=>/^(marks|evaluation)/i.test(n))||Object.keys(edited)[0]||'Marks';
+    issues.push({sheet,row:0,col:1,cell:'B1',code:'missing-assessments',level:'error',value:'',problem:'No usable assessment columns were found.',fix:'Restore the Student Name header and subject / evaluation columns from the template.',msg:sheet+'!B1: No usable assessment columns were found. Restore the template headers.'});
+  }
+  return issues;
+}
+function mountDeliveryPack(){
+  if(!window.DeliveryPack)return;
+  DeliveryPack.mount(document.getElementById('report-toolbar'),()=>({
+    segment:'junior-college',academy:BRANDING.name,batch:DATA.batch||'Class',year:DATA.year||'',
+    language:window.I18N?I18N.getLang():'en',students:AN.S.slice(),sheets:LAST_SHEETS,warnings:DATA.warnings||[],demo:WORKBOOK_IS_DEMO,
+    periods:(AN.tests||AN.semesters||AN.cycles||DATA.semesters||[]).map(x=>x.name).join(', ')||'Current reporting period',
+    reportHTML:(s,id)=>buildReportSheetHTML(s,AN,id),
+    overviewHTML:()=>{renderOverview();return document.getElementById('v-overview').innerHTML;}
+  }));
+}
 function renderReport(){
   const el=document.getElementById("v-report");const a=AN;
   if(!curStudent&&a.ranked[0])curStudent=a.ranked[0].name;
@@ -1319,6 +1337,7 @@ function renderReport(){
     </div>
     <div id="secPanel" class="no-print"></div>
     ${buildReportSheetHTML(s,a,"reportSheet")}`;
+  mountDeliveryPack();
   document.getElementById("studentPick").addEventListener("change",e=>{curStudent=e.target.value;renderReport();});
   /* Translate the rendered sheet rather than the templates, so print, PDF and
      the exported web page all inherit it — they are built from this DOM. */
@@ -1648,11 +1667,12 @@ function parseWorkbookBytes(bytes){
 // goes straight to the dashboard, exactly as it did before.
 function bootWithReview(batches,sheets,onReady){
   const parserWarnings=batches.reduce((a,b)=>a.concat(b.data.warnings||[]),[]);
-  const issues=(window.SPDGrid?SPDGrid.audit(sheets,parserWarnings):[]);
+  const issues=(window.SPDGrid?checkWorkbook(sheets):[]);
   if(!issues.length){LAST_SHEETS=sheets;boot(batches);if(onReady)onReady(sheets);return;}
   SPDGrid.open(sheets,{
+    validate:checkWorkbook,
     title:"Check this before we build the reports",
-    subtitle:"We spotted a few things that are usually typos. Fix anything that's wrong, or continue if it's intentional.",
+    subtitle:"Review the exact worksheet cells below. Correct errors before continuing; review warnings for intentional missing or not-applicable entries.",
     issues,
     filename:slugify(BRANDING.name)+"_data.xlsx",
     onApply:edited=>{
@@ -1689,7 +1709,7 @@ function readFile(file){
   rd.onload=e=>{
     const bytes=e.target.result;
     try{
-      const previousSheets=LAST_SHEETS;const batches=parseWorkbookBytes(bytes);const pendingSheets=LAST_SHEETS;LAST_SHEETS=previousSheets;
+      const incoming=XLSX.read(new Uint8Array(bytes),{type:'array'});const pendingSheets=Object.fromEntries(incoming.SheetNames.map(name=>[name,XLSX.utils.sheet_to_json(incoming.Sheets[name],{header:1,defval:null,raw:true})]));const batches=detectBatches(pendingSheets);
       bootWithReview(batches,pendingSheets,accepted=>acceptedWorkbook(file.name,accepted));
     }catch(err){
       if(err.code==="NO_TESTS"){
@@ -1720,6 +1740,7 @@ document.getElementById("batchPick").addEventListener("change",e=>loadBatch(Numb
 document.getElementById("manualEntry").addEventListener("click",()=>{
   clearUploadError();
   SPDGrid.open(SPDGrid.blankFrom(SAMPLE_SHEETS),{
+    validate:checkWorkbook,
     title:"Type your data in",
     subtitle:"Fill the rows below — one student per row. Add more rows as you need, then continue. You can also download it as an Excel file to keep for next time.",
     applyLabel:"Build the reports",
@@ -1740,6 +1761,7 @@ document.getElementById("manualEntry").addEventListener("click",()=>{
 document.getElementById("editDataBtn").addEventListener("click",()=>{
   if(!LAST_SHEETS)return;
   SPDGrid.open(LAST_SHEETS,{
+    validate:checkWorkbook,
     title:"Edit data",
     subtitle:"Change any value and continue — the reports rebuild instantly. Nothing is saved back to your original file.",
     applyLabel:"Rebuild reports",
